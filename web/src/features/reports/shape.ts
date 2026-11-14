@@ -1,4 +1,4 @@
-import { FIELD_BY_KEY, compareValues, valueOf, type FieldKey, type ReportRow } from './fields';
+import { FIELD_BY_KEY, compareValues, valueOf, type ChartRow, type FieldKey, type ReportRow } from './fields';
 import { CHART_BY_TYPE, type Aggregate, type Axis, type Mark, type Report } from './model';
 
 /*
@@ -44,7 +44,9 @@ export type Shaped =
   | { kind: 'grid'; xLabels: string[]; yLabels: string[]; z: (number | null)[][] }
   | { kind: 'points3d'; traces: Trace3D[]; axes: { x: Axis3D; y: Axis3D } };
 
-export function aggregate(values: readonly number[], how: Aggregate): number {
+export function aggregate(all: readonly number[], how: Aggregate): number {
+  // Missing values (NaN) don't count: an average duration ignores events that have no duration.
+  const values = all.some((v) => !Number.isFinite(v)) ? all.filter(Number.isFinite) : all;
   if (!values.length) return NaN;
   switch (how) {
     case 'sum':
@@ -73,14 +75,14 @@ export function aggregate(values: readonly number[], how: Aggregate): number {
 const label = (v: string | number | null) => (v === null ? '(none)' : String(v));
 
 /** Distinct values of a field, in its natural order. */
-function distinct(rows: readonly ReportRow[], field: FieldKey): (string | number | null)[] {
+function distinct(rows: readonly ChartRow[], field: FieldKey): (string | number | null)[] {
   const seen = new Set<string | number | null>();
   for (const r of rows) seen.add(valueOf(r, field));
   return [...seen].sort((a, b) => compareValues(field, a, b));
 }
 
-function groupBy<K>(rows: readonly ReportRow[], key: (r: ReportRow) => K): Map<K, ReportRow[]> {
-  const map = new Map<K, ReportRow[]>();
+function groupBy<K>(rows: readonly ChartRow[], key: (r: ChartRow) => K): Map<K, ChartRow[]> {
+  const map = new Map<K, ChartRow[]>();
   for (const r of rows) {
     const k = key(r);
     const list = map.get(k);
@@ -90,32 +92,39 @@ function groupBy<K>(rows: readonly ReportRow[], key: (r: ReportRow) => K): Map<K
   return map;
 }
 
-const num = (r: ReportRow, f: FieldKey) => Number(valueOf(r, f));
+/** A numeric field's value; missing values (null) are NaN, so they leave gaps and are skipped when combining. */
+const num = (r: ChartRow, f: FieldKey) => {
+  const v = valueOf(r, f);
+  return v === null ? NaN : Number(v);
+};
 
 /** Category axes in 3D are plotted as positions 0..n-1 and labelled. */
-function axis3d(rows: readonly ReportRow[], field: FieldKey): { at: (r: ReportRow) => number; axis: Axis3D } {
+function axis3d(rows: readonly ChartRow[], field: FieldKey): { at: (r: ChartRow) => number; axis: Axis3D } {
   if (FIELD_BY_KEY[field].kind === 'number') return { at: (r) => num(r, field), axis: { labels: null } };
   const values = distinct(rows, field);
   const index = new Map(values.map((v, i) => [v, i]));
   return { at: (r) => index.get(valueOf(r, field)) ?? 0, axis: { labels: values.map(label) } };
 }
 
-export function shape(rows: readonly ReportRow[], report: Report): Shaped {
+export function shape(rows: readonly ChartRow[], report: Report): Shaped {
   const { enc, chart } = report;
   const def = CHART_BY_TYPE[chart];
 
   switch (chart) {
     case 'candlestick':
-    case 'ohlc':
+    case 'ohlc': {
+      // Only market bars have prices; other datasets don't offer these charts.
+      const bars = rows as readonly ReportRow[];
       return {
         kind: 'ohlc',
-        x: rows.map((r) => valueOf(r, enc.x) ?? ''),
-        open: rows.map((r) => r.open),
-        high: rows.map((r) => r.high),
-        low: rows.map((r) => r.low),
-        close: rows.map((r) => r.close),
-        volume: rows.map((r) => r.volume),
+        x: bars.map((r) => valueOf(r, enc.x) ?? ''),
+        open: bars.map((r) => r.open),
+        high: bars.map((r) => r.high),
+        low: bars.map((r) => r.low),
+        close: bars.map((r) => r.close),
+        volume: bars.map((r) => r.volume),
       };
+    }
 
     case 'histogram': {
       const groups = enc.color ? [...groupBy(rows, (r) => valueOf(r, enc.color!))] : [[null, rows] as const];
@@ -150,7 +159,9 @@ export function shape(rows: readonly ReportRow[], report: Report): Shaped {
       const z = ys.map((y) =>
         xs.map((x) => {
           const list = cells.get(`${label(x)}\u0000${label(y)}`);
-          return list ? round(aggregate(list.map((r) => num(r, enc.z)), how)) : null;
+          if (!list) return null;
+          const v = round(aggregate(list.map((r) => num(r, enc.z)), how));
+          return Number.isFinite(v) ? v : null;
         }),
       );
       return { kind: 'grid', xLabels: xs.map(label), yLabels: ys.map(label), z };
@@ -186,13 +197,13 @@ export function shape(rows: readonly ReportRow[], report: Report): Shaped {
 
 const round = (n: number) => (Number.isFinite(n) ? Math.round(n * 1e4) / 1e4 : n);
 
-function cartesianTraces(rows: readonly ReportRow[], report: Report, defaultMark: Mark): CartesianTrace[] {
+function cartesianTraces(rows: readonly ChartRow[], report: Report, defaultMark: Mark): CartesianTrace[] {
   const { enc, chart } = report;
   const colorKind = enc.color ? FIELD_BY_KEY[enc.color].kind : null;
   const split = colorKind === 'category' ? enc.color : null;
   const groups = split
     ? [...groupBy(rows, (r) => valueOf(r, split))].sort(([a], [b]) => compareValues(split, a, b))
-    : [[null, rows as ReportRow[]] as const];
+    : [[null, rows as ChartRow[]] as const];
   const grouped = chart !== 'scatter' && enc.aggregate !== 'none';
   // Lines must be drawn in x order or they zig-zag; scatter dots keep bar order.
   const sortByX = chart !== 'scatter' && enc.x !== 'time';

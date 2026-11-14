@@ -44,6 +44,7 @@ function relevance(report: Report) {
     scale: chart === 'heatmap' || chart === 'surface' || numericColor,
     palette: chart !== 'heatmap' && chart !== 'surface' && chart !== 'candlestick' && chart !== 'ohlc',
     timeX,
+    categoryX: cartesian && FIELD_BY_KEY[enc.x].kind === 'category',
     y2: enc.series.some((s) => s.axis === 'right') && cartesian,
     yAxis: chart !== 'heatmap',
     zTitle: def.dims === 3 || chart === 'heatmap',
@@ -188,7 +189,24 @@ export function StylePanel({ report, onChange, colors }: Props) {
         )}
         <Toggle label="Gridlines" checked={st.showGrid} onChange={(v) => set('showGrid', v)} />
         {!rel.is3d && rel.yAxis && <Toggle label="Log scale (Y)" checked={st.yLog} onChange={(v) => set('yLog', v)} />}
-        {rel.timeX && <Toggle label="Skip nights and weekends" checked={st.skipGaps} onChange={(v) => set('skipGaps', v)} />}
+        {rel.categoryX && (
+          <Segmented
+            label="Order X by"
+            value={st.xOrder}
+            options={[
+              { value: 'natural', label: 'Name' },
+              { value: 'value', label: 'Largest first' },
+            ]}
+            onChange={(v) => set('xOrder', v)}
+          />
+        )}
+        {rel.timeX && (
+          <Toggle
+            label={report.dataset === 'analytics' ? 'Skip quiet stretches' : 'Skip nights and weekends'}
+            checked={st.skipGaps}
+            onChange={(v) => set('skipGaps', v)}
+          />
+        )}
         {rel.timeX && <Toggle label="Range slider" checked={st.rangeSlider} onChange={(v) => set('rangeSlider', v)} />}
       </Section>
 

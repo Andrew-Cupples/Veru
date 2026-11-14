@@ -40,15 +40,34 @@ export function parseReport(v: unknown): Report | null {
     where: v.where,
     style: { ...DEFAULT_STYLE, ...(style as Partial<Report['style']>) },
     description: typeof v.description === 'string' ? v.description : undefined,
+    dataset: v.dataset === 'analytics' ? 'analytics' : undefined,
     updatedAt: typeof v.updatedAt === 'number' ? v.updatedAt : 0,
   };
 }
 
-export function loadReports(): Report[] {
-  const raw = readJson<unknown[]>(KEYS.reports, [], (x): x is unknown[] => Array.isArray(x));
-  return raw.map(parseReport).filter((r): r is Report => r !== null);
+/** Where one page's reports are kept: Reports and Analytics each have their own list, open report and pins. */
+export interface ReportStoreKeys {
+  reports: string;
+  active: string;
+  pins: string;
 }
 
-export const saveReports = (reports: readonly Report[]) => writeJson(KEYS.reports, reports);
-export const loadActiveId = () => readJson<string | null>(KEYS.active, null, (x): x is string | null => typeof x === 'string');
-export const saveActiveId = (id: string) => writeJson(KEYS.active, id);
+export const MARKET_KEYS: ReportStoreKeys = { ...KEYS, pins: 'veru.reports.pinned' };
+
+export function reportStore(keys: ReportStoreKeys) {
+  return {
+    load: (): Report[] => {
+      const raw = readJson<unknown[]>(keys.reports, [], (x): x is unknown[] => Array.isArray(x));
+      return raw.map(parseReport).filter((r): r is Report => r !== null);
+    },
+    save: (reports: readonly Report[]) => writeJson(keys.reports, reports),
+    loadActiveId: () => readJson<string | null>(keys.active, null, (x): x is string | null => typeof x === 'string'),
+    saveActiveId: (id: string) => writeJson(keys.active, id),
+  };
+}
+
+const market = reportStore(MARKET_KEYS);
+export const loadReports = market.load;
+export const saveReports = market.save;
+export const loadActiveId = market.loadActiveId;
+export const saveActiveId = market.saveActiveId;

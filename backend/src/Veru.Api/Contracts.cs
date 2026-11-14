@@ -64,3 +64,24 @@ internal static class ContractMapping
             series.Bars.Select(b => new PriceBarDto(b.Time, b.Session, b.Open, b.High, b.Low, b.Close, b.Volume)).ToList());
     }
 }
+
+/// <summary>Sent by the suggestion box. Feature and kind must be one of the box's choices.</summary>
+public sealed record SuggestionRequest(
+    /// <summary>raw-data, reports, analytics, personalize, prompt-ledger or other.</summary>
+    string? Feature,
+    /// <summary>Required when feature is "other".</summary>
+    string? OtherFeature,
+    /// <summary>like, want or problem.</summary>
+    string? Kind,
+    string? Message,
+    /// <summary>The page the box was on.</summary>
+    string? Page);
+
+public sealed record SuggestionResponse(
+    long Id,
+    DateTimeOffset CreatedAt,
+    string Feature,
+    string? OtherFeature,
+    string Kind,
+    string Message,
+    string? Page);

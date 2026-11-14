@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { usePriceSeries, useQueryOptions } from '../../api/hooks';
 import { loadLastSource, loadRecentSymbols, rememberRun } from './memory';
 import { toRows, type Source } from './query';
+import { track } from '../../analytics/tracker';
 
 const DEFAULT_INTERVAL = '15m';
 const DEFAULT_RANGE = '1mo';
@@ -61,6 +62,7 @@ export function useDataSource() {
   const run = (next: Source = draft) => {
     const symbol = next.symbol.trim().toUpperCase();
     const ran = { ...next, symbol };
+    track('query', { target: 'run', subject: symbol, detail: `${ran.interval} · ${ran.range}${ran.extendedHours ? ' · pre/post' : ''}` });
     setDraft(ran);
     setSymbolError(false);
     setRecent(rememberRun(ran));

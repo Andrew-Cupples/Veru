@@ -1,5 +1,5 @@
 import type { Condition } from '../data-query/query';
-import { FIELD_BY_KEY, type FieldKey, type FieldKind } from './fields';
+import { FIELD_BY_KEY, type Dataset, type FieldKey, type FieldKind } from './fields';
 
 /*
  * A report is a chart definition that works on whatever symbol is loaded: chart type, which fields go
@@ -89,6 +89,8 @@ export interface ReportStyle {
   yLog: boolean;
   yFormat: NumberFormat;
   skipGaps: boolean;
+  /** Order of category bars: their natural order, or largest total first. */
+  xOrder: 'natural' | 'value';
   rangeSlider: boolean;
 
   legend: LegendPosition;
@@ -115,6 +117,8 @@ export interface Report {
   style: ReportStyle;
   /** Set on built-in templates; editing one saves a copy to My reports. */
   template?: boolean;
+  /** Unset means market data. */
+  dataset?: Dataset;
   description?: string;
   updatedAt: number;
 }
@@ -146,6 +150,7 @@ export const DEFAULT_STYLE: ReportStyle = {
   yLog: false,
   yFormat: 'auto',
   skipGaps: true,
+  xOrder: 'natural',
   rangeSlider: false,
   legend: 'auto',
   hover: 'x',
@@ -303,6 +308,34 @@ export const CHARTS: readonly ChartDef[] = [
 
 export const CHART_BY_TYPE = Object.fromEntries(CHARTS.map((c) => [c.type, c])) as Record<ChartType, ChartDef>;
 
+/** Price charts need open/high/low/close, which only market bars have. */
+export const chartsFor = (dataset: Dataset = 'market'): readonly ChartDef[] =>
+  dataset === 'market' ? CHARTS : CHARTS.filter((c) => c.type !== 'candlestick' && c.type !== 'ohlc');
+
+/** Per dataset: the measure a new chart plots, the row-order field, and fields to fall back on per slot. */
+const DATASET_DEFAULTS: Record<Dataset, { measure: FieldKey; index: FieldKey; second: FieldKey; preferred: Record<'x' | 'y' | 'z', readonly FieldKey[]> }> = {
+  market: {
+    measure: 'close',
+    index: 'bar',
+    second: 'close',
+    preferred: {
+      x: ['time', 'date', 'clock', 'bar', 'changePct', 'close'],
+      y: ['clock', 'close', 'hour', 'volume'],
+      z: ['volume', 'close', 'changePct'],
+    },
+  },
+  analytics: {
+    measure: 'count',
+    index: 'seq',
+    second: 'hour',
+    preferred: {
+      x: ['date', 'time', 'clock', 'seq', 'hour'],
+      y: ['clock', 'hour', 'seq', 'count'],
+      z: ['count', 'duration', 'value'],
+    },
+  },
+};
+
 export const AGGREGATES: readonly { key: Aggregate; label: string }[] = [
   { key: 'none', label: 'None (every bar)' },
   { key: 'avg', label: 'Average' },
@@ -318,13 +351,6 @@ export const AGGREGATES: readonly { key: Aggregate; label: string }[] = [
 export const fits = (rule: SlotRule | undefined, field: FieldKey | null) =>
   !!rule && field !== null && rule.kinds.includes(FIELD_BY_KEY[field].kind);
 
-/** Preferred fields per slot, tried in order when a chart switch leaves a slot without a fitting field. */
-const PREFERRED: Record<'x' | 'y' | 'z', readonly FieldKey[]> = {
-  x: ['time', 'date', 'clock', 'bar', 'changePct', 'close'],
-  y: ['clock', 'close', 'hour', 'volume'],
-  z: ['volume', 'close', 'changePct'],
-};
-
 const pick = (rule: SlotRule | undefined, current: FieldKey, preferred: readonly FieldKey[]): FieldKey =>
   !rule || fits(rule, current) ? current : preferred.find((f) => fits(rule, f)) ?? current;
 
@@ -335,28 +361,44 @@ const pick = (rule: SlotRule | undefined, current: FieldKey, preferred: readonly
 export function switchChart(report: Report, chart: ChartType): Report {
   const def = CHART_BY_TYPE[chart];
   const { enc } = report;
+  const d = DATASET_DEFAULTS[report.dataset ?? 'market'];
   let series = def.slots.series ? enc.series.filter((s) => fits(def.slots.series, s.field)) : enc.series;
-  if (def.slots.series && !series.length) series = [newSeries('close')];
+  if (def.slots.series && !series.length) series = [newSeries(d.measure)];
   // Heatmap and surface need two different groupings.
-  let x = pick(def.slots.x, enc.x, PREFERRED.x);
-  let y = pick(def.slots.y, enc.y, PREFERRED.y);
+  let x = pick(def.slots.x, enc.x, d.preferred.x);
+  let y = pick(def.slots.y, enc.y, d.preferred.y);
   if (chart === 'heatmap' || chart === 'surface') {
     if (!fits(def.slots.x, x) || FIELD_BY_KEY[x].kind === 'number') x = 'date';
     if (!fits(def.slots.y, y) || y === x) y = 'clock';
   }
-  if (def.dims === 3 && (chart === 'scatter3d' || chart === 'line3d') && x === y) y = x === 'bar' ? 'close' : 'bar';
-  const z = pick(def.slots.z, enc.z, PREFERRED.z);
+  if (def.dims === 3 && (chart === 'scatter3d' || chart === 'line3d') && x === y) y = x === d.index ? d.second : d.index;
+  const z = pick(def.slots.z, enc.z, d.preferred.z);
   const color = fits(def.slots.color, enc.color) ? enc.color : null;
   const size = fits(def.slots.size, enc.size) ? enc.size : null;
+  // Analytics rows are one event each, so grouping them means counting (summing): that's its default.
+  const defaultAgg = (a: ChartDef['aggregate']) => (a && report.dataset === 'analytics' ? 'sum' : a?.default);
   const previous = CHART_BY_TYPE[report.chart].aggregate;
-  const keepAgg = def.aggregate && previous && enc.aggregate !== previous.default && !(def.aggregate.required && enc.aggregate === 'none');
-  const aggregate = def.aggregate ? (keepAgg ? enc.aggregate : def.aggregate.default) : 'none';
+  const keepAgg = def.aggregate && previous && enc.aggregate !== defaultAgg(previous) && !(def.aggregate.required && enc.aggregate === 'none');
+  const aggregate = def.aggregate ? (keepAgg ? enc.aggregate : defaultAgg(def.aggregate)!) : 'none';
   return { ...report, chart, enc: { x, y, z, series, color, size, aggregate } };
 }
 
 export const newSeries = (field: FieldKey): Series => ({ field, mark: null, axis: 'left', color: null });
 
-export function blankReport(dims: 2 | 3, name: string): Report {
+export function blankReport(dims: 2 | 3, name: string, dataset: Dataset = 'market'): Report {
+  if (dataset === 'analytics') {
+    const base: Report = {
+      id: crypto.randomUUID(),
+      name,
+      dataset,
+      chart: 'bar',
+      enc: { x: 'date', y: 'hour', z: 'count', series: [newSeries('count')], color: null, size: null, aggregate: 'sum' },
+      where: [],
+      style: DEFAULT_STYLE,
+      updatedAt: Date.now(),
+    };
+    return dims === 3 ? switchChart({ ...base, enc: { ...base.enc, x: 'seq', y: 'hour', z: 'duration' } }, 'scatter3d') : base;
+  }
   const base: Report = {
     id: crypto.randomUUID(),
     name,

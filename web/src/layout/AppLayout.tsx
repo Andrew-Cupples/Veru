@@ -1,11 +1,13 @@
 import { useEffect, useRef, type MouseEvent } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useMotion } from '../motion/MotionProvider';
+import { usePageTracking } from '../analytics/autoTrack';
 import styles from './AppLayout.module.css';
 
 const NAV = [
   { to: '/', label: 'Raw data', end: true },
   { to: '/reports', label: 'Reports', end: false },
+  { to: '/analytics', label: 'Analytics', end: false },
   { to: '/ledger', label: 'Prompt ledger', end: false },
   { to: '/personalize', label: 'Personalize', end: false },
 ] as const;
@@ -19,6 +21,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { enabled: motion, slide } = useMotion();
   const lastPath = useRef(pathname);
+  usePageTracking(pathname);
 
   // On navigation, move focus to the new page so keyboard and screen reader users start at its top
   // instead of staying on the nav link. Not on first load (path unchanged), so the skip link stays the first Tab stop.

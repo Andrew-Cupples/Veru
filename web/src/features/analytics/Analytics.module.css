@@ -1,0 +1,209 @@
+.fromRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 20px;
+}
+
+.fromRow > :first-child {
+  min-width: min(100%, 420px);
+}
+
+.fromSummary {
+  margin: 0 0 8px;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.fromSummary strong {
+  color: var(--ink);
+}
+
+.trackingBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--rule);
+  background: var(--surface-sunken);
+  font-size: var(--text-sm);
+}
+
+.recording {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--session-regular, var(--accent));
+}
+
+.recording[data-paused] {
+  color: var(--ink-muted);
+}
+
+.recording[data-paused] .dot {
+  background: var(--ink-faint);
+}
+
+.confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--ink);
+}
+
+.dangerButton {
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--danger);
+  color: var(--surface-raised);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.kpi {
+  padding: 12px 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+
+.kpi dt {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.kpi dd {
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiValue {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.kpiNote {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* ---------- Suggestion box ---------- */
+
+.suggestions {
+  padding: 14px 18px 16px;
+}
+
+.suggestionsTitle {
+  margin: 0 0 10px;
+  font-size: var(--text-md);
+}
+
+.suggestionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.suggestionField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(100%, 180px);
+}
+
+.suggestionMessage {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.suggestionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.suggestionHint,
+.suggestionStatus {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.suggestionStatus:not(:empty) {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.recent {
+  margin-top: 12px;
+  font-size: var(--text-sm);
+}
+
+.recent summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+}
+
+.recent ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.recent li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.recentMeta {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}

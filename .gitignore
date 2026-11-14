@@ -25,3 +25,7 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/tasks.json
+
+# Veru API: suggestion box database
+backend/src/Veru.Api/data/
+.artifacts-alt/

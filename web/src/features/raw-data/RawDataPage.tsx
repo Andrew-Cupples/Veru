@@ -5,6 +5,7 @@ import { ApiAlert, GranularityNotice, SeriesGate, loadStatus } from '../data-que
 import { COLUMNS, runQuery, toCsv, toSql, type ColumnKey, type QuerySpec } from '../data-query/query';
 import { useDataSource } from '../data-query/useDataSource';
 import { downloadText } from '../../lib/download';
+import { track } from '../../analytics/tracker';
 import { QueryEditor } from './QueryEditor';
 import { MAX_RENDERED_ROWS, ResultsTable } from './ResultsTable';
 import { loadSpec, saveSpec } from './specMemory';
@@ -35,12 +36,15 @@ export function RawDataPage() {
       orderBy: { column, direction: s.orderBy?.column === column && s.orderBy.direction === 'asc' ? 'desc' : 'asc' },
     }));
 
-  const downloadCsv = () =>
+  const downloadCsv = () => {
+    track('export', { target: 'CSV', detail: 'raw data', subject: source.symbol, value: result.rows.length });
     downloadText(toCsv(result.rows, columns), `${source.symbol}_${source.interval}_${source.range}.csv`, 'text/csv');
+  };
 
   const copySql = async () => {
     try {
       await navigator.clipboard.writeText(sql);
+      track('export', { target: 'SQL', detail: 'copied', subject: source.symbol });
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {

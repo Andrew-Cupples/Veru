@@ -38,6 +38,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The latest suggestions, newest first */
+        get: operations["ListSuggestions"];
+        put?: never;
+        /** Saves a suggestion from the in-app suggestion box */
+        post: operations["CreateSuggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -127,6 +145,24 @@ export interface components {
             /** Format: int32 */
             days: null | number;
         };
+        SuggestionRequest: {
+            feature: null | string;
+            otherFeature: null | string;
+            kind: null | string;
+            message: null | string;
+            page: null | string;
+        };
+        SuggestionResponse: {
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            createdAt: string;
+            feature: string;
+            otherFeature: null | string;
+            kind: string;
+            message: string;
+            page: null | string;
+        };
     };
     responses: never;
     parameters: never;
@@ -178,6 +214,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PriceSeriesResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    ListSuggestions: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionResponse"][];
+                };
+            };
+        };
+    };
+    CreateSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Bad Request */

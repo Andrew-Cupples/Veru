@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { CHART_BY_TYPE, type Report } from './model';
 import { ChartIcon } from './ChartIcon';
-import { TEMPLATES } from './templates';
+
 import { Thumbnail } from './Thumbnail';
 import type { Thumb } from './thumbGeometry';
 import styles from './Reports.module.css';
@@ -9,6 +9,7 @@ import dq from '../data-query/DataQuery.module.css';
 
 interface Props {
   mine: readonly Report[];
+  templates: readonly Report[];
   activeId: string;
   onOpen: (id: string) => void;
   onCreate: (dims: 2 | 3) => void;
@@ -21,7 +22,7 @@ interface Props {
 }
 
 /** Templates and the user's reports. One click opens a report; the chart draws straight away. */
-export function ReportLibrary({ mine, activeId, onOpen, onCreate, thumbFor, pins, onTogglePin, comparing, onCompare }: Props) {
+export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thumbFor, pins, onTogglePin, comparing, onCompare }: Props) {
   const navRef = useRef<HTMLElement>(null);
   const highlightRef = useRef<HTMLSpanElement>(null);
   // While comparing, no single report is "open", so nothing is marked current.
@@ -36,7 +37,12 @@ export function ReportLibrary({ mine, activeId, onOpen, onCreate, thumbFor, pins
       const current = nav.querySelector<HTMLElement>('[aria-current="true"]');
       highlight.hidden = !current;
       if (!current) return;
-      highlight.style.transform = `translate(${current.offsetLeft}px, ${current.offsetTop}px)`;
+      // Measured against the list itself: offsetTop would be relative to the item's own row, which is positioned.
+      const box = nav.getBoundingClientRect();
+      const item = current.getBoundingClientRect();
+      const x = item.left - box.left - nav.clientLeft + nav.scrollLeft;
+      const y = item.top - box.top - nav.clientTop + nav.scrollTop;
+      highlight.style.transform = `translate(${x}px, ${y}px)`;
       highlight.style.width = `${current.offsetWidth}px`;
       highlight.style.height = `${current.offsetHeight}px`;
     };
@@ -59,6 +65,7 @@ export function ReportLibrary({ mine, activeId, onOpen, onCreate, thumbFor, pins
         <button
           type="button"
           className={styles.libraryItem}
+          data-track={r.name}
           aria-current={r.id === currentId ? 'true' : undefined}
           onClick={() => onOpen(r.id)}
         >
@@ -101,18 +108,16 @@ export function ReportLibrary({ mine, activeId, onOpen, onCreate, thumbFor, pins
           type="button"
           className={comparing ? dq.secondaryButton : dq.runButton}
           disabled={!comparing && pins.length < 2}
-          aria-describedby="compare-hint"
+          aria-describedby={comparing || pins.length >= 2 ? 'compare-hint' : undefined}
           onClick={() => onCompare(!comparing)}
         >
           {comparing ? 'Back to editor' : `Compare (${pins.length})`}
         </button>
-        <p id="compare-hint" className={styles.compareHint}>
-          {comparing
-            ? 'Hover one chart to see the same moment on the others. Add more with +.'
-            : pins.length < 2
-              ? 'Add 2 or more reports with + to compare them side by side.'
-              : `${pins.length} reports ready to compare.`}
-        </p>
+        {(comparing || pins.length >= 2) && (
+          <p id="compare-hint" className={styles.compareHint}>
+            {comparing ? 'Hover one chart to see the same moment on the others. Add more with +.' : `${pins.length} reports ready to compare.`}
+          </p>
+        )}
       </div>
 
       <h2 className={styles.libraryHeading} id="mine-heading">
@@ -130,7 +135,7 @@ export function ReportLibrary({ mine, activeId, onOpen, onCreate, thumbFor, pins
         Templates
       </h2>
       <ul className={styles.libraryList} aria-labelledby="templates-heading">
-        {TEMPLATES.map((r) => item(r, true))}
+        {templates.map((r) => item(r, true))}
       </ul>
     </nav>
   );
