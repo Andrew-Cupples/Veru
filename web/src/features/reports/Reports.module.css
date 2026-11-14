@@ -80,10 +80,33 @@
   color: var(--ink);
 }
 
-.libraryItem[aria-current='true'] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+/* The open report's background and border come from .libraryHighlight, which glides between items. */
+.libraryItem[aria-current='true'],
+.libraryItem[aria-current='true']:hover {
+  background: none;
   color: var(--accent);
+}
+
+.libraryItem {
+  position: relative;
+  z-index: 1;
+}
+
+.libraryHighlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+.libraryHighlight[data-ready] {
+  transition:
+    transform var(--motion-enter) var(--motion-ease-in),
+    height var(--motion-enter) var(--motion-ease-in);
 }
 
 .libraryText {

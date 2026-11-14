@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { CHART_BY_TYPE, type Report } from './model';
 import { ChartIcon } from './ChartIcon';
 import { TEMPLATES } from './templates';
@@ -13,6 +14,33 @@ interface Props {
 
 /** Templates and the user's reports. One click opens a report; the chart draws straight away. */
 export function ReportLibrary({ mine, activeId, onOpen, onCreate }: Props) {
+  const navRef = useRef<HTMLElement>(null);
+  const highlightRef = useRef<HTMLSpanElement>(null);
+
+  // One highlight that glides to the open report, rather than each item switching its own background.
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const highlight = highlightRef.current;
+    if (!nav || !highlight) return;
+    const place = () => {
+      const current = nav.querySelector<HTMLElement>('[aria-current="true"]');
+      highlight.hidden = !current;
+      if (!current) return;
+      highlight.style.transform = `translate(${current.offsetLeft}px, ${current.offsetTop}px)`;
+      highlight.style.width = `${current.offsetWidth}px`;
+      highlight.style.height = `${current.offsetHeight}px`;
+    };
+    place();
+    // Glide only after the first placement, so the highlight doesn't fly in from the top on load.
+    const frame = requestAnimationFrame(() => (highlight.dataset.ready = ''));
+    const observer = new ResizeObserver(place);
+    observer.observe(nav);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [activeId, mine]);
+
   const item = (r: Report, showDescription: boolean) => (
     <li key={r.id}>
       <button
@@ -33,7 +61,8 @@ export function ReportLibrary({ mine, activeId, onOpen, onCreate }: Props) {
   );
 
   return (
-    <nav className={styles.library} aria-label="Reports">
+    <nav ref={navRef} className={styles.library} aria-label="Reports">
+      <span ref={highlightRef} className={styles.libraryHighlight} aria-hidden="true" hidden />
       <div className={styles.newButtons}>
         <button type="button" className={dq.secondaryButton} onClick={() => onCreate(2)}>
           <span aria-hidden="true">+ </span>New 2D

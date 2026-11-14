@@ -1,6 +1,6 @@
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
-import { useCalmSwitch } from '../../motion/MotionProvider';
+import { useCalmSwitch, useMotion } from '../../motion/MotionProvider';
 import { downloadText } from '../../lib/download';
 import { ApiAlert, Clause, ConditionsEditor, GranularityNotice, SeriesGate, SourceFields, loadStatus } from '../data-query/SourceControls';
 import { filterRows } from '../data-query/query';
@@ -16,6 +16,7 @@ import { StylePanel } from './StylePanel';
 import { tableToCsv, toTable } from './table';
 import { useReports } from './useReports';
 import { useThemeColors } from './themeColors';
+import { TEMPLATES } from './templates';
 import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
 
@@ -53,6 +54,29 @@ export function ReportsPage() {
   };
   const tabIds = useId();
 
+  // Opening a report drifts the canvas in from the side of the library it came from: further down the list
+  // arrives from below, further up from above. Only opening counts, not an edit that saves a template as a copy.
+  const canvasRef = useRef<HTMLElement>(null);
+  const pendingDrift = useRef<1 | -1 | null>(null);
+  const calmOpen = useCalmSwitch();
+  const { duration } = useMotion();
+  const openReport = (id: string) => {
+    if (id === active.id) return;
+    const order = [...reports.mine.map((r) => r.id), ...TEMPLATES.map((t) => t.id)];
+    pendingDrift.current = calmOpen() ? (order.indexOf(id) > order.indexOf(active.id) ? 1 : -1) : null;
+    reports.open(id);
+  };
+  useLayoutEffect(() => {
+    const dir = pendingDrift.current;
+    pendingDrift.current = null;
+    const el = canvasRef.current;
+    if (!dir || !el || typeof el.animate !== 'function') return;
+    el.animate([{ opacity: 0, transform: `translateY(${dir * 24}px)` }, { opacity: 1, transform: 'none' }], {
+      duration,
+      easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)', // --motion-ease-in
+    });
+  }, [active.id, duration]);
+
   useDocumentTitle(`${active.name}${ds.source.symbol ? ` · ${ds.source.symbol}` : ''} · Reports`);
 
   const rows = useMemo(() => toReportRows(filterRows(ds.rows, active.where)), [ds.rows, active.where]);
@@ -83,10 +107,6 @@ export function ReportsPage() {
     <div className={styles.page}>
       <div className={dq.heading}>
         <h1>Reports</h1>
-        <p>
-          Pick a template or build your own 2D and 3D charts. Every change draws at once and saves automatically. Press{' '}
-          <kbd>/</kbd> to jump to the symbol.
-        </p>
       </div>
 
       <p className="sr-only" role="status">
@@ -107,9 +127,9 @@ export function ReportsPage() {
       </div>
 
       <div className={styles.workspace}>
-        <ReportLibrary mine={reports.mine} activeId={active.id} onOpen={reports.open} onCreate={reports.create} />
+        <ReportLibrary mine={reports.mine} activeId={active.id} onOpen={openReport} onCreate={reports.create} />
 
-        <section className={styles.canvas} aria-labelledby="report-name-label">
+        <section ref={canvasRef} className={styles.canvas} aria-labelledby="report-name-label">
           <div className={styles.toolbar}>
             <label className={styles.nameField}>
               <span id="report-name-label" className="sr-only">
@@ -164,7 +184,7 @@ export function ReportsPage() {
               {notice.kind === 'forked' ? (
                 <>
                   Your changes were saved as a new report, <strong>{notice.name}</strong>, in My reports. The template is unchanged.
-                  <button type="button" className={dq.linkButton} onClick={() => reports.open(notice.templateId)}>
+                  <button type="button" className={dq.linkButton} onClick={() => openReport(notice.templateId)}>
                     Back to template
                   </button>
                 </>

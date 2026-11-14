@@ -55,7 +55,8 @@ export function PlotlyChart({ shaped, report, colors, label, ref }: Props) {
           if (!cancelled) setLoaded(true);
         });
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        console.error('Chart failed to draw', error);
         if (!cancelled) setFailed(true);
       });
     return () => {
