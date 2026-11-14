@@ -20,12 +20,11 @@ export const EVENT_KINDS = [
   'report',
   'export',
   'query',
-  'api',
   'setting',
   'visibility',
   'performance',
   'long_task',
-  'error',
+  'feedback',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -46,7 +45,7 @@ export interface AnalyticsEvent {
   /** How the user was interacting: mouse, keyboard, touch, pen, or "" when not from input. */
   input: string;
   visit: number;
-  /** Seconds, when the event has a length (page dwell, API latency, long task). */
+  /** Seconds, when the event has a length (page dwell, long task). */
   duration: number | null;
   /** A number that goes with the event (scroll depth %, bars returned, pinned reports). */
   value: number | null;

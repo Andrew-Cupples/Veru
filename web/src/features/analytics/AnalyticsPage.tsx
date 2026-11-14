@@ -11,6 +11,7 @@ import { ReportWorkspace } from '../reports/ReportWorkspace';
 import { tableToCsv } from '../reports/table';
 import { useReports, type ReportConfig } from '../reports/useReports';
 import { ANALYTICS_TEMPLATES } from './templates';
+import { SuggestionBox } from './SuggestionBox';
 import styles from './Analytics.module.css';
 import rs from '../reports/Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
@@ -159,6 +160,8 @@ export function AnalyticsPage() {
           )
         }
       />
+
+      <SuggestionBox />
     </div>
   );
 }
@@ -235,7 +238,7 @@ function TrackingBar({
 /** Headline numbers for the window, before any report's own conditions. */
 function Kpis({ rows }: { rows: readonly AnalyticsRow[] }) {
   const k = useMemo(() => {
-    let clicks = 0, keyboard = 0, opened = 0, exports = 0, errors = 0, apiCalls = 0, apiSeconds = 0, pageSeconds = 0, views = 0;
+    let clicks = 0, keyboard = 0, opened = 0, exports = 0, pageSeconds = 0, views = 0;
     const visits = new Set<string>();
     for (const r of rows) {
       visits.add(r.visit);
@@ -250,23 +253,15 @@ function Kpis({ rows }: { rows: readonly AnalyticsRow[] }) {
         case 'export':
           exports++;
           break;
-        case 'error':
-          errors++;
-          break;
-        case 'api':
-          apiCalls++;
-          apiSeconds += r.duration ?? 0;
-          break;
         case 'page_view':
           views++;
           pageSeconds += r.duration ?? 0;
           break;
       }
     }
-    return { visits: visits.size, clicks, keyboard, opened, exports, errors, apiCalls, apiSeconds, pageSeconds, views };
+    return { visits: visits.size, clicks, keyboard, opened, exports, pageSeconds, views };
   }, [rows]);
 
-  const ms = (s: number) => `${Math.round(s * 1000).toLocaleString()} ms`;
   const time = (s: number) => (s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 60 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`);
   const items = [
     { label: 'Visits', value: k.visits.toLocaleString() },
@@ -274,8 +269,6 @@ function Kpis({ rows }: { rows: readonly AnalyticsRow[] }) {
     { label: 'Reports opened', value: k.opened.toLocaleString() },
     { label: 'Exports', value: k.exports.toLocaleString() },
     { label: 'Time in app', value: time(k.pageSeconds), note: k.views ? `${k.views.toLocaleString()} page views` : undefined },
-    { label: 'API latency', value: k.apiCalls ? ms(k.apiSeconds / k.apiCalls) : '—', note: k.apiCalls ? `average of ${k.apiCalls.toLocaleString()} calls` : undefined },
-    { label: 'Errors', value: k.errors.toLocaleString() },
   ];
 
   return (

@@ -33,12 +33,12 @@ const sample: AnalyticsEvent[] = [
   ...Array.from({ length: 12 }, (_, i) => event(i + 1)),
   event(13, { kind: 'page_view', target: '', detail: '', duration: 42.5, value: 80 }),
   event(14, { kind: 'page_view', page: 'Analytics', target: '', detail: '', duration: 10, value: 100 }),
-  event(15, { kind: 'api', target: 'bars', subject: 'TSLA', detail: '200', duration: 0.31, input: '' }),
+  event(15, { kind: 'query', target: 'run', subject: 'TSLA', detail: '15m · 1mo' }),
   event(16, { kind: 'export', target: 'CSV', detail: 'Line', subject: 'Price & volume' }),
   event(17, { kind: 'report', target: 'open', detail: 'Candlestick', subject: 'Candlesticks (template)' }),
   event(18, { kind: 'long_task', target: '', detail: '', duration: 0.08 }),
   event(19, { kind: 'setting', target: 'theme', detail: 'tidepool' }),
-  event(20, { kind: 'error', target: 'Boom', detail: 'app.js:1' }),
+  event(20, { kind: 'copy', target: 'selection', detail: '', value: 12 }),
   event(21, { kind: 'env', target: 'browser', detail: 'Chrome' }),
 ];
 const rows = toAnalyticsRows(sample);
@@ -94,7 +94,7 @@ describe('tracker', () => {
   });
 
   it('clips long names', () => {
-    track('error', { target: 'x'.repeat(500) });
+    track('click', { target: 'x'.repeat(500) });
     expect(getEvents()[0]!.target.length).toBe(80);
   });
 });

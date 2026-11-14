@@ -2,6 +2,18 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "market-api-alt (port 5081, separate build output)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "backend/src/Veru.Api", "--launch-profile", "http", "--artifacts-path", ".artifacts-alt", "--urls", "http://localhost:5081"],
+      "port": 5081
+    },
+    {
+      "name": "web-alt-api (UI on 5177, uses market-api-alt)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set MARKET_API=http://localhost:5081&& npm run dev -w @veru/web -- --port 5177"],
+      "port": 5177
+    },
+    {
       "name": "app",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

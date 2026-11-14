@@ -87,6 +87,79 @@
           }
         }
       }
+    },
+    "/api/suggestions": {
+      "post": {
+        "tags": [
+          "Suggestions"
+        ],
+        "summary": "Saves a suggestion from the in-app suggestion box",
+        "operationId": "CreateSuggestion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Suggestions"
+        ],
+        "summary": "The latest suggestions, newest first",
+        "operationId": "ListSuggestions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -434,12 +507,100 @@
             "format": "int32"
           }
         }
+      },
+      "SuggestionRequest": {
+        "required": [
+          "feature",
+          "otherFeature",
+          "kind",
+          "message",
+          "page"
+        ],
+        "type": "object",
+        "properties": {
+          "feature": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "otherFeature": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "page": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SuggestionResponse": {
+        "required": [
+          "id",
+          "createdAt",
+          "feature",
+          "otherFeature",
+          "kind",
+          "message",
+          "page"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "otherFeature": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "page": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       }
     }
   },
   "tags": [
     {
       "name": "Market data"
+    },
+    {
+      "name": "Suggestions"
     }
   ]
 }

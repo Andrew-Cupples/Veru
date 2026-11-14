@@ -62,7 +62,7 @@ export const ANALYTICS_COLUMNS: readonly ColumnDef<AnalyticsColumnKey>[] = [
   { key: 'clock', label: 'clock', kind: 'text', description: 'Time of day, HH:MM (local time)' },
   { key: 'weekday', label: 'weekday', kind: 'text', description: 'Mon to Sun', choices: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
   { key: 'hour', label: 'hour', kind: 'number', description: 'Hour of day, 0 to 23' },
-  { key: 'duration', label: 'duration', kind: 'number', description: 'Seconds: time on page, API latency, slow frame' },
+  { key: 'duration', label: 'duration', kind: 'number', description: 'Seconds: time on page, slow frame' },
   { key: 'value', label: 'value', kind: 'number', description: 'Scroll depth %, characters copied...' },
   { key: 'seq', label: 'event #', kind: 'number', description: 'Order the event happened in' },
 ];

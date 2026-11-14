@@ -2,7 +2,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Two backends sit behind one origin in development: the market data API and the Prompt Ledger API.
+// Two backends sit behind one origin in development: the market data API (market data and suggestions) and the Prompt Ledger API.
 // More specific prefixes must come first; Vite matches proxy keys in order.
 const marketApi = process.env.MARKET_API ?? 'http://localhost:5080';
 const ledgerApi = process.env.LEDGER_API ?? 'http://localhost:5180';
@@ -14,6 +14,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api/market': marketApi,
+      '/api/suggestions': marketApi,
       '/api': ledgerApi,
     },
   },

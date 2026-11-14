@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
-import { marketApi } from '../api/client';
 import { pageLabel } from './rows';
 import { beginVisit, getInput, getPage, save, setInput, setPage, track } from './tracker';
 
 /*
  * Automatic tracking, installed once at start-up: every button, link, tab and toggle used (by its visible
- * name), settings changed, shortcuts, copies, page views with time spent and scroll depth, API calls with
- * latency, slow frames, errors, and the device and browser the app runs in.
+ * name), settings changed, shortcuts, copies, page views with time spent and scroll depth, load timings,
+ * slow frames, and the device and browser the app runs in.
  *
  * All listeners are passive and do a few property reads; nothing waits on them.
  * Text fields are recorded as "edited", never with what was typed.
@@ -114,32 +113,6 @@ function observePaints() {
   }
 }
 
-/** Times every market API call: which endpoint, the symbol, status code and latency. */
-function instrumentApi() {
-  const started = new WeakMap<Request, number>();
-  const describe = (request: Request) => {
-    const path = new URL(request.url, location.origin).pathname.split('/').filter(Boolean);
-    // /api/market/options or /api/market/{symbol}/bars
-    return path.length >= 4 ? { target: path[3]!, subject: decodeURIComponent(path[2]!) } : { target: path[2] ?? 'unknown', subject: '' };
-  };
-  const latency = (request: Request) => {
-    const t = started.get(request);
-    return t === undefined ? null : Math.round(performance.now() - t) / 1000;
-  };
-  marketApi.use({
-    onRequest({ request }) {
-      started.set(request, performance.now());
-    },
-    onResponse({ request, response }) {
-      track('api', { ...describe(request), detail: String(response.status), duration: latency(request), input: '' });
-    },
-    onError({ request, error }) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      track('api', { ...describe(request), detail: 'network error', duration: latency(request), input: '' });
-    },
-  });
-}
-
 let installed = false;
 
 /** Starts automatic tracking. Safe to call more than once. */
@@ -154,7 +127,6 @@ export function installAnalytics() {
   if (document.readyState === 'complete') setTimeout(recordLoadTiming, 0);
   else addEventListener('load', () => setTimeout(recordLoadTiming, 0), { once: true });
   observePaints();
-  instrumentApi();
 
   const opts = { capture: true, passive: true } as const;
 
@@ -218,16 +190,6 @@ export function installAnalytics() {
 
   // How much was copied, never what.
   addEventListener('copy', () => track('copy', { target: 'selection', value: String(getSelection() ?? '').length }), opts);
-
-  addEventListener('error', (e) => {
-    if (!(e instanceof ErrorEvent)) return;
-    const file = e.filename ? e.filename.split('/').pop() : '';
-    track('error', { target: e.message || 'Error', detail: file ? `${file}:${e.lineno}` : 'script', input: '' });
-  });
-  addEventListener('unhandledrejection', (e) => {
-    const reason = e.reason instanceof Error ? e.reason.message : String(e.reason);
-    track('error', { target: reason || 'Unhandled rejection', detail: 'promise', input: '' });
-  });
 
   let visibleSince = performance.now();
   document.addEventListener('visibilitychange', () => {

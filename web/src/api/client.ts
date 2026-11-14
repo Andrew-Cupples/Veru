@@ -17,11 +17,14 @@ export const marketApi = createClient<paths>({ baseUrl: '' });
 /** A failed API call, carrying the server's ProblemDetails message when there is one. */
 export class ApiError extends Error {
   readonly status: number;
+  /** The ProblemDetails body, when the server sent one (validation errors are in its `errors`). */
+  readonly problem: unknown;
 
   constructor(status: number, problem: unknown) {
     super(describe(status, problem));
     this.name = 'ApiError';
     this.status = status;
+    this.problem = problem;
   }
 }
 

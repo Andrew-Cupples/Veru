@@ -113,3 +113,97 @@
   font-size: var(--text-xs);
   color: var(--ink-muted);
 }
+
+/* ---------- Suggestion box ---------- */
+
+.suggestions {
+  padding: 14px 18px 16px;
+}
+
+.suggestionsTitle {
+  margin: 0 0 10px;
+  font-size: var(--text-md);
+}
+
+.suggestionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.suggestionField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(100%, 180px);
+}
+
+.suggestionMessage {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.suggestionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.suggestionHint,
+.suggestionStatus {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.suggestionStatus:not(:empty) {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.recent {
+  margin-top: 12px;
+  font-size: var(--text-sm);
+}
+
+.recent summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+}
+
+.recent ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.recent li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.recentMeta {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}

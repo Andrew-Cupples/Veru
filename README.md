@@ -48,3 +48,7 @@ or post) on each intraday bar, plus the instrument's descriptive fields. The def
 15-minute bars over the last month. Errors come back as RFC 9457 problem details: 400 for invalid parameters
 (including interval/range combinations Yahoo can't serve), 404 for an unknown symbol, 502 when Yahoo fails.
 Identical queries are cached for 60 seconds (`MarketData:CacheDuration`).
+
+`POST /api/suggestions` saves a suggestion from the box on the Analytics page (feature, type, message; validated, 400 on
+missing fields) and `GET /api/suggestions?limit=50` lists the latest. They're stored in SQLite at
+`backend/src/Veru.Api/data/suggestions.db` (created on first use; set `Suggestions:DatabasePath` to move it).

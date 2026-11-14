@@ -76,16 +76,10 @@ export const ANALYTICS_TEMPLATES: readonly Report[] = [
   template('input', 'Mouse vs keyboard', 'How controls are used, per page', 'bar', { x: 'page', color: 'input' }, [is('event', 'click')], {
     barMode: 'stack',
   }),
-  template('symbols', 'Symbols queried', 'Market API calls per symbol', 'bar', { x: 'subject', color: 'detail' }, [is('event', 'api'), is('target', 'bars')], {
+  template('symbols', 'Symbols queried', 'Symbols loaded, by interval and range', 'bar', { x: 'subject', color: 'detail' }, [is('event', 'query')], {
     barMode: 'stack',
     xOrder: 'value',
     xTitle: 'Symbol',
-  }),
-  template('latency', 'API latency', 'Seconds per market API call, by status', 'scatter', { x: 'time', series: [newSeries('duration')], color: 'detail', aggregate: 'none' }, [is('event', 'api')], {
-    yTitle: 'Seconds',
-    hover: 'closest',
-    spikes: false,
-    markerSize: 8,
   }),
   template('jank', 'Slow frames', 'Moments the UI was blocked for 50ms or more', 'scatter', { x: 'time', series: [newSeries('duration')], color: 'page', aggregate: 'none' }, [is('event', 'long_task')], {
     yTitle: 'Seconds blocked',
@@ -96,9 +90,6 @@ export const ANALYTICS_TEMPLATES: readonly Report[] = [
     barMode: 'stack',
     xOrder: 'value',
     xTitle: 'Setting',
-  }),
-  template('errors', 'Errors', 'Script errors and failed promises per day', 'bar', { x: 'date', color: 'target' }, [is('event', 'error')], {
-    barMode: 'stack',
   }),
   template('environment', 'Devices and browsers', 'Browser, screen, language and preferences seen', 'bar', { x: 'detail', color: 'target' }, [is('event', 'env')], {
     barMode: 'stack',

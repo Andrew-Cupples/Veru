@@ -76,7 +76,7 @@ export const FIELDS: readonly FieldDef[] = [
   { key: 'input', label: 'Input method', kind: 'category', description: 'mouse, keyboard, touch or pen', datasets: A },
   { key: 'visit', label: 'Visit', kind: 'category', description: 'Which visit (page load) the event was in', datasets: A },
   { key: 'count', label: 'Events', kind: 'number', description: '1 per event, so Sum counts them', datasets: A },
-  { key: 'duration', label: 'Duration (s)', kind: 'number', description: 'Time on page, API latency, slow-frame length', unit: 'seconds', datasets: A },
+  { key: 'duration', label: 'Duration (s)', kind: 'number', description: 'Time on page, slow-frame length', unit: 'seconds', datasets: A },
   { key: 'value', label: 'Value', kind: 'number', description: 'Scroll depth %, characters copied, reports compared...', datasets: A },
 ];
 
