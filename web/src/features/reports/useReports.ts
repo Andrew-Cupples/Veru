@@ -30,6 +30,7 @@ export function useReports() {
       return next;
     });
 
+  /** Opening a report always shows it in the editor, leaving the compare view. */
   const open = (id: string, keepNotice = false) => {
     saveActiveId(id);
     if (!keepNotice) setNotice(null);
@@ -37,11 +38,25 @@ export function useReports() {
       (prev) => {
         const p = new URLSearchParams(prev);
         p.set('report', id);
+        p.delete('view');
         return p;
       },
       { replace: false },
     );
   };
+
+  // The compare view lives in the URL too (?view=compare), so Back returns to the editor.
+  const comparing = params.get('view') === 'compare';
+  const setComparing = (on: boolean) =>
+    setParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (on) p.set('view', 'compare');
+        else p.delete('view');
+        return p;
+      },
+      { replace: false },
+    );
 
   const update = (change: (r: Report) => Report) => {
     if (active.template) {
@@ -81,5 +96,18 @@ export function useReports() {
     open(report.id);
   };
 
-  return { mine, active, open, update, create, duplicate, remove, undoDelete, notice, dismissNotice: () => setNotice(null) };
+  return {
+    mine,
+    active,
+    open,
+    update,
+    create,
+    duplicate,
+    remove,
+    undoDelete,
+    notice,
+    dismissNotice: () => setNotice(null),
+    comparing,
+    setComparing,
+  };
 }

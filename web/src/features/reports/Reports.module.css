@@ -80,10 +80,169 @@
   color: var(--ink);
 }
 
-.libraryItem[aria-current='true'] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+/* The open report's background and border come from .libraryHighlight, which glides between items. */
+.libraryItem[aria-current='true'],
+.libraryItem[aria-current='true']:hover {
+  background: none;
   color: var(--accent);
+}
+
+.libraryItem {
+  position: relative;
+  z-index: 1;
+  /* Room on the right for the compare button that sits over the row. */
+  padding-right: 44px;
+}
+
+.libraryRow {
+  position: relative;
+}
+
+/* Fixed slot so text lines up whether a row shows a thumbnail or (while loading) the chart-type icon. */
+.thumbSlot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 34px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+}
+
+.thumbnail {
+  display: block;
+}
+
+/* Add to / remove from the comparison: a real button-sized target (32px), always visible. */
+.compareToggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--motion-exit, 120ms), background var(--motion-exit, 120ms), border-color var(--motion-exit, 120ms);
+}
+
+.compareToggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.compareToggle[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.compareToggle[aria-pressed='true']:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------- Compare ---------- */
+
+.workspaceCompare {
+  grid-template-columns: 232px minmax(0, 1fr);
+}
+
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.compareHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.compareHead h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+}
+
+.compareHead h2:focus {
+  outline: none;
+}
+
+.compareGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.compareCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.compareCardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.compareCardHead > :first-child {
+  flex: 1;
+}
+
+.compareCardHead h3 {
+  margin: 0;
+}
+
+.compareBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compareBox button {
+  width: 100%;
+}
+
+.compareHint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  line-height: 1.35;
+}
+
+.libraryHighlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+.libraryHighlight[data-ready] {
+  transition:
+    transform var(--motion-enter) var(--motion-ease-in),
+    height var(--motion-enter) var(--motion-ease-in);
 }
 
 .libraryText {
@@ -242,12 +401,13 @@
   position: sticky;
   top: 12px;
   max-height: calc(100vh - var(--header-height) - 24px);
-  overflow: auto;
+  overflow-x: hidden; /* keeps a sliding panel from adding a sideways scrollbar */
+  overflow-y: auto;
 }
 
 .tabs {
   display: flex;
-  position: sticky;
+  position: sticky; /* also the containing block for .tabIndicator */
   top: 0;
   z-index: 1;
   background: var(--surface);
@@ -258,7 +418,6 @@
   flex: 1;
   height: 40px;
   border: none;
-  border-bottom: 2px solid transparent;
   background: none;
   font-size: var(--text-sm);
   font-weight: 600;
@@ -272,7 +431,35 @@
 
 .tab[aria-selected='true'] {
   color: var(--accent);
-  border-bottom-color: var(--accent);
+}
+
+/* One underline that glides under the selected tab. */
+.tabIndicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  transition: transform var(--motion-enter) var(--motion-ease-in);
+  pointer-events: none;
+}
+
+/* The new panel drifts in a short way from the side of the tab that was picked (timings: styles/motion.css). */
+.panelFromRight {
+  animation: panel-drift-in var(--motion-enter) var(--motion-ease-in);
+  --drift: var(--motion-distance);
+}
+
+.panelFromLeft {
+  animation: panel-drift-in var(--motion-enter) var(--motion-ease-in);
+  --drift: calc(-1 * var(--motion-distance));
+}
+
+@keyframes panel-drift-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
 }
 
 .panelBody {
@@ -531,8 +718,15 @@
   height: 16px;
 }
 
+@media (max-width: 1100px) {
+  .compareGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
-  .workspace {
+  .workspace,
+  .workspaceCompare {
     grid-template-columns: 200px minmax(0, 1fr);
   }
   .inspector {
@@ -546,7 +740,8 @@
   .page {
     padding: 16px 16px 40px;
   }
-  .workspace {
+  .workspace,
+  .workspaceCompare {
     grid-template-columns: minmax(0, 1fr);
   }
   .library {

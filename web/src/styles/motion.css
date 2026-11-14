@@ -1,0 +1,89 @@
+/*
+ * Page-to-page movement, driven by MotionProvider.slide(). A "shared axis" drift: the old page eases a
+ * short way towards the exit side and fades out; the new one drifts in from the other side and fades in.
+ * Nothing sweeps across the screen, but the direction of travel still reads.
+ *
+ * Names are only set while a slide runs (html[data-slide]), so nothing else is ever pulled out of a snapshot.
+ * The header stays put (root has no animation); only <main> moves, and the nav underline glides to the new tab.
+ *
+ * Timings come from MotionProvider (the Personalize slider writes --motion-enter; exit and panel derive from it).
+ */
+
+:root {
+  --motion-enter: 260ms;
+  --motion-exit: 120ms;
+  --motion-distance: 24px;
+  /* Decelerate: arrives at speed and settles slowly, so the end of a move is never abrupt. */
+  --motion-ease-in: cubic-bezier(0.05, 0.7, 0.1, 1);
+  /* Accelerate: the outgoing page gets out of the way without lingering. */
+  --motion-ease-out: cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+
+:root[data-slide] #main {
+  view-transition-name: page;
+}
+
+/* During a page slide the frame (header) stays put; only <main> moves. */
+:root[data-slide]::view-transition-old(root),
+:root[data-slide]::view-transition-new(root) {
+  animation: none;
+}
+
+/*
+ * Theme and light/dark changes: the whole screen crossfades from the old colors to the new.
+ * A touch longer than a page move, since every pixel changes at once; plain easing, as nothing travels.
+ */
+:root[data-fade]::view-transition-old(root),
+:root[data-fade]::view-transition-new(root) {
+  animation-duration: calc(var(--motion-enter) * 1.4);
+  animation-timing-function: ease-in-out;
+}
+
+::view-transition-group(nav-indicator) {
+  animation-duration: var(--motion-enter);
+  animation-timing-function: var(--motion-ease-in);
+}
+
+::view-transition-group(page) {
+  animation-duration: var(--motion-enter);
+}
+
+::view-transition-old(page),
+::view-transition-new(page) {
+  /* Fade each page on its own rather than blending the two together. */
+  mix-blend-mode: normal;
+  animation-fill-mode: both;
+}
+
+::view-transition-old(page) {
+  animation: veru-drift-out var(--motion-exit) var(--motion-ease-out) both;
+  --drift: calc(-1 * var(--motion-distance));
+}
+
+/* The new page starts as the old one is mostly gone, so the two barely overlap. */
+::view-transition-new(page) {
+  animation: veru-drift-in var(--motion-enter) var(--motion-ease-in) calc(var(--motion-exit) * 0.6) both;
+  --drift: var(--motion-distance);
+}
+
+:root[data-slide='back']::view-transition-old(page) {
+  --drift: var(--motion-distance);
+}
+
+:root[data-slide='back']::view-transition-new(page) {
+  --drift: calc(-1 * var(--motion-distance));
+}
+
+@keyframes veru-drift-out {
+  to {
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
+}
+
+@keyframes veru-drift-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
+}

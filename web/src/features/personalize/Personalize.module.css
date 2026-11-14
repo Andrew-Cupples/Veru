@@ -537,3 +537,167 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Motion ---------- */
+
+.motionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 32px;
+}
+
+.timing {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.timingHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.timingValue {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.resetButton {
+  margin-left: auto;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.timingScale {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--ink-muted);
+}
+
+.sample {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+  max-width: 560px;
+}
+
+.sampleBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sampleLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* Clips the drift, and stacks the leaving page over the arriving one. */
+.sampleStage {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+}
+
+.samplePage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.sampleTitle {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.sampleRows {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.sampleRows span {
+  height: 9px;
+  border-radius: 4px;
+  background: var(--rule-strong);
+}
+
+.sampleBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 1;
+}
+
+.sampleBars span {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+}
+
+/* Same drift, easing and timing as page changes (styles/motion.css). */
+.sampleOut {
+  z-index: 1;
+  animation: sample-drift-out var(--motion-exit) var(--motion-ease-out) both;
+}
+
+.sampleOut[data-dir='forward'],
+.sampleIn[data-dir='back'] {
+  --drift: calc(-1 * var(--motion-distance));
+}
+
+.sampleOut[data-dir='back'],
+.sampleIn[data-dir='forward'] {
+  --drift: var(--motion-distance);
+}
+
+.sampleIn {
+  animation: sample-drift-in var(--motion-enter) var(--motion-ease-in) calc(var(--motion-exit) * 0.6) both;
+}
+
+@keyframes sample-drift-out {
+  to {
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
+}
+
+@keyframes sample-drift-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
+}

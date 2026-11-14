@@ -36,6 +36,7 @@
 }
 
 .link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
@@ -43,8 +44,20 @@
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: 500;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+}
+
+/* The active tab's underline. Named during a page slide, so it glides from the old tab to the new one. */
+.indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+}
+
+:global(:root[data-slide]) .indicator {
+  view-transition-name: nav-indicator;
 }
 
 .link:hover {
@@ -78,7 +91,6 @@
 
 .active {
   color: var(--ink);
-  border-bottom-color: var(--accent);
 }
 
 .main {

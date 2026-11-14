@@ -8,6 +8,7 @@ import { PersonalizePage } from './features/personalize/PersonalizePage';
 import { ReportsPage } from './features/reports/ReportsPage';
 import { LEDGER_PRESET, ThemeProvider, useTheme } from './theme/ThemeProvider';
 import { useDocumentTitle } from './a11y/useDocumentTitle';
+import { MotionProvider } from './motion/MotionProvider';
 
 export function App() {
   const [queryClient] = useState(
@@ -16,19 +17,22 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppLayout />}>
-              <Route index element={<RawDataPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="ledger" element={<ThemedLedger queryClient={queryClient} />} />
-              <Route path="personalize" element={<PersonalizePage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </QueryClientProvider>
+      <MotionProvider>
+        <QueryClientProvider client={queryClient}>
+          {/* Synchronous route updates, so a page slide can snapshot the new page as soon as navigate() returns. */}
+          <BrowserRouter useTransitions={false}>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route index element={<RawDataPage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="ledger" element={<ThemedLedger queryClient={queryClient} />} />
+                <Route path="personalize" element={<PersonalizePage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </MotionProvider>
     </ThemeProvider>
   );
 }
