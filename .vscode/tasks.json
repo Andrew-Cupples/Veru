@@ -7,6 +7,46 @@
   },
   "tasks": [
     {
+      "label": "app: build api",
+      "detail": "Build the market data API (also regenerates web/openapi/openapi.json)",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/backend/src/Veru.Api", "--nologo", "-v", "q"],
+      "group": "build",
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "app: web",
+      "detail": "Vite dev server for the app on http://localhost:5173",
+      "type": "npm",
+      "script": "web",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^x{0}$" },
+        "background": { "activeBegins": true, "beginsPattern": "VITE", "endsPattern": "Local:" }
+      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "app" }
+    },
+    {
+      "label": "app: start (no debugger)",
+      "detail": "Market API + Ledger API + UI, then open http://localhost:5173",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "app" }
+    },
+    {
+      "label": "app: test",
+      "detail": "Backend tests plus web typecheck, lint and tests",
+      "type": "npm",
+      "script": "test",
+      "group": "test",
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "ledger: build api",
       "detail": "Build the Prompt Ledger API (also regenerates openapi.json)",
       "type": "process",

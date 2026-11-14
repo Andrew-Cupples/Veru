@@ -1,0 +1,445 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Veru.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/market/options": {
+      "get": {
+        "tags": [
+          "Market data"
+        ],
+        "summary": "Supported intervals and ranges, with how far back each interval reaches",
+        "operationId": "GetQueryOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryOptionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/market/{symbol}/bars": {
+      "get": {
+        "tags": [
+          "Market data"
+        ],
+        "summary": "Raw OHLCV bars for a symbol (defaults: 15-minute bars over the last month)",
+        "operationId": "GetPriceBars",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "extendedHours",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "InstrumentDto": {
+        "required": [
+          "symbol",
+          "name",
+          "exchange",
+          "instrumentType",
+          "currency",
+          "timeZone",
+          "firstTradeDate",
+          "regularMarketPrice",
+          "regularMarketTime",
+          "previousClose",
+          "dayHigh",
+          "dayLow",
+          "dayVolume",
+          "fiftyTwoWeekHigh",
+          "fiftyTwoWeekLow"
+        ],
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exchange": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instrumentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "firstTradeDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "regularMarketPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "regularMarketTime": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "previousClose": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "dayHigh": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "dayLow": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "dayVolume": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "fiftyTwoWeekHigh": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "fiftyTwoWeekLow": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "IntervalOptionDto": {
+        "required": [
+          "code",
+          "label",
+          "intraday",
+          "maxLookbackDays"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "intraday": {
+            "type": "boolean"
+          },
+          "maxLookbackDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "MarketSession": {
+        "enum": [
+          "pre",
+          "regular",
+          "post",
+          null
+        ]
+      },
+      "PriceBarDto": {
+        "required": [
+          "time",
+          "session",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "session": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MarketSession"
+              }
+            ]
+          },
+          "open": {
+            "type": "number",
+            "format": "double"
+          },
+          "high": {
+            "type": "number",
+            "format": "double"
+          },
+          "low": {
+            "type": "number",
+            "format": "double"
+          },
+          "close": {
+            "type": "number",
+            "format": "double"
+          },
+          "volume": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PriceQueryDto": {
+        "required": [
+          "symbol",
+          "interval",
+          "range",
+          "extendedHours"
+        ],
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "range": {
+            "type": "string"
+          },
+          "extendedHours": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PriceSeriesResponse": {
+        "required": [
+          "instrument",
+          "query",
+          "granularity",
+          "bars"
+        ],
+        "type": "object",
+        "properties": {
+          "instrument": {
+            "$ref": "#/components/schemas/InstrumentDto"
+          },
+          "query": {
+            "$ref": "#/components/schemas/PriceQueryDto"
+          },
+          "granularity": {
+            "type": "string"
+          },
+          "bars": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceBarDto"
+            }
+          }
+        }
+      },
+      "QueryOptionsResponse": {
+        "required": [
+          "intervals",
+          "ranges",
+          "defaultInterval",
+          "defaultRange"
+        ],
+        "type": "object",
+        "properties": {
+          "intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntervalOptionDto"
+            }
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RangeOptionDto"
+            }
+          },
+          "defaultInterval": {
+            "type": "string"
+          },
+          "defaultRange": {
+            "type": "string"
+          }
+        }
+      },
+      "RangeOptionDto": {
+        "required": [
+          "code",
+          "label",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "days": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Market data"
+    }
+  ]
+}

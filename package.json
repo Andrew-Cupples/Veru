@@ -3,9 +3,14 @@
   "private": true,
   "description": "Workspace root. Each UI package lives in its own workspace so the main app can import them.",
   "workspaces": [
+    "web",
     "tools/prompt-ledger/web"
   ],
   "scripts": {
+    "dev": "concurrently --kill-others --names market,ledger,web --prefix-colors green,blue,magenta \"npm:api\" \"npm:ledger:api\" \"npm:web -- --open\"",
+    "api": "dotnet run --project backend/src/Veru.Api --launch-profile http",
+    "web": "npm run dev -w @veru/web",
+    "test": "dotnet test backend && npm run check -w @veru/web",
     "ledger": "concurrently --kill-others --names api,web --prefix-colors blue,magenta \"npm:ledger:api\" \"npm:ledger:dev -- --open\"",
     "ledger:api": "dotnet run --project tools/prompt-ledger/src/PromptLedger.Api --launch-profile http",
     "ledger:dev": "npm run dev -w @veru/prompt-ledger",
