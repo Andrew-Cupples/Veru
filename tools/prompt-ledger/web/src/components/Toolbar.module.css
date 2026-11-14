@@ -105,7 +105,7 @@
 }
 
 .iconButton:hover,
-.textButton:hover:not(:disabled) {
+.textButton:hover:not([aria-disabled='true']) {
   background: var(--pl-surface-sunken);
   color: var(--pl-ink);
 }
@@ -115,7 +115,7 @@
   background: var(--pl-accent-soft);
 }
 
-.textButton:disabled {
+.textButton[aria-disabled='true'] {
   cursor: progress;
   opacity: 0.75;
 }

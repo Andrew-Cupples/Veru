@@ -7,7 +7,7 @@ import styles from './Toolbar.module.css';
 interface ToolbarProps {
   prompts: readonly PromptDetail[];
   scheme: ColorScheme;
-  onSchemeChange: (scheme: ColorScheme) => void;
+  onSchemeChange?: (scheme: ColorScheme) => void;
   showOutline: boolean;
   showAnnotations: boolean;
   onToggleOutline: () => void;
@@ -62,14 +62,26 @@ export function Toolbar(props: ToolbarProps) {
         <button
           type="button"
           className={styles.textButton}
-          onClick={() => sync.mutate()}
-          disabled={sync.isPending}
+          onClick={() => {
+            if (!sync.isPending) sync.mutate();
+          }}
+          // aria-disabled, not disabled: a disabled button drops keyboard focus mid-press.
+          aria-disabled={sync.isPending}
           title={sync.isError ? sync.error.message : 'Import new prompts and replies from Claude Code transcripts'}
         >
           <Icon name="sync" size={15} className={sync.isPending ? styles.spin : undefined} />
           {sync.isPending ? 'Syncing…' : sync.isError ? 'Sync failed' : syncLabel}
         </button>
-        <IconButton icon={schemeInfo.icon} label={`${schemeInfo.label} (click to change)`} onClick={() => onSchemeChange(schemeInfo.next)} />
+        <span className="pl-sr-only" role="status">
+          {sync.isPending ? 'Syncing transcripts' : sync.isError ? `Sync failed: ${sync.error.message}` : sync.isSuccess ? syncLabel : ''}
+        </span>
+        {onSchemeChange && (
+          <IconButton
+            icon={schemeInfo.icon}
+            label={`${schemeInfo.label} (click to change)`}
+            onClick={() => onSchemeChange(schemeInfo.next)}
+          />
+        )}
         <IconButton icon="notes" label="Toggle annotations" pressed={showAnnotations} onClick={onToggleAnnotations} />
       </div>
     </header>

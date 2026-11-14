@@ -87,6 +87,17 @@ export function Outline({ groups, activeId, onSelect, filterRef }: OutlineProps)
                     <span className={styles.label}>{headline(prompt.text, 70) || '(empty prompt)'}</span>
                     {prompt.starred && <Icon name="star" size={12} filled className={styles.star} />}
                     {!prompt.includeInLog && <Icon name="hidden" size={12} className={styles.excluded} />}
+                    {/* The status dot and icons are visual only; say the same thing to screen readers. */}
+                    <span className="pl-sr-only">
+                      {[
+                        prompt.humanReviewed ? 'reviewed' : 'not reviewed',
+                        prompt.starred && 'starred',
+                        !prompt.includeInLog && 'excluded from log',
+                      ]
+                        .filter(Boolean)
+                        .map((s) => `, ${s}`)
+                        .join('')}
+                    </span>
                   </button>
                 </li>
               ))}

@@ -132,7 +132,14 @@
 .hint {
   margin: 6px 0 0;
   font-size: var(--text-xs);
-  color: var(--ink-faint);
+  color: var(--ink-muted);
+}
+
+.fieldError {
+  margin: 6px 0 0;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--danger);
 }
 
 .runButton,
@@ -151,10 +158,11 @@
   color: var(--accent-ink);
 }
 
-.runButton:hover:not(:disabled) {
+.runButton:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--accent-hover);
 }
 
+.runButton[aria-disabled='true'],
 .runButton:disabled,
 .secondaryButton:disabled {
   opacity: 0.5;
@@ -225,6 +233,16 @@
   padding-top: 3px;
 }
 
+.conditionWrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+.conditionWrap .fieldError {
+  margin: 2px 0 0 42px;
+}
+
 .condition {
   display: grid;
   grid-template-columns: 36px 120px 96px minmax(0, 180px) 30px;
@@ -272,6 +290,16 @@
   font-size: var(--text-xs);
   color: var(--ink-muted);
   cursor: pointer;
+}
+
+/* Inside clipped containers the focus ring goes on the inside. */
+.segmented button:focus-visible,
+.sortButton:focus-visible {
+  outline-offset: -3px;
+}
+
+.tableWrap:focus-visible {
+  outline-offset: 2px;
 }
 
 .segmented button + button {
@@ -395,7 +423,7 @@
 
 .facts dt {
   font-size: var(--text-xs);
-  color: var(--ink-faint);
+  color: var(--ink-muted);
 }
 
 .facts dd {
@@ -413,6 +441,14 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
+}
+
+.alert code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-sunken);
 }
 
 .notice {
@@ -568,4 +604,23 @@
   .price {
     text-align: left;
   }
+}
+
+/* ---------- Shared bits added with Reports ---------- */
+
+.bulk {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.bulkDivider {
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+}
+
+.linkButton[aria-disabled='true'] {
+  color: var(--ink-faint);
+  cursor: default;
+  text-decoration: none;
 }

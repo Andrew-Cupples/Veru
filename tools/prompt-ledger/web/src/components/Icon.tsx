@@ -20,7 +20,9 @@ const paths = {
 
 export type IconName = keyof typeof paths;
 
+/** Decorative by default (hidden from screen readers). Pass aria-label to make it a labelled image. */
 export function Icon({ name, size = 16, filled = false, ...rest }: { name: IconName; size?: number; filled?: boolean } & SVGProps<SVGSVGElement>) {
+  const labelled = rest['aria-label'] != null;
   return (
     <svg
       width={size}
@@ -31,7 +33,8 @@ export function Icon({ name, size = 16, filled = false, ...rest }: { name: IconN
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
-      aria-hidden="true"
+      aria-hidden={labelled ? undefined : true}
+      role={labelled ? 'img' : undefined}
       {...rest}
     >
       <path d={paths[name]} />

@@ -1,0 +1,176 @@
+import { radioGroup } from '../../a11y/radioGroup';
+import { MultiSelectChips } from '../data-query/SourceControls';
+import { FIELDS, FIELD_BY_KEY, NUMERIC_FIELDS, type FieldKey } from './fields';
+import { AGGREGATES, CHARTS, CHART_BY_TYPE, newSeries, type Aggregate, type ChartType, type Mark, type Report, type Series, type SlotRule } from './model';
+import { ColorField, SelectField, Segmented } from './controls';
+import { ChartIcon } from './ChartIcon';
+import styles from './Reports.module.css';
+
+interface Props {
+  report: Report;
+  onChange: (update: (r: Report) => Report) => void;
+  onChartChange: (chart: ChartType) => void;
+  /** Colours the series get automatically, in order. */
+  autoColors: readonly string[];
+}
+
+const fieldOptions = (rule: SlotRule) =>
+  FIELDS.filter((f) => rule.kinds.includes(f.kind)).map((f) => ({ value: f.key as string, label: f.label }));
+
+export function DataPanel({ report, onChange, onChartChange, autoColors }: Props) {
+  const def = CHART_BY_TYPE[report.chart];
+  const { enc } = report;
+  const setEnc = (patch: Partial<Report['enc']>) => onChange((r) => ({ ...r, enc: { ...r.enc, ...patch } }));
+  const types = CHARTS.map((c) => c.type);
+  const { onKeyDown, radioProps } = radioGroup(types, report.chart, onChartChange);
+  const mixable = report.chart === 'line' || report.chart === 'area' || report.chart === 'bar';
+
+  const setSeriesFields = (fields: FieldKey[]) => {
+    const existing = new Map(enc.series.map((s) => [s.field, s]));
+    setEnc({ series: fields.map((f) => existing.get(f) ?? newSeries(f)) });
+  };
+  const patchSeries = (field: FieldKey, patch: Partial<Series>) =>
+    setEnc({ series: enc.series.map((s) => (s.field === field ? { ...s, ...patch } : s)) });
+
+  const slotSelect = (slot: 'x' | 'y' | 'z') => {
+    const rule = def.slots[slot];
+    if (!rule) return null;
+    return (
+      <SelectField
+        key={slot}
+        label={rule.label}
+        value={enc[slot]}
+        options={fieldOptions(rule)}
+        onChange={(v) => setEnc({ [slot]: v as FieldKey })}
+      />
+    );
+  };
+
+  const optionalSelect = (slot: 'color' | 'size') => {
+    const rule = def.slots[slot];
+    if (!rule) return null;
+    return (
+      <SelectField
+        key={slot}
+        label={rule.label}
+        value={enc[slot] ?? ''}
+        options={[{ value: '', label: '(none)' }, ...fieldOptions(rule)]}
+        onChange={(v) => setEnc({ [slot]: (v || null) as FieldKey | null })}
+      />
+    );
+  };
+
+  return (
+    <div className={styles.panelBody}>
+      <section aria-labelledby="chart-type-label">
+        <h3 id="chart-type-label" className={styles.sectionTitle}>
+          Chart type
+        </h3>
+        <div role="radiogroup" aria-labelledby="chart-type-label" onKeyDown={onKeyDown} className={styles.typeGroups}>
+          {([2, 3] as const).map((dims) => (
+            <div key={dims} className={styles.typeGroup}>
+              <span className={styles.typeGroupLabel} aria-hidden="true">
+                {dims}D
+              </span>
+              <div className={styles.typeGrid}>
+                {CHARTS.filter((c) => c.dims === dims).map((c) => (
+                  <button key={c.type} type="button" className={styles.typeButton} title={c.description} {...radioProps(c.type)}>
+                    <ChartIcon type={c.type} />
+                    <span>{c.label}</span>
+                    <span className="sr-only">, {dims}D. {c.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="encoding-label">
+        <h3 id="encoding-label" className={styles.sectionTitle}>
+          Fields
+        </h3>
+        <div className={styles.controlGrid}>
+          {slotSelect('x')}
+          {slotSelect('y')}
+          {slotSelect('z')}
+          {optionalSelect('color')}
+          {optionalSelect('size')}
+          {def.aggregate && (
+            <SelectField<Aggregate>
+              label={def.slots.series ? 'Combine bars per X' : 'Combine bars per cell'}
+              value={enc.aggregate}
+              options={AGGREGATES.map((a) => ({ value: a.key, label: a.label, disabled: def.aggregate?.required && a.key === 'none' }))}
+              onChange={(aggregate) => setEnc({ aggregate })}
+            />
+          )}
+        </div>
+
+        {def.slots.series && (
+          <div className={styles.control}>
+            <span className={styles.subTitle} id="series-label">
+              {def.slots.series.label}
+            </span>
+            <MultiSelectChips
+              label={def.slots.series.label}
+              options={NUMERIC_FIELDS}
+              selected={enc.series.map((s) => s.field)}
+              onChange={setSeriesFields}
+            />
+            {!enc.series.length && (
+              <p className={styles.inlineError} role="alert">
+                Pick at least one value to plot.
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
+      {def.slots.series && enc.series.length > 0 && report.chart !== 'box' && (
+        <section aria-labelledby="series-detail-label">
+          <h3 id="series-detail-label" className={styles.sectionTitle}>
+            Series
+          </h3>
+          <ul className={styles.seriesList}>
+            {enc.series.map((s, i) => (
+              <li key={s.field} className={styles.seriesItem} role="group" aria-label={FIELD_BY_KEY[s.field].label}>
+                <span className={styles.seriesName}>{FIELD_BY_KEY[s.field].label}</span>
+                {mixable && (
+                  <SelectField<Mark | ''>
+                    label="Draw as"
+                    value={s.mark ?? ''}
+                    options={[
+                      { value: '', label: `Chart default (${def.mark})` },
+                      { value: 'line', label: 'Line' },
+                      { value: 'area', label: 'Area' },
+                      { value: 'bar', label: 'Bar' },
+                      { value: 'scatter', label: 'Dots' },
+                    ]}
+                    onChange={(m) => patchSeries(s.field, { mark: m || null })}
+                  />
+                )}
+                <Segmented
+                  label="Axis"
+                  value={s.axis}
+                  options={[
+                    { value: 'left', label: 'Left' },
+                    { value: 'right', label: 'Right' },
+                  ]}
+                  onChange={(axis) => patchSeries(s.field, { axis })}
+                />
+                {!(enc.color && FIELD_BY_KEY[enc.color].kind === 'category') && (
+                  <ColorField
+                    label="Colour"
+                    value={s.color}
+                    auto={autoColors[i % Math.max(1, autoColors.length)] ?? '#888888'}
+                    onChange={(color) => patchSeries(s.field, { color })}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}

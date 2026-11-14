@@ -1,5 +1,5 @@
 import type { Instrument } from '../../api/client';
-import styles from './RawData.module.css';
+import styles from './DataQuery.module.css';
 
 const number = (value: number | null | undefined, digits = 2) =>
   value == null ? '—' : value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });

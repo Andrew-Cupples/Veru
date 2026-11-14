@@ -1,52 +1,33 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
-import { ApiError } from '../../api/client';
-import { usePriceSeries, useQueryOptions } from '../../api/hooks';
-import { InstrumentSummary } from './InstrumentSummary';
+import { useDocumentTitle } from '../../a11y/useDocumentTitle';
+import { InstrumentSummary } from '../data-query/InstrumentSummary';
+import { ApiAlert, GranularityNotice, SeriesGate, loadStatus } from '../data-query/SourceControls';
+import { COLUMNS, runQuery, toCsv, toSql, type ColumnKey, type QuerySpec } from '../data-query/query';
+import { useDataSource } from '../data-query/useDataSource';
+import { downloadText } from '../../lib/download';
 import { QueryEditor } from './QueryEditor';
 import { MAX_RENDERED_ROWS, ResultsTable } from './ResultsTable';
-import { DEFAULT_SPEC, runQuery, toCsv, toRows, toSql, type ColumnKey, type QuerySpec, type Source } from './query';
-import styles from './RawData.module.css';
-
-const DEFAULT_INTERVAL = '15m';
-const DEFAULT_RANGE = '1mo';
-const QUICK_PICKS = ['TSLA', 'AAPL', 'NVDA', 'SPY', '^GSPC', 'BTC-USD'];
-
-/** The data source lives in the URL so a query can be bookmarked, shared and survives a refresh. */
-function readSource(params: URLSearchParams): Source {
-  return {
-    symbol: params.get('symbol') ?? '',
-    interval: params.get('interval') ?? DEFAULT_INTERVAL,
-    range: params.get('range') ?? DEFAULT_RANGE,
-    extendedHours: params.get('ext') === '1',
-  };
-}
+import { loadSpec, saveSpec } from './specMemory';
+import styles from '../data-query/DataQuery.module.css';
 
 export function RawDataPage() {
-  const [params, setParams] = useSearchParams();
-  const source = readSource(params);
-  const [draft, setDraft] = useState<Source>(source);
-  const [spec, setSpec] = useState<QuerySpec>(DEFAULT_SPEC);
+  const ds = useDataSource();
+  const { source, draft, series, rows } = ds;
+  const [spec, setSpecState] = useState<QuerySpec>(loadSpec);
   const [copied, setCopied] = useState(false);
 
-  const options = useQueryOptions();
-  const series = usePriceSeries(source.symbol ? source : null);
+  useDocumentTitle(source.symbol ? `${source.symbol} · Raw data` : 'Raw data');
 
-  const rows = useMemo(() => toRows(series.data?.bars ?? []), [series.data]);
   const result = useMemo(() => runQuery(rows, spec), [rows, spec]);
-  const columns: ColumnKey[] = spec.select.length ? spec.select : DEFAULT_SPEC.select;
+  const columns: ColumnKey[] = spec.select;
   const sql = toSql(source.symbol ? source : draft, spec);
 
-  const run = (next: Source = draft) => {
-    const symbol = next.symbol.trim().toUpperCase();
-    setDraft({ ...next, symbol });
-    setParams({
-      symbol,
-      interval: next.interval,
-      range: next.range,
-      ...(next.extendedHours ? { ext: '1' } : {}),
+  const setSpec = (next: QuerySpec | ((s: QuerySpec) => QuerySpec)) =>
+    setSpecState((current) => {
+      const value = typeof next === 'function' ? next(current) : next;
+      saveSpec(value);
+      return value;
     });
-  };
 
   const sortBy = (column: ColumnKey) =>
     setSpec((s) => ({
@@ -54,16 +35,8 @@ export function RawDataPage() {
       orderBy: { column, direction: s.orderBy?.column === column && s.orderBy.direction === 'asc' ? 'desc' : 'asc' },
     }));
 
-  const downloadCsv = () => {
-    const blob = new Blob([toCsv(result.rows, columns)], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), {
-      href: url,
-      download: `${source.symbol}_${source.interval}_${source.range}.csv`,
-    });
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const downloadCsv = () =>
+    downloadText(toCsv(result.rows, columns), `${source.symbol}_${source.interval}_${source.range}.csv`, 'text/csv');
 
   const copySql = async () => {
     try {
@@ -75,90 +48,87 @@ export function RawDataPage() {
     }
   };
 
-  const granularityChanged = series.data && series.data.granularity !== series.data.query.interval;
+  // One polite message for screen readers describing what the page is doing now.
+  const status = copied ? 'SQL copied' : loadStatus(ds, `${result.rows.length.toLocaleString()} rows for ${source.symbol}`);
 
   return (
     <div className={styles.page}>
       <div className={styles.heading}>
         <h1>Raw data</h1>
-        <p>Query the bars the market data API returns, before any aggregation.</p>
+        <p>
+          Query the bars the market data API returns, before any aggregation. Press <kbd>/</kbd> to jump to the symbol.
+        </p>
       </div>
 
+      <p className="sr-only" role="status">
+        {status}
+      </p>
+
+      <ApiAlert ds={ds} />
+
       <div className={styles.card}>
-        <QueryEditor
-          draft={draft}
-          onDraftChange={setDraft}
-          onRun={() => run()}
-          running={series.isFetching}
-          options={options.data}
-          spec={spec}
-          onSpecChange={setSpec}
-        />
+        <QueryEditor ds={ds} spec={spec} onSpecChange={setSpec} />
         <div className={styles.sql}>
           <pre aria-label="Equivalent SQL">{sql}</pre>
-          <button type="button" className={styles.linkButton} onClick={copySql}>
+          <button type="button" className={styles.linkButton} onClick={copySql} aria-label="Copy SQL">
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>
 
-      {options.isError && (
-        <div className={styles.alert} role="alert">
-          {options.error.message}
-        </div>
-      )}
+      <SeriesGate ds={ds}>
+        {(data) => (
+          <div className={styles.results} data-stale={series.isFetching || series.isPlaceholderData} aria-busy={series.isFetching}>
+            <InstrumentSummary instrument={data.instrument} />
+            <GranularityNotice data={data} />
 
-      {!source.symbol ? (
-        <div className={styles.empty}>
-          <p>Enter a symbol and press Run, or start with one of these:</p>
-          <div className={styles.chips}>
-            {QUICK_PICKS.map((symbol) => (
-              <button key={symbol} type="button" className={styles.chip} onClick={() => run({ ...draft, symbol })}>
-                {symbol}
+            <div className={styles.resultBar}>
+              <span>
+                <strong>{result.rows.length.toLocaleString()}</strong> rows
+                {result.rows.length !== rows.length && <> of {rows.length.toLocaleString()} bars</>}
+                {result.matched !== result.rows.length && <> · {result.matched.toLocaleString()} matched before LIMIT</>}
+                {result.rows.length > MAX_RENDERED_ROWS && <> · showing the first {MAX_RENDERED_ROWS.toLocaleString()}</>}
+              </span>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={downloadCsv}
+                disabled={!result.rows.length || !columns.length}
+              >
+                Download CSV
               </button>
-            ))}
-          </div>
-        </div>
-      ) : series.isError ? (
-        <div className={styles.alert} role="alert">
-          <strong>{series.error instanceof ApiError && series.error.status === 404 ? 'Symbol not found. ' : 'Query failed. '}</strong>
-          {series.error.message}
-          <button type="button" className={styles.linkButton} onClick={() => series.refetch()}>
-            Try again
-          </button>
-        </div>
-      ) : !series.data ? (
-        <div className={styles.loading} aria-busy="true">Loading {source.symbol}…</div>
-      ) : (
-        <div className={styles.results} data-stale={series.isFetching || series.isPlaceholderData}>
-          <InstrumentSummary instrument={series.data.instrument} />
-
-          {granularityChanged && (
-            <div className={styles.notice}>
-              Yahoo returned <strong>{series.data.granularity}</strong> bars instead of {series.data.query.interval} for this
-              range.
             </div>
-          )}
 
-          <div className={styles.resultBar}>
-            <span>
-              <strong>{result.rows.length.toLocaleString()}</strong> rows
-              {result.rows.length !== rows.length && <> of {rows.length.toLocaleString()} bars</>}
-              {result.matched !== result.rows.length && <> · {result.matched.toLocaleString()} matched before LIMIT</>}
-              {result.rows.length > MAX_RENDERED_ROWS && <> · showing the first {MAX_RENDERED_ROWS.toLocaleString()}</>}
-            </span>
-            <button type="button" className={styles.secondaryButton} onClick={downloadCsv} disabled={!result.rows.length}>
-              Download CSV
-            </button>
+            {!columns.length ? (
+              <div className={styles.empty}>
+                No columns selected.{' '}
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={() => setSpec((s) => ({ ...s, select: COLUMNS.map((c) => c.key) }))}
+                >
+                  Select all columns
+                </button>
+              </div>
+            ) : result.rows.length ? (
+              <ResultsTable
+                rows={result.rows}
+                columns={columns}
+                orderBy={spec.orderBy}
+                onSort={sortBy}
+                caption={`${source.symbol} ${source.interval} bars over ${source.range}`}
+              />
+            ) : (
+              <div className={styles.empty}>
+                No bars match these conditions.{' '}
+                <button type="button" className={styles.linkButton} onClick={() => setSpec((s) => ({ ...s, where: [] }))}>
+                  Clear conditions
+                </button>
+              </div>
+            )}
           </div>
-
-          {result.rows.length ? (
-            <ResultsTable rows={result.rows} columns={columns} orderBy={spec.orderBy} onSort={sortBy} />
-          ) : (
-            <div className={styles.empty}>No bars match these conditions.</div>
-          )}
-        </div>
-      )}
+        )}
+      </SeriesGate>
     </div>
   );
 }

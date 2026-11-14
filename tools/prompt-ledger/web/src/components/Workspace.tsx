@@ -13,7 +13,8 @@ import styles from './Workspace.module.css';
 
 interface WorkspaceProps {
   scheme: ColorScheme;
-  onSchemeChange: (scheme: ColorScheme) => void;
+  /** Omitted when the host app controls the scheme; the toolbar then hides its scheme button. */
+  onSchemeChange?: (scheme: ColorScheme) => void;
 }
 
 /** Matches the container query in Workspace.module.css. */
@@ -31,7 +32,7 @@ export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
   const idsKey = prompts.map((p) => p.id).join(',');
   const ids = useMemo(() => (idsKey ? idsKey.split(',').map(Number) : []), [idsKey]);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
   const filterRef = useRef<HTMLInputElement>(null);
   const { activeId, scrollToId } = useScrollSpy(scrollRef, ids);
 
@@ -154,9 +155,10 @@ export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
           <Outline groups={groups} activeId={currentId} onSelect={(id) => goTo(id)} filterRef={filterRef} />
         )}
 
-        <main ref={scrollRef} className={styles.documentScroll} tabIndex={0} aria-label="Prompt document">
+        {/* A region, not <main>: the host app already provides the page's main landmark. */}
+        <section ref={scrollRef} className={styles.documentScroll} tabIndex={0} aria-label="Prompt document">
           {body ?? <DocumentView groups={groups} selectedId={currentId} onSelect={(id) => goTo(id)} />}
-        </main>
+        </section>
 
         {showAnnotations && current && (
           <AnnotationPanel

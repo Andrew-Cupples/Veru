@@ -14,7 +14,8 @@ npm install
 npm run dev        # market API :5080, ledger API :5180, UI :5173 (opens the browser)
 ```
 
-Open **http://localhost:5173**. **Raw data** is the home page. The **Prompt ledger** is in the header.
+Open **http://localhost:5173**. **Raw data** is the home page. **Reports** builds 2D and 3D charts (Plotly) from the same
+data source, with templates and a style editor. The **Prompt ledger** is in the header.
 
 Run the pieces on their own with `npm run api` (market data API) or `npm run web` (UI only).
 In VS Code, pick **Veru (Market API + Ledger API + UI)** in Run and Debug and press F5.
