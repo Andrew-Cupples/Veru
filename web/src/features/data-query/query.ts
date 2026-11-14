@@ -1,4 +1,6 @@
 import type { MarketSession, PriceBar } from '../../api/client';
+import type { AnalyticsRow } from '../../analytics/rows';
+import { EVENT_KINDS } from '../../analytics/tracker';
 
 /*
  * A small, SQL-shaped query model over raw bars: SELECT columns, WHERE conditions (AND-ed),
@@ -21,11 +23,13 @@ export interface Row {
 export type ColumnKey = keyof Row;
 export type ColumnKind = 'text' | 'number' | 'session';
 
-export interface ColumnDef {
-  key: ColumnKey;
+export interface ColumnDef<K extends string = ColumnKey> {
+  key: K;
   label: string;
   kind: ColumnKind;
   description: string;
+  /** Fixed set of values, offered as a list instead of free text. */
+  choices?: readonly string[];
 }
 
 export const COLUMNS: readonly ColumnDef[] = [
@@ -42,6 +46,32 @@ export const COLUMNS: readonly ColumnDef[] = [
 
 export const COLUMN_BY_KEY = Object.fromEntries(COLUMNS.map((c) => [c.key, c])) as Record<ColumnKey, ColumnDef>;
 
+/** Columns WHERE can test on Analytics: the usage event fields (local time). */
+export type AnalyticsColumnKey = keyof AnalyticsRow;
+export type ConditionColumn = ColumnKey | AnalyticsColumnKey;
+
+export const ANALYTICS_COLUMNS: readonly ColumnDef<AnalyticsColumnKey>[] = [
+  { key: 'event', label: 'event', kind: 'text', description: 'Kind of event', choices: EVENT_KINDS },
+  { key: 'page', label: 'page', kind: 'text', description: 'Page the event happened on', choices: ['Raw data', 'Reports', 'Analytics', 'Prompt ledger', 'Personalize'] },
+  { key: 'target', label: 'control', kind: 'text', description: 'The button, control or action used' },
+  { key: 'detail', label: 'detail', kind: 'text', description: 'Chart type, export format, status code...' },
+  { key: 'subject', label: 'subject', kind: 'text', description: 'Report, symbol, theme or state' },
+  { key: 'input', label: 'input', kind: 'text', description: 'mouse, keyboard, touch or pen', choices: ['mouse', 'keyboard', 'touch', 'pen'] },
+  { key: 'visit', label: 'visit', kind: 'text', description: 'Visit number, like #3' },
+  { key: 'date', label: 'date', kind: 'text', description: 'Day, YYYY-MM-DD (local time)' },
+  { key: 'clock', label: 'clock', kind: 'text', description: 'Time of day, HH:MM (local time)' },
+  { key: 'weekday', label: 'weekday', kind: 'text', description: 'Mon to Sun', choices: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { key: 'hour', label: 'hour', kind: 'number', description: 'Hour of day, 0 to 23' },
+  { key: 'duration', label: 'duration', kind: 'number', description: 'Seconds: time on page, API latency, slow frame' },
+  { key: 'value', label: 'value', kind: 'number', description: 'Scroll depth %, characters copied...' },
+  { key: 'seq', label: 'event #', kind: 'number', description: 'Order the event happened in' },
+];
+
+/** Every column a condition may name, for validating and applying conditions on either dataset. */
+export const CONDITION_COLUMN_BY_KEY = Object.fromEntries(
+  [...COLUMNS, ...ANALYTICS_COLUMNS].map((c) => [c.key, c]),
+) as Record<ConditionColumn, ColumnDef<ConditionColumn>>;
+
 export type Operator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains';
 
 export const OPERATORS_BY_KIND: Record<ColumnKind, readonly Operator[]> = {
@@ -52,7 +82,7 @@ export const OPERATORS_BY_KIND: Record<ColumnKind, readonly Operator[]> = {
 
 export interface Condition {
   id: string;
-  column: ColumnKey;
+  column: ConditionColumn;
   operator: Operator;
   value: string;
 }
@@ -103,7 +133,7 @@ export function isConditionList(v: unknown): v is Condition[] {
         typeof c.operator === 'string' &&
         OPERATORS.has(c.operator) &&
         typeof c.column === 'string' &&
-        c.column in COLUMN_BY_KEY,
+        c.column in CONDITION_COLUMN_BY_KEY,
     )
   );
 }
@@ -112,13 +142,13 @@ export function isConditionList(v: unknown): v is Condition[] {
 export function isActive(condition: Condition): boolean {
   const value = condition.value.trim();
   if (!value) return false;
-  return COLUMN_BY_KEY[condition.column].kind !== 'number' || Number.isFinite(Number(value));
+  return CONDITION_COLUMN_BY_KEY[condition.column].kind !== 'number' || Number.isFinite(Number(value));
 }
 
-function matches(row: Row, condition: Condition): boolean {
-  const cell = row[condition.column];
+function matches(row: object, condition: Condition): boolean {
+  const cell = (row as Record<string, unknown>)[condition.column] as string | number | null | undefined;
   const raw = condition.value.trim();
-  const kind = COLUMN_BY_KEY[condition.column].kind;
+  const kind = CONDITION_COLUMN_BY_KEY[condition.column].kind;
 
   if (condition.operator === 'contains') {
     return String(cell ?? '').toLowerCase().includes(raw.toLowerCase());
@@ -157,7 +187,7 @@ export interface QueryResult {
 }
 
 /** Applies just the WHERE conditions (AND-ed), keeping row order. Works on any row that extends {@link Row}. */
-export function filterRows<T extends Row>(rows: readonly T[], where: readonly Condition[]): T[] {
+export function filterRows<T extends object>(rows: readonly T[], where: readonly Condition[]): T[] {
   const conditions = where.filter(isActive);
   return conditions.length ? rows.filter((r) => conditions.every((c) => matches(r, c))) : [...rows];
 }
@@ -199,7 +229,7 @@ export function fromSql(source: Source): string {
 /** WHERE / AND lines for the conditions that apply; empty when none do. */
 export function whereSql(where: readonly Condition[]): string[] {
   return where.filter(isActive).map((c, i) => {
-    const kind = COLUMN_BY_KEY[c.column].kind;
+    const kind = CONDITION_COLUMN_BY_KEY[c.column].kind;
     const value = c.value.trim();
     const literal = kind === 'number' ? value : `'${value.replaceAll("'", "''")}'`;
     const predicate = c.operator === 'contains'

@@ -1,7 +1,7 @@
 import { radioGroup } from '../../a11y/radioGroup';
 import { MultiSelectChips } from '../data-query/SourceControls';
-import { FIELDS, FIELD_BY_KEY, NUMERIC_FIELDS, type FieldKey } from './fields';
-import { AGGREGATES, CHARTS, CHART_BY_TYPE, newSeries, type Aggregate, type ChartType, type Mark, type Report, type Series, type SlotRule } from './model';
+import { FIELD_BY_KEY, fieldsFor, type FieldDef, type FieldKey } from './fields';
+import { AGGREGATES, CHART_BY_TYPE, chartsFor, newSeries, type Aggregate, type ChartType, type Mark, type Report, type Series, type SlotRule } from './model';
 import { ColorField, SelectField, Segmented } from './controls';
 import { ChartIcon } from './ChartIcon';
 import styles from './Reports.module.css';
@@ -14,20 +14,23 @@ interface Props {
   autoColors: readonly string[];
 }
 
-const fieldOptions = (rule: SlotRule) =>
-  FIELDS.filter((f) => rule.kinds.includes(f.kind)).map((f) => ({ value: f.key as string, label: f.label }));
+const fieldOptions = (fields: readonly FieldDef[], rule: SlotRule) =>
+  fields.filter((f) => rule.kinds.includes(f.kind)).map((f) => ({ value: f.key as string, label: f.label }));
 
 export function DataPanel({ report, onChange, onChartChange, autoColors }: Props) {
   const def = CHART_BY_TYPE[report.chart];
   const { enc } = report;
   const setEnc = (patch: Partial<Report['enc']>) => onChange((r) => ({ ...r, enc: { ...r.enc, ...patch } }));
-  const types = CHARTS.map((c) => c.type);
+  const charts = chartsFor(report.dataset);
+  const fields = fieldsFor(report.dataset ?? 'market');
+  const numericFields = fields.filter((f) => f.kind === 'number');
+  const types = charts.map((c) => c.type);
   const { onKeyDown, radioProps } = radioGroup(types, report.chart, onChartChange);
   const mixable = report.chart === 'line' || report.chart === 'area' || report.chart === 'bar';
 
-  const setSeriesFields = (fields: FieldKey[]) => {
+  const setSeriesFields = (picked: FieldKey[]) => {
     const existing = new Map(enc.series.map((s) => [s.field, s]));
-    setEnc({ series: fields.map((f) => existing.get(f) ?? newSeries(f)) });
+    setEnc({ series: picked.map((f) => existing.get(f) ?? newSeries(f)) });
   };
   const patchSeries = (field: FieldKey, patch: Partial<Series>) =>
     setEnc({ series: enc.series.map((s) => (s.field === field ? { ...s, ...patch } : s)) });
@@ -40,7 +43,7 @@ export function DataPanel({ report, onChange, onChartChange, autoColors }: Props
         key={slot}
         label={rule.label}
         value={enc[slot]}
-        options={fieldOptions(rule)}
+        options={fieldOptions(fields, rule)}
         onChange={(v) => setEnc({ [slot]: v as FieldKey })}
       />
     );
@@ -54,7 +57,7 @@ export function DataPanel({ report, onChange, onChartChange, autoColors }: Props
         key={slot}
         label={rule.label}
         value={enc[slot] ?? ''}
-        options={[{ value: '', label: '(none)' }, ...fieldOptions(rule)]}
+        options={[{ value: '', label: '(none)' }, ...fieldOptions(fields, rule)]}
         onChange={(v) => setEnc({ [slot]: (v || null) as FieldKey | null })}
       />
     );
@@ -73,8 +76,8 @@ export function DataPanel({ report, onChange, onChartChange, autoColors }: Props
                 {dims}D
               </span>
               <div className={styles.typeGrid}>
-                {CHARTS.filter((c) => c.dims === dims).map((c) => (
-                  <button key={c.type} type="button" className={styles.typeButton} title={c.description} {...radioProps(c.type)}>
+                {charts.filter((c) => c.dims === dims).map((c) => (
+                  <button key={c.type} type="button" className={styles.typeButton} title={c.description} data-track={c.label} {...radioProps(c.type)}>
                     <ChartIcon type={c.type} />
                     <span>{c.label}</span>
                     <span className="sr-only">, {dims}D. {c.description}</span>
@@ -98,7 +101,7 @@ export function DataPanel({ report, onChange, onChartChange, autoColors }: Props
           {optionalSelect('size')}
           {def.aggregate && (
             <SelectField<Aggregate>
-              label={def.slots.series ? 'Combine bars per X' : 'Combine bars per cell'}
+              label={`Combine ${report.dataset === 'analytics' ? 'events' : 'bars'} per ${def.slots.series ? 'X' : 'cell'}`}
               value={enc.aggregate}
               options={AGGREGATES.map((a) => ({ value: a.key, label: a.label, disabled: def.aggregate?.required && a.key === 'none' }))}
               onChange={(aggregate) => setEnc({ aggregate })}
@@ -113,7 +116,7 @@ export function DataPanel({ report, onChange, onChartChange, autoColors }: Props
             </span>
             <MultiSelectChips
               label={def.slots.series.label}
-              options={NUMERIC_FIELDS}
+              options={numericFields}
               selected={enc.series.map((s) => s.field)}
               onChange={setSeriesFields}
             />

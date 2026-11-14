@@ -1,3 +1,4 @@
+import { track } from '../analytics/tracker';
 import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { ThemePreset } from '@veru/prompt-ledger';
 import { themeVariables, type Theme } from './theme';
@@ -87,10 +88,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((id: string) => {
     setThemeId(id);
+    track('setting', { target: 'theme', detail: id });
     writeStored(STORAGE.theme, id);
   }, []);
   const setSchemePreference = useCallback((value: SchemePreference) => {
     setSchemePref(value);
+    track('setting', { target: 'light/dark', detail: value });
     writeStored(STORAGE.scheme, value);
   }, []);
   const setCustomColors = useCallback((colors: CustomTheme) => {

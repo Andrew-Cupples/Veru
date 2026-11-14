@@ -1,7 +1,7 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
 import type { IntervalOption, PriceSeries, RangeOption } from '../../api/client';
 import { ApiError } from '../../api/client';
-import { COLUMNS, COLUMN_BY_KEY, OPERATORS_BY_KIND, isActive, type ColumnKey, type Condition, type Operator } from './query';
+import { COLUMNS, CONDITION_COLUMN_BY_KEY, OPERATORS_BY_KIND, isActive, type ColumnDef, type Condition, type ConditionColumn, type Operator } from './query';
 import type { DataSource } from './useDataSource';
 import styles from './DataQuery.module.css';
 
@@ -202,7 +202,18 @@ export function MultiSelectChips<K extends string>({
 }
 
 /** WHERE: AND-ed conditions over the raw bar columns. New conditions take focus; removing one returns it to Add. */
-export function ConditionsEditor({ where, onChange }: { where: readonly Condition[]; onChange: (where: Condition[]) => void }) {
+export function ConditionsEditor({
+  where,
+  onChange,
+  columns = COLUMNS,
+  defaultColumn = 'volume',
+}: {
+  where: readonly Condition[];
+  onChange: (where: Condition[]) => void;
+  /** The columns a condition can test; the raw bar columns unless given. */
+  columns?: readonly ColumnDef<ConditionColumn>[];
+  defaultColumn?: ConditionColumn;
+}) {
   const [newConditionId, setNewConditionId] = useState<string | null>(null);
   const addConditionRef = useRef<HTMLButtonElement>(null);
 
@@ -211,7 +222,8 @@ export function ConditionsEditor({ where, onChange }: { where: readonly Conditio
   const add = () => {
     const id = crypto.randomUUID();
     setNewConditionId(id);
-    onChange([...where, { id, column: 'volume', operator: '>', value: '' }]);
+    const kind = CONDITION_COLUMN_BY_KEY[defaultColumn].kind;
+    onChange([...where, { id, column: defaultColumn, operator: OPERATORS_BY_KIND[kind][0]!, value: '' }]);
   };
 
   const remove = (id: string) => {
@@ -226,6 +238,7 @@ export function ConditionsEditor({ where, onChange }: { where: readonly Conditio
           key={c.id}
           condition={c}
           index={i}
+          columns={columns}
           autoFocus={c.id === newConditionId}
           onChange={(patch) => update(c.id, patch)}
           onRemove={() => remove(c.id)}
@@ -249,29 +262,36 @@ export function ConditionsEditor({ where, onChange }: { where: readonly Conditio
 function ConditionRow({
   condition,
   index,
+  columns,
   autoFocus,
   onChange,
   onRemove,
 }: {
   condition: Condition;
   index: number;
+  columns: readonly ColumnDef<ConditionColumn>[];
   autoFocus: boolean;
   onChange: (patch: Partial<Condition>) => void;
   onRemove: () => void;
 }) {
   const errorId = useId();
   const n = index + 1;
-  const kind = COLUMN_BY_KEY[condition.column].kind;
+  const kind = CONDITION_COLUMN_BY_KEY[condition.column].kind;
   const operators = OPERATORS_BY_KIND[kind];
   const invalid = condition.value.trim() !== '' && !isActive(condition);
+  const choicesOf = (column: ConditionColumn) =>
+    CONDITION_COLUMN_BY_KEY[column].choices ?? (CONDITION_COLUMN_BY_KEY[column].kind === 'session' ? SESSIONS : null);
+  const choices = choicesOf(condition.column);
 
-  const changeColumn = (column: ColumnKey) => {
-    const nextKind = COLUMN_BY_KEY[column].kind;
+  const changeColumn = (column: ConditionColumn) => {
+    const nextKind = CONDITION_COLUMN_BY_KEY[column].kind;
     const nextOps = OPERATORS_BY_KIND[nextKind];
+    const nextChoices = choicesOf(column);
+    const keep = nextKind === kind && (!nextChoices || nextChoices.includes(condition.value));
     onChange({
       column,
       operator: nextOps.includes(condition.operator) ? condition.operator : nextOps[0]!,
-      value: nextKind === kind ? condition.value : '',
+      value: keep ? condition.value : '',
     });
   };
 
@@ -283,9 +303,9 @@ function ConditionRow({
           className={styles.input}
           aria-label={`Condition ${n} column`}
           value={condition.column}
-          onChange={(e) => changeColumn(e.target.value as ColumnKey)}
+          onChange={(e) => changeColumn(e.target.value as ConditionColumn)}
         >
-          {COLUMNS.map((c) => (
+          {columns.map((c) => (
             <option key={c.key} value={c.key}>{c.label}</option>
           ))}
         </select>
@@ -299,7 +319,7 @@ function ConditionRow({
             <option key={op} value={op}>{op === '!=' ? '≠' : op === '>=' ? '≥' : op === '<=' ? '≤' : op}</option>
           ))}
         </select>
-        {kind === 'session' ? (
+        {choices && condition.operator !== 'contains' ? (
           <select
             className={styles.input}
             aria-label={`Condition ${n} value`}
@@ -308,7 +328,7 @@ function ConditionRow({
             onChange={(e) => onChange({ value: e.target.value })}
           >
             <option value="">choose…</option>
-            {SESSIONS.map((s) => (
+            {choices.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
@@ -331,14 +351,14 @@ function ConditionRow({
       </div>
       {invalid && (
         <p id={errorId} className={styles.fieldError}>
-          {COLUMN_BY_KEY[condition.column].label} needs a number, like {placeholderFor(condition.column)}.
+          {CONDITION_COLUMN_BY_KEY[condition.column].label} needs a number, like {placeholderFor(condition.column)}.
         </p>
       )}
     </div>
   );
 }
 
-function placeholderFor(column: ColumnKey): string {
+function placeholderFor(column: ConditionColumn): string {
   switch (column) {
     case 'date': return 'YYYY-MM-DD';
     case 'clock': return 'HH:MM';

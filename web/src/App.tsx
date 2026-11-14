@@ -6,6 +6,7 @@ import { AppLayout } from './layout/AppLayout';
 import { RawDataPage } from './features/raw-data/RawDataPage';
 import { PersonalizePage } from './features/personalize/PersonalizePage';
 import { ReportsPage } from './features/reports/ReportsPage';
+import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { LEDGER_PRESET, ThemeProvider, useTheme } from './theme/ThemeProvider';
 import { useDocumentTitle } from './a11y/useDocumentTitle';
 import { MotionProvider } from './motion/MotionProvider';
@@ -25,6 +26,7 @@ export function App() {
               <Route element={<AppLayout />}>
                 <Route index element={<RawDataPage />} />
                 <Route path="reports" element={<ReportsPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="ledger" element={<ThemedLedger queryClient={queryClient} />} />
                 <Route path="personalize" element={<PersonalizePage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

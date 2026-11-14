@@ -246,7 +246,13 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         }
       });
 
-      const categories = [...new Set(shaped.traces.flatMap((t) => t.x.map(String)))].sort((a, b) => compareValues(enc.x, a, b));
+      let categories = [...new Set(shaped.traces.flatMap((t) => t.x.map(String)))].sort((a, b) => compareValues(enc.x, a, b));
+      if (st.xOrder === 'value' && FIELD_BY_KEY[enc.x].kind === 'category') {
+        // Largest first, by the total across every series: "most used" reads left to right.
+        const totals = new Map<string, number>();
+        for (const t of shaped.traces) t.x.forEach((x, i) => totals.set(String(x), (totals.get(String(x)) ?? 0) + (Number.isFinite(t.y[i]) ? t.y[i]! : 0)));
+        categories = [...categories].sort((a, b) => (totals.get(b) ?? 0) - (totals.get(a) ?? 0));
+      }
       layout.xaxis = {
         ...xAxisFor(enc.x, categories),
         rangeslider: { visible: st.rangeSlider, bgcolor: c.surface, bordercolor: c.rule },

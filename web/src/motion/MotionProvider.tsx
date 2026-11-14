@@ -1,3 +1,4 @@
+import { track } from '../analytics/tracker';
 import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { readJson, writeJson } from '../lib/storage';
@@ -75,6 +76,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
   const setPreference = useCallback((value: MotionPreference) => {
     setPref(value);
+    track('setting', { target: 'motion', detail: value });
     writeJson(STORAGE.preference, value);
   }, []);
 
