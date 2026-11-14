@@ -4,6 +4,7 @@ import styles from './AppLayout.module.css';
 const NAV = [
   { to: '/', label: 'Raw data', end: true },
   { to: '/ledger', label: 'Prompt ledger', end: false },
+  { to: '/personalize', label: 'Personalize', end: false },
 ] as const;
 
 export function AppLayout() {
