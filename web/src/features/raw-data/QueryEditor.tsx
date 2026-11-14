@@ -1,4 +1,4 @@
-import { useId, type FormEvent, type ReactNode } from 'react';
+import { useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
 import type { IntervalOption, QueryOptions, RangeOption } from '../../api/client';
 import {
   COLUMNS,
@@ -23,6 +23,8 @@ export function rangeFits(interval: IntervalOption | undefined, range: RangeOpti
 interface Props {
   draft: Source;
   onDraftChange: (draft: Source) => void;
+  /** Interval, range or pre/post changed; the page may re-run right away. */
+  onSourceOptionChange: (draft: Source) => void;
   onRun: () => void;
   running: boolean;
   /** False until interval/range options have loaded from the API. */
@@ -30,18 +32,32 @@ interface Props {
   options: QueryOptions | undefined;
   spec: QuerySpec;
   onSpecChange: (spec: QuerySpec) => void;
+  /** Offered as autocomplete in the symbol box, most recent first. */
+  recentSymbols: readonly string[];
+  symbolRef: RefObject<HTMLInputElement | null>;
 }
 
 /** The query, laid out clause by clause like SQL. FROM fetches from the API; the rest filters what came back. */
-export function QueryEditor({ draft, onDraftChange, onRun, running, ready, options, spec, onSpecChange }: Props) {
+export function QueryEditor(props: Props) {
+  const { draft, onDraftChange, onSourceOptionChange, onRun, running, ready, options, spec, onSpecChange, recentSymbols, symbolRef } = props;
   const ids = useId();
+  const [symbolError, setSymbolError] = useState(false);
+  // The condition just added, so its value box can take focus; and the add button, to return focus after a removal.
+  const [newConditionId, setNewConditionId] = useState<string | null>(null);
+  const addConditionRef = useRef<HTMLButtonElement>(null);
   const intervals = options?.intervals ?? [];
   const ranges = options?.ranges ?? [];
   const selectedInterval = intervals.find((i) => i.code === draft.interval);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (ready && draft.symbol.trim()) onRun();
+    if (!draft.symbol.trim()) {
+      // Say what's missing and put the cursor there, rather than a Run button that silently does nothing.
+      setSymbolError(true);
+      symbolRef.current?.focus();
+      return;
+    }
+    if (ready && !running) onRun();
   };
 
   const changeInterval = (code: string) => {
@@ -51,7 +67,7 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
     const range = current && rangeFits(interval, current)
       ? current.code
       : [...ranges].reverse().find((r) => rangeFits(interval, r))?.code ?? draft.range;
-    onDraftChange({ ...draft, interval: code, range });
+    onSourceOptionChange({ ...draft, interval: code, range });
   };
 
   const toggleColumn = (key: ColumnKey) => {
@@ -65,11 +81,16 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
   const updateCondition = (id: string, patch: Partial<Condition>) =>
     onSpecChange({ ...spec, where: spec.where.map((c) => (c.id === id ? { ...c, ...patch } : c)) });
 
-  const addCondition = () =>
-    onSpecChange({
-      ...spec,
-      where: [...spec.where, { id: crypto.randomUUID(), column: 'volume', operator: '>', value: '' }],
-    });
+  const addCondition = () => {
+    const id = crypto.randomUUID();
+    setNewConditionId(id);
+    onSpecChange({ ...spec, where: [...spec.where, { id, column: 'volume', operator: '>', value: '' }] });
+  };
+
+  const removeCondition = (id: string) => {
+    onSpecChange({ ...spec, where: spec.where.filter((w) => w.id !== id) });
+    addConditionRef.current?.focus();
+  };
 
   return (
     <form className={styles.editor} onSubmit={submit} aria-label="Query">
@@ -90,6 +111,7 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
           <button
             type="button"
             className={styles.linkButton}
+            aria-label="Select all columns"
             onClick={() => onSpecChange({ ...spec, select: COLUMNS.map((c) => c.key) })}
           >
             all
@@ -102,15 +124,28 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
           <label className={styles.field}>
             <span className={styles.fieldLabel}>Symbol</span>
             <input
+              ref={symbolRef}
               className={`${styles.input} ${styles.symbolInput}`}
               value={draft.symbol}
-              onChange={(e) => onDraftChange({ ...draft, symbol: e.target.value.toUpperCase() })}
+              onChange={(e) => {
+                setSymbolError(false);
+                onDraftChange({ ...draft, symbol: e.target.value.toUpperCase() });
+              }}
               placeholder="TSLA"
               maxLength={20}
               spellCheck={false}
               autoComplete="off"
-              aria-describedby={`${ids}-symbol-hint`}
+              list={`${ids}-recent`}
+              aria-keyshortcuts="/"
+              aria-required="true"
+              aria-invalid={symbolError}
+              aria-describedby={symbolError ? `${ids}-symbol-error ${ids}-symbol-hint` : `${ids}-symbol-hint`}
             />
+            <datalist id={`${ids}-recent`}>
+              {recentSymbols.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
           </label>
           <label className={styles.field}>
             <span className={styles.fieldLabel}>Interval</span>
@@ -132,7 +167,7 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
               className={styles.input}
               value={draft.range}
               disabled={!ready}
-              onChange={(e) => onDraftChange({ ...draft, range: e.target.value })}
+              onChange={(e) => onSourceOptionChange({ ...draft, range: e.target.value })}
             >
               {!ready && <option value={draft.range}>loading…</option>}
               {ranges.map((r) => (
@@ -147,16 +182,23 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
               type="checkbox"
               checked={draft.extendedHours}
               disabled={selectedInterval ? !selectedInterval.intraday : false}
-              onChange={(e) => onDraftChange({ ...draft, extendedHours: e.target.checked })}
+              onChange={(e) => onSourceOptionChange({ ...draft, extendedHours: e.target.checked })}
             />
             Pre/post market
           </label>
-          <button type="submit" className={styles.runButton} disabled={!ready || !draft.symbol.trim() || running}>
+          {/* aria-disabled rather than disabled: the button keeps focus while running and stays discoverable. */}
+          <button type="submit" className={styles.runButton} aria-disabled={!ready || running}>
             {running ? 'Running…' : 'Run'}
           </button>
         </div>
+        {symbolError && (
+          <p id={`${ids}-symbol-error`} className={styles.fieldError} role="alert">
+            Enter a symbol to query, like TSLA.
+          </p>
+        )}
         <p id={`${ids}-symbol-hint`} className={styles.hint}>
-          Stocks, ETFs, indexes (^GSPC), crypto (BTC-USD) and currencies (EURUSD=X).
+          Stocks, ETFs, indexes (^GSPC), crypto (BTC-USD) and currencies (EURUSD=X). Interval, range and pre/post
+          changes re-run automatically.
           {selectedInterval?.maxLookbackDays != null &&
             ` Bars of ${selectedInterval.label} reach back ${selectedInterval.maxLookbackDays} days.`}
         </p>
@@ -168,13 +210,15 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, ready, optio
             <ConditionRow
               key={c.id}
               condition={c}
-              first={i === 0}
+              index={i}
+              autoFocus={c.id === newConditionId}
               onChange={(patch) => updateCondition(c.id, patch)}
-              onRemove={() => onSpecChange({ ...spec, where: spec.where.filter((w) => w.id !== c.id) })}
+              onRemove={() => removeCondition(c.id)}
             />
           ))}
-          <button type="button" className={styles.linkButton} onClick={addCondition}>
-            + condition
+          <button ref={addConditionRef} type="button" className={styles.linkButton} onClick={addCondition}>
+            <span aria-hidden="true">+ </span>
+            Add condition
           </button>
         </div>
       </Clause>
@@ -247,15 +291,19 @@ function Clause({ keyword, children }: { keyword: string; children: ReactNode })
 
 function ConditionRow({
   condition,
-  first,
+  index,
+  autoFocus,
   onChange,
   onRemove,
 }: {
   condition: Condition;
-  first: boolean;
+  index: number;
+  autoFocus: boolean;
   onChange: (patch: Partial<Condition>) => void;
   onRemove: () => void;
 }) {
+  const errorId = useId();
+  const n = index + 1;
   const kind = COLUMN_BY_KEY[condition.column].kind;
   const operators = OPERATORS_BY_KIND[kind];
   const invalid = condition.value.trim() !== '' && !isActive(condition);
@@ -271,54 +319,64 @@ function ConditionRow({
   };
 
   return (
-    <div className={styles.condition}>
-      <span className={styles.conjunction}>{first ? '' : 'AND'}</span>
-      <select
-        className={styles.input}
-        aria-label="Column"
-        value={condition.column}
-        onChange={(e) => changeColumn(e.target.value as ColumnKey)}
-      >
-        {COLUMNS.map((c) => (
-          <option key={c.key} value={c.key}>{c.label}</option>
-        ))}
-      </select>
-      <select
-        className={`${styles.input} ${styles.operator}`}
-        aria-label="Operator"
-        value={condition.operator}
-        onChange={(e) => onChange({ operator: e.target.value as Operator })}
-      >
-        {operators.map((op) => (
-          <option key={op} value={op}>{op === '!=' ? '≠' : op === '>=' ? '≥' : op === '<=' ? '≤' : op}</option>
-        ))}
-      </select>
-      {kind === 'session' ? (
+    <div className={styles.conditionWrap} role="group" aria-label={`Condition ${n}`}>
+      <div className={styles.condition}>
+        <span className={styles.conjunction}>{index === 0 ? '' : 'AND'}</span>
         <select
           className={styles.input}
-          aria-label="Value"
-          value={condition.value}
-          onChange={(e) => onChange({ value: e.target.value })}
+          aria-label={`Condition ${n} column`}
+          value={condition.column}
+          onChange={(e) => changeColumn(e.target.value as ColumnKey)}
         >
-          <option value="">choose…</option>
-          {SESSIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
+          {COLUMNS.map((c) => (
+            <option key={c.key} value={c.key}>{c.label}</option>
           ))}
         </select>
-      ) : (
-        <input
-          className={styles.input}
-          aria-label="Value"
-          aria-invalid={invalid}
-          inputMode={kind === 'number' ? 'decimal' : 'text'}
-          placeholder={placeholderFor(condition.column)}
-          value={condition.value}
-          onChange={(e) => onChange({ value: e.target.value })}
-        />
+        <select
+          className={`${styles.input} ${styles.operator}`}
+          aria-label={`Condition ${n} operator`}
+          value={condition.operator}
+          onChange={(e) => onChange({ operator: e.target.value as Operator })}
+        >
+          {operators.map((op) => (
+            <option key={op} value={op}>{op === '!=' ? '≠' : op === '>=' ? '≥' : op === '<=' ? '≤' : op}</option>
+          ))}
+        </select>
+        {kind === 'session' ? (
+          <select
+            className={styles.input}
+            aria-label={`Condition ${n} value`}
+            autoFocus={autoFocus}
+            value={condition.value}
+            onChange={(e) => onChange({ value: e.target.value })}
+          >
+            <option value="">choose…</option>
+            {SESSIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            className={styles.input}
+            aria-label={`Condition ${n} value`}
+            autoFocus={autoFocus}
+            aria-invalid={invalid}
+            aria-describedby={invalid ? errorId : undefined}
+            inputMode={kind === 'number' ? 'decimal' : 'text'}
+            placeholder={placeholderFor(condition.column)}
+            value={condition.value}
+            onChange={(e) => onChange({ value: e.target.value })}
+          />
+        )}
+        <button type="button" className={styles.iconButton} aria-label={`Remove condition ${n}`} onClick={onRemove}>
+          ×
+        </button>
+      </div>
+      {invalid && (
+        <p id={errorId} className={styles.fieldError}>
+          {COLUMN_BY_KEY[condition.column].label} needs a number, like {placeholderFor(condition.column)}.
+        </p>
       )}
-      <button type="button" className={styles.iconButton} aria-label="Remove condition" onClick={onRemove}>
-        ×
-      </button>
     </div>
   );
 }

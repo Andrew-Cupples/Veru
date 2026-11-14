@@ -12,14 +12,21 @@ interface Props {
   columns: readonly ColumnKey[];
   orderBy: QuerySpec['orderBy'];
   onSort: (column: ColumnKey) => void;
+  /** Read by screen readers as the table name. */
+  caption: string;
 }
 
-export function ResultsTable({ rows, columns, orderBy, onSort }: Props) {
+export function ResultsTable({ rows, columns, orderBy, onSort, caption }: Props) {
   const visible = rows.length > MAX_RENDERED_ROWS ? rows.slice(0, MAX_RENDERED_ROWS) : rows;
 
   return (
-    <div className={styles.tableWrap}>
+    // Focusable so the keyboard can scroll it (arrow keys, Page Up/Down) once the table is taller than the box.
+    <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={`${caption} (scrollable)`}>
       <table className={styles.table}>
+        <caption className="sr-only">
+          {caption}
+          {orderBy ? `, sorted by ${orderBy.column} ${orderBy.direction === "asc" ? "ascending" : "descending"}` : ""}
+        </caption>
         <thead>
           <tr>
             {columns.map((key) => {
@@ -32,7 +39,7 @@ export function ResultsTable({ rows, columns, orderBy, onSort }: Props) {
                   className={def.kind === 'number' ? styles.numeric : undefined}
                   aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
                 >
-                  <button type="button" className={styles.sortButton} onClick={() => onSort(key)} title={def.description}>
+                  <button type="button" className={styles.sortButton} onClick={() => onSort(key)} title={def.description} aria-description={def.description}>
                     {def.label}
                     <span className={styles.sortMark} aria-hidden="true">
                       {sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : ''}

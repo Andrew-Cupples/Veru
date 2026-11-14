@@ -14,8 +14,13 @@ export interface PromptLedgerProps {
   apiBaseUrl?: string;
   /** Pass the host app's QueryClient to share caching; otherwise the module creates its own. */
   queryClient?: QueryClient;
-  /** Initial color scheme. The toolbar lets the user switch it afterwards. */
+  /** Initial color scheme. The toolbar lets the user switch it afterwards, unless the host controls it. */
   colorScheme?: ColorScheme;
+  /**
+   * The host app owns light/dark: the module follows `colorScheme` as it changes and hides its own
+   * scheme button, so there is one control for it instead of two that disagree.
+   */
+  hostControlsScheme?: boolean;
   /** Token overrides applied on top of the color scheme (the hook for future color presets). */
   preset?: ThemePreset;
   className?: string;
@@ -26,13 +31,14 @@ export interface PromptLedgerProps {
  * The Prompt Ledger, as a self-contained module. It fills its parent's box (give the parent a height),
  * scopes all of its styles under `.pl-root`, and owns no routing, so it can drop into a host app as is.
  */
-export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'system', preset, className, style }: PromptLedgerProps) {
+export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'system', hostControlsScheme = false, preset, className, style }: PromptLedgerProps) {
   const client = useMemo(() => createLedgerClient(apiBaseUrl), [apiBaseUrl]);
   const [ownQueryClient] = useState(
     // Three retries with backoff (~7s) covers the API still starting when the UI loads first.
     () => new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 3 } } }),
   );
-  const [scheme, setScheme] = useState<ColorScheme>(colorScheme);
+  const [ownScheme, setScheme] = useState<ColorScheme>(colorScheme);
+  const scheme = hostControlsScheme ? colorScheme : ownScheme;
 
   return (
     <QueryClientProvider client={queryClient ?? ownQueryClient}>
@@ -42,7 +48,7 @@ export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'syst
           data-pl-scheme={scheme}
           style={{ height: '100%', ...presetStyle(preset), ...style }}
         >
-          <Workspace scheme={scheme} onSchemeChange={setScheme} />
+          <Workspace scheme={scheme} onSchemeChange={hostControlsScheme ? undefined : setScheme} />
         </div>
       </LedgerApiProvider>
     </QueryClientProvider>

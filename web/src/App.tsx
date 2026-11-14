@@ -6,6 +6,7 @@ import { AppLayout } from './layout/AppLayout';
 import { RawDataPage } from './features/raw-data/RawDataPage';
 import { PersonalizePage } from './features/personalize/PersonalizePage';
 import { LEDGER_PRESET, ThemeProvider, useTheme } from './theme/ThemeProvider';
+import { useDocumentTitle } from './a11y/useDocumentTitle';
 
 export function App() {
   const [queryClient] = useState(
@@ -30,8 +31,19 @@ export function App() {
   );
 }
 
-/** The ledger keeps its own palette under Classic and follows the app's tokens under every other theme. */
+/**
+ * The ledger keeps its own palette under Classic and follows the app's tokens under every other theme.
+ * Light/dark is always the app's (set on Personalize), so there is a single switch for it.
+ */
 function ThemedLedger({ queryClient }: { queryClient: QueryClient }) {
   const { theme, scheme } = useTheme();
-  return <PromptLedger queryClient={queryClient} colorScheme={scheme} preset={theme.skinsLedger ? LEDGER_PRESET : undefined} />;
+  useDocumentTitle('Prompt ledger');
+  return (
+    <PromptLedger
+      queryClient={queryClient}
+      colorScheme={scheme}
+      hostControlsScheme
+      preset={theme.skinsLedger ? LEDGER_PRESET : undefined}
+    />
+  );
 }

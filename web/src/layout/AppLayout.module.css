@@ -51,6 +51,31 @@
   color: var(--ink);
 }
 
+.link:focus-visible {
+  outline-offset: -6px;
+  border-radius: 10px;
+}
+
+/* First Tab stop on every page; hidden until focused. */
+.skipLink {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: none;
+}
+
 .active {
   color: var(--ink);
   border-bottom-color: var(--accent);

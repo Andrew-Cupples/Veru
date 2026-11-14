@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router';
+import { useEffect, useRef } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import styles from './AppLayout.module.css';
 
 const NAV = [
@@ -8,8 +9,23 @@ const NAV = [
 ] as const;
 
 export function AppLayout() {
+  const mainRef = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  const lastPath = useRef(pathname);
+
+  // On navigation, move focus to the new page so keyboard and screen reader users start at its top
+  // instead of staying on the nav link. Not on first load (path unchanged), so the skip link stays the first Tab stop.
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    mainRef.current?.focus({ preventScroll: true });
+  }, [pathname]);
+
   return (
     <div className={styles.shell}>
+      <a className={styles.skipLink} href="#main">
+        Skip to content
+      </a>
       <header className={styles.header}>
         <span className={styles.brand}>
           <span className={styles.mark} aria-hidden="true" />
@@ -28,7 +44,7 @@ export function AppLayout() {
           ))}
         </nav>
       </header>
-      <main className={styles.main}>
+      <main id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
         <Outlet />
       </main>
     </div>

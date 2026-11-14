@@ -3,7 +3,7 @@ import { THEMES } from './themes';
 import { CONTRAST_PAIRS, TOKENS } from './tokens';
 import { contrastRatio, parseHex } from './contrast';
 import { themeToCss } from './theme';
-import { buildCustomTheme, colorsFromTheme, parseCustomTheme } from './custom';
+import { buildCustomTheme, colorsFromTheme, fixReadability, parseCustomTheme, readabilityIssues } from './custom';
 import { leafGreen } from './themes/leafGreen';
 
 describe('custom theme', () => {
@@ -19,6 +19,23 @@ describe('custom theme', () => {
     for (const { name } of TOKENS) expect(theme.schemes.light[name], name).toBeTruthy();
     expect(contrastRatio(theme.schemes.dark['accent-ink'], theme.schemes.dark.accent)).toBeGreaterThan(4.5);
     expect(parseHex(theme.schemes.light.rule)).not.toBeNull();
+  });
+
+  it('flags hard-to-read colors and fixes them in one step', () => {
+    const pale = { ...colors, light: { ...colors.light, text: '#c8d0c8', accent: '#9fe0a0' } };
+    const fields = new Set(readabilityIssues(pale, 'light').map((i) => i.field));
+    expect(fields).toEqual(new Set(['text', 'accent']));
+
+    const fixed = fixReadability(fixReadability(pale, 'light', 'text'), 'light', 'accent');
+    expect(readabilityIssues(fixed, 'light')).toEqual([]);
+    expect(fixed.dark).toBe(pale.dark);
+  });
+
+  it('reports nothing for the built-in themes it was started from', () => {
+    for (const t of THEMES) {
+      expect(readabilityIssues(colorsFromTheme(t), 'light'), t.name).toEqual([]);
+      expect(readabilityIssues(colorsFromTheme(t), 'dark'), t.name).toEqual([]);
+    }
   });
 
   it('ignores bad stored values', () => {
@@ -42,8 +59,7 @@ describe.each(THEMES.map((t) => [t.name, t] as const))('%s', (_name, theme) => {
     for (const { name } of TOKENS) expect(theme.schemes[scheme][name], name).toBeTruthy();
   });
 
-  // Classic keeps the original palette exactly, misses included; the Personalize page lists them.
-  it.skipIf(theme.id === 'classic').each(['light', 'dark'] as const)('meets AA on every checked pair in %s', (scheme) => {
+  it.each(['light', 'dark'] as const)('meets AA on every checked pair in %s', (scheme) => {
     const tokens = theme.schemes[scheme];
     const failures = CONTRAST_PAIRS.flatMap(({ fg, bg, min }) => {
       const ratio = contrastRatio(tokens[fg], tokens[bg]);

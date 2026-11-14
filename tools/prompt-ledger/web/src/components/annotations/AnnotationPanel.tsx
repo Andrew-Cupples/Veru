@@ -181,7 +181,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
       </div>
 
       <footer className={styles.footer}>
-        <span className={styles.saveState} data-dirty={autosave.dirty || saving || undefined}>
+        <span className={styles.saveState} role="status" data-dirty={autosave.dirty || saving || undefined}>
           <span className={styles.saveDot} aria-hidden="true" />
           {status}
         </span>

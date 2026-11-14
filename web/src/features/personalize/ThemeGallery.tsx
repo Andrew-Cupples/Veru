@@ -1,5 +1,6 @@
 import type { Theme } from '../../theme/theme';
 import type { ColorScheme } from '../../theme/tokens';
+import { radioGroup } from '../../a11y/radioGroup';
 import { scopeStyle } from './scope';
 import styles from './Personalize.module.css';
 
@@ -10,20 +11,29 @@ interface Props {
   onPick: (id: string) => void;
 }
 
-/** One card per theme, each a tiny mock of the app painted in that theme's colors. Click to apply. */
+/**
+ * One card per theme, each a tiny mock of the app painted in that theme's colors.
+ * A radio group: Tab lands on the active theme, arrow keys switch theme immediately.
+ */
 export function ThemeGallery({ themes, activeId, scheme, onPick }: Props) {
+  const group = radioGroup(
+    themes.map((t) => t.id),
+    activeId,
+    onPick,
+  );
+
   return (
-    <div className={styles.gallery} role="radiogroup" aria-label="Theme">
+    <div className={styles.gallery} role="radiogroup" aria-label="Theme" onKeyDown={group.onKeyDown}>
       {themes.map((theme) => {
         const active = theme.id === activeId;
         return (
           <button
             key={theme.id}
             type="button"
-            role="radio"
-            aria-checked={active}
             className={styles.themeCard}
-            onClick={() => onPick(theme.id)}
+            aria-label={theme.name}
+            aria-describedby={`theme-${theme.id}-tagline`}
+            {...group.radioProps(theme.id)}
           >
             <div className={styles.mock} style={scopeStyle(theme, scheme)} aria-hidden="true">
               <div className={styles.mockHeader}>
@@ -55,9 +65,15 @@ export function ThemeGallery({ themes, activeId, scheme, onPick }: Props) {
             <div className={styles.themeMeta}>
               <span className={styles.themeName}>
                 <span aria-hidden="true">{theme.emoji}</span> {theme.name}
-                {active && <span className={styles.badge}>Active</span>}
+                {active && (
+                  <span className={styles.badge} aria-hidden="true">
+                    Active
+                  </span>
+                )}
               </span>
-              <span className={styles.themeTagline}>{theme.tagline}</span>
+              <span id={`theme-${theme.id}-tagline`} className={styles.themeTagline}>
+                {theme.tagline}
+              </span>
             </div>
           </button>
         );

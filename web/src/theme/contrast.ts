@@ -33,7 +33,8 @@ export function mixHex(a: string, b: string, amount: number): string {
 
 /** Black or white, whichever reads better on the given background. */
 export function readableInk(bg: string): string {
-  const rgb = parseHex(bg);
-  if (!rgb) return 'currentColor';
-  return luminance(rgb) > 0.4 ? '#111111' : '#ffffff';
+  const dark = contrastRatio('#111111', bg);
+  const light = contrastRatio('#ffffff', bg);
+  if (dark === null || light === null) return 'currentColor';
+  return dark >= light ? '#111111' : '#ffffff';
 }

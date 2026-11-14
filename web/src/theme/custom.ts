@@ -1,6 +1,6 @@
-import { mixHex, readableInk } from './contrast';
+import { contrastRatio, mixHex, readableInk } from './contrast';
 import { defineTheme, type Theme } from './theme';
-import type { ColorScheme } from './tokens';
+import { CONTRAST_PAIRS, type ColorScheme, type ThemeToken } from './tokens';
 
 /**
  * The handful of colors a user picks for their own theme. Every other token is worked out from these,
@@ -59,7 +59,7 @@ export function buildCustomTheme(colors: CustomTheme): Theme {
       'surface-sunken': mixHex(c.background, c.text, dark ? 0.85 : 0.96),
       ink: c.text,
       'ink-muted': mixHex(c.text, c.card, 0.7),
-      'ink-faint': mixHex(c.text, c.card, 0.48),
+      'ink-faint': mixHex(c.text, c.card, 0.56),
       rule: mixHex(c.text, c.card, 0.12),
       'rule-strong': mixHex(c.text, c.card, 0.22),
       accent: c.accent,
@@ -103,4 +103,49 @@ export function parseCustomTheme(json: string | null, fallback: CustomTheme): Cu
   } catch {
     return fallback;
   }
+}
+
+/** Which picked color a derived text token comes from, so a readability problem can name (and fix) it. */
+const FIELD_FOR_TOKEN: Partial<Record<ThemeToken, keyof CustomColors>> = {
+  ink: 'text',
+  'ink-muted': 'text',
+  'ink-faint': 'text',
+  accent: 'accent',
+  'accent-ink': 'accent',
+  keyword: 'secondary',
+  'session-post': 'secondary',
+  'session-regular': 'up',
+  danger: 'down',
+};
+
+export interface ReadabilityIssue {
+  field: keyof CustomColors;
+  where: string;
+  ratio: number;
+  min: number;
+}
+
+/** Text/background pairs in the custom theme that fall below WCAG AA, grouped under the color to change. */
+export function readabilityIssues(colors: CustomTheme, scheme: ColorScheme): ReadabilityIssue[] {
+  const tokens = buildCustomTheme(colors).schemes[scheme];
+  return CONTRAST_PAIRS.flatMap(({ fg, bg, min, where }) => {
+    const field = FIELD_FOR_TOKEN[fg];
+    const ratio = contrastRatio(tokens[fg], tokens[bg]);
+    return field && ratio !== null && ratio < min ? [{ field, where, ratio, min }] : [];
+  });
+}
+
+/**
+ * Nudges one color toward black or white (whichever the cards contrast with) in small steps,
+ * stopping at the first shade where none of its text pairs are hard to read. Keeps the hue as far as possible.
+ */
+export function fixReadability(colors: CustomTheme, scheme: ColorScheme, field: keyof CustomColors): CustomTheme {
+  const original = colors[scheme][field];
+  // For the accent this also fixes button labels: once it is dark (or light) enough, the label flips to match.
+  const target = readableInk(colors[scheme].card);
+  for (let step = 1; step <= 20; step++) {
+    const candidate = { ...colors, [scheme]: { ...colors[scheme], [field]: mixHex(original, target, 1 - step / 20) } };
+    if (!readabilityIssues(candidate, scheme).some((i) => i.field === field)) return candidate;
+  }
+  return { ...colors, [scheme]: { ...colors[scheme], [field]: target } };
 }
