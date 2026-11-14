@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Ledger API (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "ledger: build api",
+      "program": "${workspaceFolder}/tools/prompt-ledger/src/PromptLedger.Api/bin/Debug/net10.0/PromptLedger.Api.dll",
+      "cwd": "${workspaceFolder}/tools/prompt-ledger/src/PromptLedger.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5180"
+      },
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "Ledger UI (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "ledger: web",
+      "url": "http://localhost:5181",
+      "webRoot": "${workspaceFolder}/tools/prompt-ledger/web"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Prompt Ledger (API + UI)",
+      "configurations": ["Ledger API (.NET)", "Ledger UI (Chrome)"],
+      "stopAll": true
+    }
+  ]
+}

@@ -29,7 +29,8 @@ export interface PromptLedgerProps {
 export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'system', preset, className, style }: PromptLedgerProps) {
   const client = useMemo(() => createLedgerClient(apiBaseUrl), [apiBaseUrl]);
   const [ownQueryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } } }),
+    // Three retries with backoff (~7s) covers the API still starting when the UI loads first.
+    () => new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 3 } } }),
   );
   const [scheme, setScheme] = useState<ColorScheme>(colorScheme);
 

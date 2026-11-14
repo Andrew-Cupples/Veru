@@ -45,6 +45,14 @@ api.MapTagEndpoints();
 api.MapLedgerEndpoints();
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" })).ExcludeFromDescription();
 
+// Anyone who opens the API's address in a browser gets pointed at the UI rather than a bare 404.
+app.MapGet("/", () => TypedResults.Ok(new
+{
+    service = "Prompt Ledger API",
+    ui = "http://localhost:5181 (run `npm run ledger` at the repo root)",
+    openApi = "/openapi/v1.json",
+})).ExcludeFromDescription();
+
 await app.RunAsync();
 
 /// <summary>Exposed for WebApplicationFactory in integration tests.</summary>

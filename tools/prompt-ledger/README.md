@@ -4,6 +4,22 @@ Records every prompt sent to Claude Code in this repository, lets a human annota
 (reviewed toggle, comment, #hashtags, why it was sent, what was kept, changed or rejected), and generates
 [`PROMPT_LOG.md`](../../PROMPT_LOG.md) for the assessment.
 
+## Running it
+
+Requires the .NET 10 SDK and Node 22+. From the repo root:
+
+```bash
+npm install
+npm run ledger      # API on :5180 + UI on :5181, opens the browser
+```
+
+Then open **http://localhost:5181**. Port 5180 is the API only.
+
+**In VS Code:** open the repo folder and install the recommended extensions (C# Dev Kit, ESLint). In
+Run and Debug (Ctrl+Shift+D), choose **Prompt Ledger (API + UI)** and press F5. This starts the API under
+the .NET debugger and the UI in a debuggable Chrome window, and stopping one stops both. For no debugger, run
+the task **ledger: start (no debugger)** (Terminal → Run Task).
+
 ## How prompts are captured
 
 | Path | When | What it adds |

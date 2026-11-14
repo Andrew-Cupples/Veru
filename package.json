@@ -6,10 +6,15 @@
     "tools/prompt-ledger/web"
   ],
   "scripts": {
+    "ledger": "concurrently --kill-others --names api,web --prefix-colors blue,magenta \"npm:ledger:api\" \"npm:ledger:dev -- --open\"",
+    "ledger:api": "dotnet run --project tools/prompt-ledger/src/PromptLedger.Api --launch-profile http",
     "ledger:dev": "npm run dev -w @veru/prompt-ledger",
     "ledger:check": "npm run check -w @veru/prompt-ledger"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
   }
 }
