@@ -1,0 +1,15 @@
+{
+  "name": "veru",
+  "private": true,
+  "description": "Workspace root. Each UI package lives in its own workspace so the main app can import them.",
+  "workspaces": [
+    "tools/prompt-ledger/web"
+  ],
+  "scripts": {
+    "ledger:dev": "npm run dev -w @veru/prompt-ledger",
+    "ledger:check": "npm run check -w @veru/prompt-ledger"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

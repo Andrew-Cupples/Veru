@@ -1,0 +1,184 @@
+/*
+ * Prompt Ledger design tokens.
+ *
+ * Everything visual reads from these variables, and they are scoped to .pl-root so the
+ * module can sit inside a host app without leaking styles either way.
+ * Color presets (planned) override these same names, either as another
+ * [data-pl-preset] block here or at runtime through the `preset` prop.
+ */
+.pl-root {
+  /* Typography */
+  --pl-font-ui: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --pl-font-doc: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --pl-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --pl-text-xs: 0.72rem;
+  --pl-text-sm: 0.8125rem;
+  --pl-text-md: 0.9375rem;
+  --pl-text-lg: 1.0625rem;
+  --pl-doc-size: 1.0625rem;
+  --pl-doc-leading: 1.7;
+
+  /* Surfaces */
+  --pl-desk: #ecebe6;
+  --pl-desk-pattern: radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.05) 1px, transparent 0);
+  --pl-surface: #f8f7f3;
+  --pl-surface-raised: #ffffff;
+  --pl-surface-sunken: #f0efe9;
+  --pl-paper: #fffefb;
+  --pl-paper-edge: rgb(60 50 30 / 0.08);
+  --pl-paper-shadow: 0 1px 2px rgb(40 30 10 / 0.06), 0 8px 28px -6px rgb(40 30 10 / 0.12);
+
+  /* Ink */
+  --pl-ink: #1f1d1a;
+  --pl-ink-muted: #5f5a52;
+  --pl-ink-faint: #9a948a;
+  --pl-rule: #e3e0d8;
+  --pl-rule-strong: #cfcac0;
+
+  /* Accent & state */
+  --pl-accent: #3d5afe;
+  --pl-accent-hover: #2f49e0;
+  --pl-accent-soft: rgb(61 90 254 / 0.1);
+  --pl-accent-ink: #ffffff;
+  --pl-focus-ring: 0 0 0 3px rgb(61 90 254 / 0.28);
+  --pl-success: #1f8a5b;
+  --pl-success-soft: rgb(31 138 91 / 0.12);
+  --pl-danger: #c4382f;
+  --pl-danger-soft: rgb(196 56 47 / 0.1);
+  --pl-star: #e0a100;
+
+  /* Outcomes */
+  --pl-outcome-unset: var(--pl-ink-faint);
+  --pl-outcome-kept: #1f8a5b;
+  --pl-outcome-changed: #b7791f;
+  --pl-outcome-rejected: #c4382f;
+  --pl-outcome-mixed: #7c4dff;
+
+  /* Prompt & response blocks in the document */
+  --pl-prompt-bg: #f4f2ff;
+  --pl-prompt-rule: #7c6cf2;
+  --pl-response-ink: #2a2723;
+  --pl-code-bg: #f3f1ec;
+  --pl-highlight: rgb(255 214 0 / 0.42);
+
+  /* Shape & motion */
+  --pl-radius-sm: 6px;
+  --pl-radius-md: 10px;
+  --pl-radius-lg: 14px;
+  --pl-pane-outline: 288px;
+  --pl-pane-annotations: 380px;
+  --pl-doc-width: 760px;
+  --pl-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --pl-motion-fast: 120ms;
+  --pl-motion-med: 220ms;
+
+  color-scheme: light;
+}
+
+.pl-root[data-pl-scheme='dark'] {
+  --pl-desk: #121315;
+  --pl-desk-pattern: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.035) 1px, transparent 0);
+  --pl-surface: #18191c;
+  --pl-surface-raised: #202226;
+  --pl-surface-sunken: #141518;
+  --pl-paper: #1c1d21;
+  --pl-paper-edge: rgb(255 255 255 / 0.06);
+  --pl-paper-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 32px -8px rgb(0 0 0 / 0.6);
+  --pl-ink: #ecebe8;
+  --pl-ink-muted: #a8a49c;
+  --pl-ink-faint: #6e6a63;
+  --pl-rule: #2b2d32;
+  --pl-rule-strong: #3a3d43;
+  --pl-accent: #7b8cff;
+  --pl-accent-hover: #93a1ff;
+  --pl-accent-soft: rgb(123 140 255 / 0.14);
+  --pl-accent-ink: #0d0f1a;
+  --pl-focus-ring: 0 0 0 3px rgb(123 140 255 / 0.35);
+  --pl-success: #3ccf8e;
+  --pl-success-soft: rgb(60 207 142 / 0.14);
+  --pl-danger: #ff6b5e;
+  --pl-danger-soft: rgb(255 107 94 / 0.14);
+  --pl-star: #ffc53d;
+  --pl-outcome-kept: #3ccf8e;
+  --pl-outcome-changed: #f0b34a;
+  --pl-outcome-rejected: #ff6b5e;
+  --pl-outcome-mixed: #a98bff;
+  --pl-prompt-bg: #23223a;
+  --pl-prompt-rule: #8f80ff;
+  --pl-response-ink: #dcdad5;
+  --pl-code-bg: #16171a;
+  --pl-highlight: rgb(255 214 0 / 0.28);
+  color-scheme: dark;
+}
+
+/* 'system' follows the OS. The dark values are repeated because CSS can't share a block across a media query. */
+@media (prefers-color-scheme: dark) {
+  .pl-root[data-pl-scheme='system'] {
+    --pl-desk: #121315;
+    --pl-desk-pattern: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.035) 1px, transparent 0);
+    --pl-surface: #18191c;
+    --pl-surface-raised: #202226;
+    --pl-surface-sunken: #141518;
+    --pl-paper: #1c1d21;
+    --pl-paper-edge: rgb(255 255 255 / 0.06);
+    --pl-paper-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 32px -8px rgb(0 0 0 / 0.6);
+    --pl-ink: #ecebe8;
+    --pl-ink-muted: #a8a49c;
+    --pl-ink-faint: #6e6a63;
+    --pl-rule: #2b2d32;
+    --pl-rule-strong: #3a3d43;
+    --pl-accent: #7b8cff;
+    --pl-accent-hover: #93a1ff;
+    --pl-accent-soft: rgb(123 140 255 / 0.14);
+    --pl-accent-ink: #0d0f1a;
+    --pl-focus-ring: 0 0 0 3px rgb(123 140 255 / 0.35);
+    --pl-success: #3ccf8e;
+    --pl-success-soft: rgb(60 207 142 / 0.14);
+    --pl-danger: #ff6b5e;
+    --pl-danger-soft: rgb(255 107 94 / 0.14);
+    --pl-star: #ffc53d;
+    --pl-outcome-kept: #3ccf8e;
+    --pl-outcome-changed: #f0b34a;
+    --pl-outcome-rejected: #ff6b5e;
+    --pl-outcome-mixed: #a98bff;
+    --pl-prompt-bg: #23223a;
+    --pl-prompt-rule: #8f80ff;
+    --pl-response-ink: #dcdad5;
+    --pl-code-bg: #16171a;
+    --pl-highlight: rgb(255 214 0 / 0.28);
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-root {
+    --pl-motion-fast: 0ms;
+    --pl-motion-med: 0ms;
+  }
+}
+
+/* Scoped base styles: the module never styles anything outside .pl-root. */
+.pl-root,
+.pl-root *,
+.pl-root *::before,
+.pl-root *::after {
+  box-sizing: border-box;
+}
+
+.pl-root {
+  font-family: var(--pl-font-ui);
+  font-size: var(--pl-text-md);
+  color: var(--pl-ink);
+  background: var(--pl-desk);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.pl-root :focus-visible {
+  outline: none;
+  box-shadow: var(--pl-focus-ring);
+}
+
+.pl-root ::selection {
+  background: var(--pl-highlight);
+}

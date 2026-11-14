@@ -14,9 +14,12 @@ public static class PromptEndpoints
     {
         var group = api.MapGroup("/prompts").WithTags("Prompts");
         group.MapGet("/", List).WithSummary("Search and filter prompts");
+        group.MapGet("/document", Document)
+            .WithSummary("Every prompt with full text and annotations, in reading order (session start, then sequence)");
         group.MapGet("/{id:int}", Get).WithName("GetPrompt");
         group.MapPatch("/{id:int}", Update).WithSummary("Update annotations (null fields are left unchanged)");
         group.MapPut("/{id:int}/tags", SetTags).WithSummary("Replace the prompt's tags");
+        group.MapDelete("/{id:int}", Delete).WithSummary("Permanently remove a prompt (e.g. a stray or duplicate capture)");
         return api;
     }
 
@@ -75,6 +78,18 @@ public static class PromptEndpoints
         return TypedResults.Ok(new PagedResult<PromptSummaryDto>(items, total, page, pageSize));
     }
 
+    private static async Task<Ok<List<PromptDetailDto>>> Document(LedgerDbContext db, string? sessionId, CancellationToken ct)
+    {
+        var q = db.Prompts.AsNoTracking().Include(p => p.Tags).Include(p => p.Session).AsQueryable();
+        if (!string.IsNullOrEmpty(sessionId)) q = q.Where(p => p.SessionId == sessionId);
+
+        var prompts = await q
+            .OrderBy(p => p.Session!.StartedAt).ThenBy(p => p.SessionId).ThenBy(p => p.Sequence)
+            .AsSplitQuery()
+            .ToListAsync(ct);
+        return TypedResults.Ok(prompts.Select(ToDetail).ToList());
+    }
+
     private static async Task<Results<Ok<PromptDetailDto>, NotFound>> Get(int id, LedgerDbContext db, CancellationToken ct)
     {
         var prompt = await Load(db, id, ct);
@@ -124,6 +139,9 @@ public static class PromptEndpoints
         await db.SaveChangesAsync(ct);
         return TypedResults.Ok(ToDetail(prompt));
     }
+
+    private static async Task<Results<NoContent, NotFound>> Delete(int id, LedgerDbContext db, CancellationToken ct) =>
+        await db.Prompts.Where(p => p.Id == id).ExecuteDeleteAsync(ct) == 0 ? TypedResults.NotFound() : TypedResults.NoContent();
 
     private static Task<Prompt?> Load(LedgerDbContext db, int id, CancellationToken ct, bool tracking = false)
     {

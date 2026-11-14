@@ -132,6 +132,7 @@ public static class TranscriptReader
         if (string.IsNullOrWhiteSpace(content)) return false;
         content = content.Trim();
         if (content.StartsWith("[Request interrupted", StringComparison.Ordinal)) return false;
+        if (Services.PromptClassifier.IsSystemEvent(content)) return false;
 
         text = content;
         return true;

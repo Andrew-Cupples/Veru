@@ -46,7 +46,10 @@ async Task<int> RunHookAsync()
     string? repoRoot = null;
     try
     {
-        var payload = await Console.In.ReadToEndAsync();
+        // Hook payloads are UTF-8 JSON. Console.In would decode with the Windows console code page and
+        // corrupt non-ASCII text (curly quotes, emoji), so read the raw stream explicitly.
+        using var stdin = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false));
+        var payload = await stdin.ReadToEndAsync();
         repoRoot = LedgerPaths.RepoRoot(Environment.GetEnvironmentVariable("CLAUDE_PROJECT_DIR"));
         await using var db = LedgerDatabase.Open(LedgerPaths.DatabaseFile(repoRoot));
         await LedgerDatabase.InitializeAsync(db);

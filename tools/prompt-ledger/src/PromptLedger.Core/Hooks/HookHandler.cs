@@ -21,7 +21,7 @@ public sealed class HookHandler(CaptureService capture)
         {
             case "UserPromptSubmit":
                 var prompt = await capture.RecordHookPromptAsync(sessionId ?? "", Str(root, "prompt") ?? "", Str(root, "cwd"), ct);
-                return prompt is null ? "ignored: empty prompt" : $"recorded prompt {prompt.Id}";
+                return prompt is null ? "ignored: empty prompt or system event" : $"recorded prompt {prompt.Id}";
 
             case "Stop":
             case "SessionEnd":
