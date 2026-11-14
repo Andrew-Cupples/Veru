@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  // On Windows, run tasks through cmd.exe. PowerShell's default execution policy blocks the npm.ps1
+  // shims that Node version managers (fnm, nvm) install, which breaks every npm task.
+  "windows": {
+    "options": { "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] } }
+  },
+  "tasks": [
+    {
+      "label": "ledger: build api",
+      "detail": "Build the Prompt Ledger API (also regenerates openapi.json)",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/tools/prompt-ledger/src/PromptLedger.Api", "--nologo", "-v", "q"],
+      "group": "build",
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      "label": "ledger: web",
+      "detail": "Vite dev server for the UI on http://localhost:5181",
+      "type": "npm",
+      "script": "ledger:dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^x{0}$" },
+        "background": { "activeBegins": true, "beginsPattern": "VITE", "endsPattern": "Local:" }
+      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "ledger" }
+    },
+    {
+      "label": "ledger: api",
+      "detail": "Run the API on http://localhost:5180 without the debugger",
+      "type": "npm",
+      "script": "ledger:api",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dotnet-run",
+        "pattern": { "regexp": "^x{0}$" },
+        "background": { "activeBegins": true, "beginsPattern": "Building|Using launch settings", "endsPattern": "Now listening on" }
+      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "ledger" }
+    },
+    {
+      "label": "ledger: start (no debugger)",
+      "detail": "API + UI side by side, then open http://localhost:5181",
+      "dependsOn": ["ledger: api", "ledger: web"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "ledger: test",
+      "detail": ".NET tests plus frontend typecheck, lint and tests",
+      "type": "shell",
+      "command": "dotnet test ${workspaceFolder}/tools/prompt-ledger && npm run ledger:check",
+      "group": "test",
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}
