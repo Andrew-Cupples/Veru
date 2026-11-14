@@ -8,6 +8,7 @@ TestResults/
 # Node
 node_modules/
 dist/
+*.tsbuildinfo
 
 # Prompt Ledger: the live database stays local; the committed copy is snapshot/prompt-log.jsonl
 tools/prompt-ledger/data/

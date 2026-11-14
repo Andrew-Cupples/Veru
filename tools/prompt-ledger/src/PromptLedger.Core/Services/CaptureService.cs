@@ -28,6 +28,7 @@ public sealed class CaptureService(LedgerDbContext db, TimeProvider? clock = nul
     public async Task<Prompt?> RecordHookPromptAsync(string sessionId, string text, string? cwd, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(text)) return null;
+        if (PromptClassifier.IsSystemEvent(text)) return null;
 
         var now = _clock.GetUtcNow();
         await EnsureSessionAsync(sessionId, cwd, now, ct);

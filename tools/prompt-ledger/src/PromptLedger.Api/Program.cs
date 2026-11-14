@@ -15,14 +15,22 @@ builder.Services.AddScoped<PromptQuery>();
 builder.Services.AddScoped(sp => new CaptureService(sp.GetRequiredService<LedgerDbContext>(), sp.GetRequiredService<TimeProvider>()));
 
 builder.Services.ConfigureHttpJsonOptions(o =>
-    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+{
+    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    // The web default also accepts numbers sent as strings, which makes OpenAPI type every int as
+    // "integer | string". Strict keeps the contract (and the generated TypeScript) honest.
+    o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-await using (var scope = app.Services.CreateAsyncScope())
+// At build time the OpenAPI generator boots this app only to read its endpoints; don't touch the database then.
+var isBuildTimeOpenApi = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+if (!isBuildTimeOpenApi)
 {
+    await using var scope = app.Services.CreateAsyncScope();
     await LedgerDatabase.InitializeAsync(scope.ServiceProvider.GetRequiredService<LedgerDbContext>());
 }
 

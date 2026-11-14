@@ -55,6 +55,31 @@ dotnet run --project tools/prompt-ledger/src/PromptLedger.Api
 dotnet test tools/prompt-ledger
 ```
 
+## UI (`web/`, package `@veru/prompt-ledger`)
+
+An embeddable React module: `import { PromptLedger } from '@veru/prompt-ledger'` and render
+`<PromptLedger />` inside any element with a height. It owns no routing, scopes every style under
+`.pl-root`, sizes its breakpoints with container queries (its own width, not the window's), and takes the
+host's `QueryClient` if one is passed.
+
+- **Left:** outline of every prompt, grouped by session; filter by words or `#tag`.
+- **Middle:** the whole ledger as one continuous document. Scrolling updates the outline and the panel.
+- **Right:** annotations, autosaved as you type. While a field has focus the panel stays on that
+  prompt, even if the document scrolls.
+- **Keys:** `j`/`k` next/previous, `r` reviewed, `s` star, `c` comment, `/` filter,
+  `Ctrl+Enter` (in a field) reviewed and next, `Esc` leave the field.
+- **Theming:** all visuals are CSS variables in `src/theme/tokens.css`; `colorScheme` and `preset`
+  (token overrides) props are the hooks for color presets.
+
+```bash
+npm install                 # at the repo root (npm workspaces)
+npm run ledger:dev          # http://localhost:5181, proxies /api to the API on :5180
+npm run ledger:check        # regenerate API types, typecheck, lint, test
+```
+
+TypeScript types come from `web/openapi/openapi.json`, which the API build regenerates; run
+`npm run gen:api -w @veru/prompt-ledger` after an API contract change.
+
 ## API overview
 
 | Method | Route | Purpose |

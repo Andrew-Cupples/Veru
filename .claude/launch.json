@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ledger-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "tools/prompt-ledger/src/PromptLedger.Api", "--launch-profile", "http"],
+      "port": 5180
+    },
+    {
+      "name": "ledger-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "ledger:dev"],
+      "port": 5181
+    }
+  ]
+}
