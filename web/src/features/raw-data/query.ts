@@ -1,0 +1,191 @@
+import type { MarketSession, PriceBar } from '../../api/client';
+
+/*
+ * A small, SQL-shaped query model over raw bars: SELECT columns, WHERE conditions (AND-ed),
+ * ORDER BY one column, LIMIT. Pure functions so the UI stays thin and the logic is unit-testable.
+ */
+
+export interface Row {
+  /** Full ISO timestamp in exchange time, e.g. 2026-11-13T09:30:00-05:00. */
+  time: string;
+  date: string;
+  clock: string;
+  session: MarketSession | null;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export type ColumnKey = keyof Row;
+export type ColumnKind = 'text' | 'number' | 'session';
+
+export interface ColumnDef {
+  key: ColumnKey;
+  label: string;
+  kind: ColumnKind;
+  description: string;
+}
+
+export const COLUMNS: readonly ColumnDef[] = [
+  { key: 'time', label: 'time', kind: 'text', description: 'Bar start (exchange time, ISO 8601)' },
+  { key: 'date', label: 'date', kind: 'text', description: 'Trading day, YYYY-MM-DD' },
+  { key: 'clock', label: 'clock', kind: 'text', description: 'Time of day, HH:MM (exchange time)' },
+  { key: 'session', label: 'session', kind: 'session', description: 'pre, regular or post market' },
+  { key: 'open', label: 'open', kind: 'number', description: 'First trade price in the bar' },
+  { key: 'high', label: 'high', kind: 'number', description: 'Highest price in the bar' },
+  { key: 'low', label: 'low', kind: 'number', description: 'Lowest price in the bar' },
+  { key: 'close', label: 'close', kind: 'number', description: 'Last trade price in the bar' },
+  { key: 'volume', label: 'volume', kind: 'number', description: 'Shares (or units) traded in the bar' },
+];
+
+export const COLUMN_BY_KEY = Object.fromEntries(COLUMNS.map((c) => [c.key, c])) as Record<ColumnKey, ColumnDef>;
+
+export type Operator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains';
+
+export const OPERATORS_BY_KIND: Record<ColumnKind, readonly Operator[]> = {
+  number: ['>', '>=', '<', '<=', '=', '!='],
+  text: ['=', '!=', '>', '>=', '<', '<=', 'contains'],
+  session: ['=', '!='],
+};
+
+export interface Condition {
+  id: string;
+  column: ColumnKey;
+  operator: Operator;
+  value: string;
+}
+
+export type Direction = 'asc' | 'desc';
+
+export interface QuerySpec {
+  select: ColumnKey[];
+  where: Condition[];
+  orderBy: { column: ColumnKey; direction: Direction } | null;
+  limit: number | null;
+}
+
+export const DEFAULT_SPEC: QuerySpec = {
+  select: COLUMNS.map((c) => c.key),
+  where: [],
+  orderBy: { column: 'time', direction: 'asc' },
+  limit: null,
+};
+
+export function toRows(bars: readonly PriceBar[]): Row[] {
+  return bars.map((b) => ({
+    time: b.time,
+    // The API sends exchange-local ISO strings, so the date and clock are read straight off the text.
+    date: b.time.slice(0, 10),
+    clock: b.time.slice(11, 16),
+    session: b.session ?? null,
+    open: b.open,
+    high: b.high,
+    low: b.low,
+    close: b.close,
+    volume: b.volume,
+  }));
+}
+
+/** A condition is applied only when complete and well-formed; half-typed ones are ignored, not errors. */
+export function isActive(condition: Condition): boolean {
+  const value = condition.value.trim();
+  if (!value) return false;
+  return COLUMN_BY_KEY[condition.column].kind !== 'number' || Number.isFinite(Number(value));
+}
+
+function matches(row: Row, condition: Condition): boolean {
+  const cell = row[condition.column];
+  const raw = condition.value.trim();
+  const kind = COLUMN_BY_KEY[condition.column].kind;
+
+  if (condition.operator === 'contains') {
+    return String(cell ?? '').toLowerCase().includes(raw.toLowerCase());
+  }
+
+  const left = kind === 'number' ? (cell as number) : String(cell ?? '');
+  const right = kind === 'number' ? Number(raw) : raw;
+  if (kind !== 'number' && (condition.operator === '=' || condition.operator === '!=')) {
+    const equal = String(left).toLowerCase() === String(right).toLowerCase();
+    return condition.operator === '=' ? equal : !equal;
+  }
+
+  switch (condition.operator) {
+    case '=': return left === right;
+    case '!=': return left !== right;
+    case '>': return left > right;
+    case '>=': return left >= right;
+    case '<': return left < right;
+    case '<=': return left <= right;
+  }
+}
+
+function compare(a: Row, b: Row, column: ColumnKey): number {
+  const x = a[column];
+  const y = b[column];
+  if (x === y) return 0;
+  if (x === null) return 1;
+  if (y === null) return -1;
+  return x < y ? -1 : 1;
+}
+
+export interface QueryResult {
+  rows: Row[];
+  /** Rows that passed WHERE, before LIMIT. */
+  matched: number;
+}
+
+export function runQuery(rows: readonly Row[], spec: QuerySpec): QueryResult {
+  const conditions = spec.where.filter(isActive);
+  let result = conditions.length ? rows.filter((r) => conditions.every((c) => matches(r, c))) : [...rows];
+
+  if (spec.orderBy) {
+    const { column, direction } = spec.orderBy;
+    const sign = direction === 'asc' ? 1 : -1;
+    result.sort((a, b) => sign * compare(a, b, column));
+  }
+
+  const matched = result.length;
+  if (spec.limit !== null && spec.limit >= 0) result = result.slice(0, spec.limit);
+  return { rows: result, matched };
+}
+
+export interface Source {
+  symbol: string;
+  interval: string;
+  range: string;
+  extendedHours: boolean;
+}
+
+/** A read-only SQL rendering of the query, so the user can see exactly what is being asked. */
+export function toSql(source: Source, spec: QuerySpec): string {
+  const columns = spec.select.length === COLUMNS.length ? '*' : spec.select.join(', ') || '*';
+  const lines = [
+    `SELECT ${columns}`,
+    `FROM bars('${source.symbol}', interval => '${source.interval}', range => '${source.range}', extended_hours => ${source.extendedHours})`,
+  ];
+
+  const conditions = spec.where.filter(isActive);
+  conditions.forEach((c, i) => {
+    const kind = COLUMN_BY_KEY[c.column].kind;
+    const value = c.value.trim();
+    const literal = kind === 'number' ? value : `'${value.replaceAll("'", "''")}'`;
+    const predicate = c.operator === 'contains'
+      ? `${c.column} ILIKE '%${value.replaceAll("'", "''")}%'`
+      : `${c.column} ${c.operator === '!=' ? '<>' : c.operator} ${literal}`;
+    lines.push(`${i === 0 ? 'WHERE' : '  AND'} ${predicate}`);
+  });
+
+  if (spec.orderBy) lines.push(`ORDER BY ${spec.orderBy.column} ${spec.orderBy.direction.toUpperCase()}`);
+  if (spec.limit !== null) lines.push(`LIMIT ${spec.limit}`);
+  return lines.join('\n') + ';';
+}
+
+export function toCsv(rows: readonly Row[], columns: readonly ColumnKey[]): string {
+  const escape = (v: unknown) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+  };
+  return [columns.join(','), ...rows.map((r) => columns.map((c) => escape(r[c])).join(','))].join('\n');
+}

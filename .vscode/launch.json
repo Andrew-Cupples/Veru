@@ -2,6 +2,28 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Market API (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "app: build api",
+      "program": "${workspaceFolder}/backend/src/Veru.Api/bin/Debug/net10.0/Veru.Api.dll",
+      "cwd": "${workspaceFolder}/backend/src/Veru.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5080"
+      },
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "App UI (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "app: web",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/web"
+    },
+    {
       "name": "Ledger API (.NET)",
       "type": "coreclr",
       "request": "launch",
@@ -26,8 +48,20 @@
   ],
   "compounds": [
     {
+      "name": "Veru (Market API + Ledger API + UI)",
+      "configurations": [
+        "Market API (.NET)",
+        "Ledger API (.NET)",
+        "App UI (Chrome)"
+      ],
+      "stopAll": true
+    },
+    {
       "name": "Prompt Ledger (API + UI)",
-      "configurations": ["Ledger API (.NET)", "Ledger UI (Chrome)"],
+      "configurations": [
+        "Ledger API (.NET)",
+        "Ledger UI (Chrome)"
+      ],
       "stopAll": true
     }
   ]

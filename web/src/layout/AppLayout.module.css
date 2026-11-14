@@ -1,0 +1,72 @@
+.shell {
+  display: grid;
+  grid-template-rows: var(--header-height) minmax(0, 1fr);
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: var(--text-lg);
+}
+
+.mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--accent), var(--keyword));
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.link:hover {
+  color: var(--ink);
+}
+
+.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.main {
+  min-height: 0;
+  overflow: auto;
+}
+
+@media (max-width: 560px) {
+  .header {
+    gap: 12px;
+    padding: 0 12px;
+  }
+  .link {
+    padding: 0 8px;
+  }
+}

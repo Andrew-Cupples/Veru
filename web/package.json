@@ -1,0 +1,43 @@
+{
+  "name": "@veru/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Veru market data UI. Hosts feature views (raw data, reports) and the Prompt Ledger module.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "gen:api": "openapi-typescript openapi/openapi.json -o src/api/schema.d.ts",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "npm run gen:api && npm run typecheck && npm run lint && npm run test"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@tanstack/react-query": "^5.107.1",
+    "@veru/prompt-ledger": "*",
+    "openapi-fetch": "^0.17.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^16.0.0",
+    "jsdom": "^31.0.1",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}

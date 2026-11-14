@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Veru.Api/Veru.Api.csproj" />
+    <Project Path="src/Veru.MarketData/Veru.MarketData.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Veru.Tests/Veru.Tests.csproj" />
+  </Folder>
+</Solution>
