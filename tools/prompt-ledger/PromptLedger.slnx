@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PromptLedger.Api/PromptLedger.Api.csproj" />
+    <Project Path="src/PromptLedger.Cli/PromptLedger.Cli.csproj" />
+    <Project Path="src/PromptLedger.Core/PromptLedger.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PromptLedger.Tests/PromptLedger.Tests.csproj" />
+  </Folder>
+</Solution>
