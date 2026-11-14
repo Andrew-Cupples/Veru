@@ -45,6 +45,8 @@ export interface MotionState {
    * it finishes at once and this change applies instantly, so moves never pile up.
    */
   slide: (update: () => void, direction: SlideDirection) => void;
+  /** Run a whole-screen change (a new theme, light/dark) as a crossfade. Same fallbacks as slide(). */
+  fade: (update: () => void) => void;
 }
 
 const MotionContext = createContext<MotionState | null>(null);
@@ -59,6 +61,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
   const systemReduces = useSystemReducesMotion();
   const enabled = preference === 'on' || (preference === 'system' && !systemReduces);
   const running = useRef<ViewTransition | null>(null);
+  const lastChange = useRef(0);
 
   useLayoutEffect(() => {
     document.documentElement.dataset.motion = enabled ? 'on' : 'off';
@@ -81,10 +84,19 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     writeJson(STORAGE.duration, value);
   }, []);
 
-  const slide = useCallback(
-    (update: () => void, direction: SlideDirection) => {
-      if (running.current) {
-        running.current.skipTransition();
+  /**
+   * Shared by slide() and fade(). `kind` goes on <html> as data-slide / data-fade for the transition's
+   * lifetime; styles/motion.css keys off it to pick the animation.
+   */
+  const run = useCallback(
+    (update: () => void, kind: { slide: SlideDirection } | { fade: true }) => {
+      // Rapid flipping (clicking or arrowing through tabs/themes): finish any move at once and apply this
+      // change instantly. Every quick change restarts the window, so a burst stays instant from start to end.
+      const now = performance.now();
+      const rapid = now - lastChange.current < duration;
+      lastChange.current = now;
+      if (running.current || rapid) {
+        running.current?.skipTransition();
         running.current = null;
         update();
         return;
@@ -94,22 +106,28 @@ export function MotionProvider({ children }: { children: ReactNode }) {
         return;
       }
       const root = document.documentElement;
-      // The attribute switches on the view-transition names and picks the direction (styles/motion.css).
-      root.dataset.slide = direction;
+      if ('slide' in kind) root.dataset.slide = kind.slide;
+      else root.dataset.fade = '';
       const transition = document.startViewTransition(() => flushSync(update));
       running.current = transition;
       transition.finished.finally(() => {
         if (running.current === transition) running.current = null;
-        // A newer slide may have set its own direction by now; only clear our own.
-        if (!running.current) delete root.dataset.slide;
+        // A newer transition may have set its own attributes by now; only clear when nothing is running.
+        if (!running.current) {
+          delete root.dataset.slide;
+          delete root.dataset.fade;
+        }
       });
     },
-    [enabled],
+    [enabled, duration],
   );
 
+  const slide = useCallback((update: () => void, direction: SlideDirection) => run(update, { slide: direction }), [run]);
+  const fade = useCallback((update: () => void) => run(update, { fade: true }), [run]);
+
   const value = useMemo<MotionState>(
-    () => ({ preference, setPreference, systemReduces, enabled, duration, setDuration, slide }),
-    [preference, setPreference, systemReduces, enabled, duration, setDuration, slide],
+    () => ({ preference, setPreference, systemReduces, enabled, duration, setDuration, slide, fade }),
+    [preference, setPreference, systemReduces, enabled, duration, setDuration, slide, fade],
   );
 
   return <MotionContext.Provider value={value}>{children}</MotionContext.Provider>;

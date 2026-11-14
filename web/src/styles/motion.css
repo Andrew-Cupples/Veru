@@ -23,9 +23,20 @@
   view-transition-name: page;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
+/* During a page slide the frame (header) stays put; only <main> moves. */
+:root[data-slide]::view-transition-old(root),
+:root[data-slide]::view-transition-new(root) {
   animation: none;
+}
+
+/*
+ * Theme and light/dark changes: the whole screen crossfades from the old colors to the new.
+ * A touch longer than a page move, since every pixel changes at once; plain easing, as nothing travels.
+ */
+:root[data-fade]::view-transition-old(root),
+:root[data-fade]::view-transition-new(root) {
+  animation-duration: calc(var(--motion-enter) * 1.4);
+  animation-timing-function: ease-in-out;
 }
 
 ::view-transition-group(nav-indicator) {

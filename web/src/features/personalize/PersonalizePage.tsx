@@ -10,6 +10,7 @@ import { CustomThemeEditor } from './CustomThemeEditor';
 import { Preview } from './Preview';
 import { useCopy } from './useCopy';
 import { MotionSettings } from './MotionSettings';
+import { useMotion } from '../../motion/MotionProvider';
 import styles from './Personalize.module.css';
 
 const SCHEMES: { value: SchemePreference; label: string }[] = [
@@ -24,10 +25,21 @@ export function PersonalizePage() {
   const { copied, copy } = useCopy();
   const css = themeToCss(theme);
   const isCustom = theme.id === CUSTOM_THEME_ID;
+  const { fade } = useMotion();
+
+  // Picking a theme or light/dark crossfades the whole screen. Custom color edits stay live (no fade),
+  // since a color picker changes them continuously while dragging.
+  const pickTheme = (id: string) => {
+    if (id !== theme.id) fade(() => setTheme(id));
+  };
+  const pickScheme = (value: SchemePreference) => {
+    if (value !== schemePreference) fade(() => setSchemePreference(value));
+  };
+
   const schemeGroup = radioGroup(
     SCHEMES.map((s) => s.value),
     schemePreference,
-    setSchemePreference,
+    pickScheme,
   );
 
   const editCustom = (colors: CustomTheme) => {
@@ -50,7 +62,7 @@ export function PersonalizePage() {
 
       <section className={styles.section} aria-labelledby="themes-heading">
         <h2 id="themes-heading">Themes</h2>
-        <ThemeGallery themes={themes} activeId={theme.id} scheme={scheme} onPick={setTheme} />
+        <ThemeGallery themes={themes} activeId={theme.id} scheme={scheme} onPick={pickTheme} />
       </section>
 
       <MotionSettings />
