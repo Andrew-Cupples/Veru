@@ -13,6 +13,10 @@ export function useQueryOptions() {
     queryKey: ['market', 'options'],
     queryFn: async ({ signal }) => unwrap(await marketApi.GET('/api/market/options', { signal })),
     staleTime: Infinity,
+    retry: 2,
+    retryDelay: 1_000,
+    // If the API isn't up yet (UI started first, or started alone), keep checking so the page recovers on its own.
+    refetchInterval: (query) => (query.state.status === 'error' ? 5_000 : false),
   });
 }
 

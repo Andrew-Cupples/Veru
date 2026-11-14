@@ -84,12 +84,22 @@ export function RawDataPage() {
         <p>Query the bars the market data API returns, before any aggregation.</p>
       </div>
 
+      {options.isError && (
+        <div className={styles.alert} role="alert">
+          <span>
+            <strong>Market data API not reachable.</strong> Start it with <code>npm run api</code> (or everything with{' '}
+            <code>npm run dev</code>). This page reconnects automatically.
+          </span>
+        </div>
+      )}
+
       <div className={styles.card}>
         <QueryEditor
           draft={draft}
           onDraftChange={setDraft}
           onRun={() => run()}
           running={series.isFetching}
+          ready={options.isSuccess}
           options={options.data}
           spec={spec}
           onSpecChange={setSpec}
@@ -101,12 +111,6 @@ export function RawDataPage() {
           </button>
         </div>
       </div>
-
-      {options.isError && (
-        <div className={styles.alert} role="alert">
-          {options.error.message}
-        </div>
-      )}
 
       {!source.symbol ? (
         <div className={styles.empty}>

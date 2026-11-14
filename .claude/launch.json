@@ -14,7 +14,7 @@
       "port": 5080
     },
     {
-      "name": "web",
+      "name": "web-only (needs market-api running)",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "web"],
       "port": 5173

@@ -25,13 +25,15 @@ interface Props {
   onDraftChange: (draft: Source) => void;
   onRun: () => void;
   running: boolean;
+  /** False until interval/range options have loaded from the API. */
+  ready: boolean;
   options: QueryOptions | undefined;
   spec: QuerySpec;
   onSpecChange: (spec: QuerySpec) => void;
 }
 
 /** The query, laid out clause by clause like SQL. FROM fetches from the API; the rest filters what came back. */
-export function QueryEditor({ draft, onDraftChange, onRun, running, options, spec, onSpecChange }: Props) {
+export function QueryEditor({ draft, onDraftChange, onRun, running, ready, options, spec, onSpecChange }: Props) {
   const ids = useId();
   const intervals = options?.intervals ?? [];
   const ranges = options?.ranges ?? [];
@@ -39,7 +41,7 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, options, spe
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (draft.symbol.trim()) onRun();
+    if (ready && draft.symbol.trim()) onRun();
   };
 
   const changeInterval = (code: string) => {
@@ -112,7 +114,13 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, options, spe
           </label>
           <label className={styles.field}>
             <span className={styles.fieldLabel}>Interval</span>
-            <select className={styles.input} value={draft.interval} onChange={(e) => changeInterval(e.target.value)}>
+            <select
+              className={styles.input}
+              value={draft.interval}
+              disabled={!ready}
+              onChange={(e) => changeInterval(e.target.value)}
+            >
+              {!ready && <option value={draft.interval}>loading…</option>}
               {intervals.map((i) => (
                 <option key={i.code} value={i.code}>{i.label}</option>
               ))}
@@ -123,8 +131,10 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, options, spe
             <select
               className={styles.input}
               value={draft.range}
+              disabled={!ready}
               onChange={(e) => onDraftChange({ ...draft, range: e.target.value })}
             >
+              {!ready && <option value={draft.range}>loading…</option>}
               {ranges.map((r) => (
                 <option key={r.code} value={r.code} disabled={!rangeFits(selectedInterval, r)}>
                   {r.label}
@@ -141,7 +151,7 @@ export function QueryEditor({ draft, onDraftChange, onRun, running, options, spe
             />
             Pre/post market
           </label>
-          <button type="submit" className={styles.runButton} disabled={!draft.symbol.trim() || running}>
+          <button type="submit" className={styles.runButton} disabled={!ready || !draft.symbol.trim() || running}>
             {running ? 'Running…' : 'Run'}
           </button>
         </div>
