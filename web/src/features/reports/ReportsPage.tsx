@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
+import { useCalmSwitch } from '../../motion/MotionProvider';
 import { downloadText } from '../../lib/download';
 import { ApiAlert, Clause, ConditionsEditor, GranularityNotice, SeriesGate, SourceFields, loadStatus } from '../data-query/SourceControls';
 import { filterRows } from '../data-query/query';
@@ -19,7 +20,8 @@ import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
 
 const TABLE_PREVIEW_ROWS = 500;
-type Tab = 'data' | 'style';
+const TABS = ['data', 'style'] as const;
+type Tab = (typeof TABS)[number];
 
 /** One sentence describing the chart, for its accessible name and the status line. */
 function describe(report: Report, points: number, symbol: string): string {
@@ -41,7 +43,14 @@ export function ReportsPage() {
   const { active } = reports;
   const colors = useThemeColors();
   const chartRef = useRef<ChartHandle>(null);
-  const [tab, setTab] = useState<Tab>('data');
+  // `arrived` is the side the shown panel slid in from; null at first so nothing animates on load.
+  const [{ tab, arrived }, setTabState] = useState<{ tab: Tab; arrived: 'left' | 'right' | null }>({ tab: 'data', arrived: null });
+  const calmSwitch = useCalmSwitch();
+  const setTab = (next: Tab) => {
+    if (next === tab) return;
+    const arrived = !calmSwitch() ? null : TABS.indexOf(next) > TABS.indexOf(tab) ? 'right' : 'left';
+    setTabState({ tab: next, arrived });
+  };
   const tabIds = useId();
 
   useDocumentTitle(`${active.name}${ds.source.symbol ? ` · ${ds.source.symbol}` : ''} · Reports`);
@@ -232,7 +241,7 @@ export function ReportsPage() {
 
         <aside className={styles.inspector} aria-label="Report settings">
           <div role="tablist" aria-label="Settings" className={styles.tabs} onKeyDown={onTabKey}>
-            {(['data', 'style'] as const).map((t) => (
+            {TABS.map((t) => (
               <button
                 key={t}
                 id={`${tabIds}-${t}-tab`}
@@ -247,8 +256,19 @@ export function ReportsPage() {
                 {t === 'data' ? 'Data' : 'Style'}
               </button>
             ))}
+            <span
+              className={styles.tabIndicator}
+              style={{ width: `${100 / TABS.length}%`, transform: `translateX(${TABS.indexOf(tab) * 100}%)` }}
+              aria-hidden="true"
+            />
           </div>
-          <div id={`${tabIds}-${tab}-panel`} role="tabpanel" aria-labelledby={`${tabIds}-${tab}-tab`}>
+          <div
+            key={tab}
+            id={`${tabIds}-${tab}-panel`}
+            role="tabpanel"
+            aria-labelledby={`${tabIds}-${tab}-tab`}
+            className={arrived ? (arrived === 'right' ? styles.panelFromRight : styles.panelFromLeft) : undefined}
+          >
             {tab === 'data' ? (
               <DataPanel
                 report={active}

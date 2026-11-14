@@ -9,6 +9,7 @@ import { ThemeGallery } from './ThemeGallery';
 import { CustomThemeEditor } from './CustomThemeEditor';
 import { Preview } from './Preview';
 import { useCopy } from './useCopy';
+import { MotionSettings } from './MotionSettings';
 import styles from './Personalize.module.css';
 
 const SCHEMES: { value: SchemePreference; label: string }[] = [
@@ -51,6 +52,8 @@ export function PersonalizePage() {
         <h2 id="themes-heading">Themes</h2>
         <ThemeGallery themes={themes} activeId={theme.id} scheme={scheme} onPick={setTheme} />
       </section>
+
+      <MotionSettings />
 
       {isCustom ? (
         <section className={styles.section} aria-labelledby="custom-heading">

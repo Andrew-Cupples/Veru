@@ -242,12 +242,13 @@
   position: sticky;
   top: 12px;
   max-height: calc(100vh - var(--header-height) - 24px);
-  overflow: auto;
+  overflow-x: hidden; /* keeps a sliding panel from adding a sideways scrollbar */
+  overflow-y: auto;
 }
 
 .tabs {
   display: flex;
-  position: sticky;
+  position: sticky; /* also the containing block for .tabIndicator */
   top: 0;
   z-index: 1;
   background: var(--surface);
@@ -258,7 +259,6 @@
   flex: 1;
   height: 40px;
   border: none;
-  border-bottom: 2px solid transparent;
   background: none;
   font-size: var(--text-sm);
   font-weight: 600;
@@ -272,7 +272,35 @@
 
 .tab[aria-selected='true'] {
   color: var(--accent);
-  border-bottom-color: var(--accent);
+}
+
+/* One underline that glides under the selected tab. */
+.tabIndicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  transition: transform var(--motion-enter) var(--motion-ease-in);
+  pointer-events: none;
+}
+
+/* The new panel drifts in a short way from the side of the tab that was picked (timings: styles/motion.css). */
+.panelFromRight {
+  animation: panel-drift-in var(--motion-enter) var(--motion-ease-in);
+  --drift: var(--motion-distance);
+}
+
+.panelFromLeft {
+  animation: panel-drift-in var(--motion-enter) var(--motion-ease-in);
+  --drift: calc(-1 * var(--motion-distance));
+}
+
+@keyframes panel-drift-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
 }
 
 .panelBody {
