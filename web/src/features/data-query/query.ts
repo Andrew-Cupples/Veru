@@ -88,6 +88,26 @@ export function toRows(bars: readonly PriceBar[]): Row[] {
   }));
 }
 
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+const OPERATORS = new Set<string>(Object.values(OPERATORS_BY_KIND).flat());
+
+/** Validates WHERE conditions read back from storage. */
+export function isConditionList(v: unknown): v is Condition[] {
+  return (
+    Array.isArray(v) &&
+    v.every(
+      (c) =>
+        isObject(c) &&
+        typeof c.id === 'string' &&
+        typeof c.value === 'string' &&
+        typeof c.operator === 'string' &&
+        OPERATORS.has(c.operator) &&
+        typeof c.column === 'string' &&
+        c.column in COLUMN_BY_KEY,
+    )
+  );
+}
+
 /** A condition is applied only when complete and well-formed; half-typed ones are ignored, not errors. */
 export function isActive(condition: Condition): boolean {
   const value = condition.value.trim();
@@ -136,9 +156,14 @@ export interface QueryResult {
   matched: number;
 }
 
+/** Applies just the WHERE conditions (AND-ed), keeping row order. Works on any row that extends {@link Row}. */
+export function filterRows<T extends Row>(rows: readonly T[], where: readonly Condition[]): T[] {
+  const conditions = where.filter(isActive);
+  return conditions.length ? rows.filter((r) => conditions.every((c) => matches(r, c))) : [...rows];
+}
+
 export function runQuery(rows: readonly Row[], spec: QuerySpec): QueryResult {
-  const conditions = spec.where.filter(isActive);
-  let result = conditions.length ? rows.filter((r) => conditions.every((c) => matches(r, c))) : [...rows];
+  let result = filterRows(rows, spec.where);
 
   if (spec.orderBy) {
     const { column, direction } = spec.orderBy;
@@ -160,26 +185,28 @@ export interface Source {
 
 /** A read-only SQL rendering of the query, so the user can see exactly what is being asked. */
 export function toSql(source: Source, spec: QuerySpec): string {
-  const columns = spec.select.length === COLUMNS.length ? '*' : spec.select.join(', ') || '*';
-  const lines = [
-    `SELECT ${columns}`,
-    `FROM bars('${source.symbol}', interval => '${source.interval}', range => '${source.range}', extended_hours => ${source.extendedHours})`,
-  ];
+  const columns = spec.select.length === COLUMNS.length ? '*' : spec.select.join(', ') || '/* no columns */';
+  const lines = [`SELECT ${columns}`, fromSql(source), ...whereSql(spec.where)];
+  if (spec.orderBy) lines.push(`ORDER BY ${spec.orderBy.column} ${spec.orderBy.direction.toUpperCase()}`);
+  if (spec.limit !== null) lines.push(`LIMIT ${spec.limit}`);
+  return lines.join('\n') + ';';
+}
 
-  const conditions = spec.where.filter(isActive);
-  conditions.forEach((c, i) => {
+export function fromSql(source: Source): string {
+  return `FROM bars('${source.symbol}', interval => '${source.interval}', range => '${source.range}', extended_hours => ${source.extendedHours})`;
+}
+
+/** WHERE / AND lines for the conditions that apply; empty when none do. */
+export function whereSql(where: readonly Condition[]): string[] {
+  return where.filter(isActive).map((c, i) => {
     const kind = COLUMN_BY_KEY[c.column].kind;
     const value = c.value.trim();
     const literal = kind === 'number' ? value : `'${value.replaceAll("'", "''")}'`;
     const predicate = c.operator === 'contains'
       ? `${c.column} ILIKE '%${value.replaceAll("'", "''")}%'`
       : `${c.column} ${c.operator === '!=' ? '<>' : c.operator} ${literal}`;
-    lines.push(`${i === 0 ? 'WHERE' : '  AND'} ${predicate}`);
+    return `${i === 0 ? 'WHERE' : '  AND'} ${predicate}`;
   });
-
-  if (spec.orderBy) lines.push(`ORDER BY ${spec.orderBy.column} ${spec.orderBy.direction.toUpperCase()}`);
-  if (spec.limit !== null) lines.push(`LIMIT ${spec.limit}`);
-  return lines.join('\n') + ';';
 }
 
 export function toCsv(rows: readonly Row[], columns: readonly ColumnKey[]): string {

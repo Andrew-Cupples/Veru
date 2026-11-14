@@ -26,6 +26,12 @@
       "port": 5174
     },
     {
+      "name": "web-alt-port-2 (UI on 5175, needs market-api running)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@veru/web", "--", "--port", "5175"],
+      "port": 5175
+    },
+    {
       "name": "ledger",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "ledger"],

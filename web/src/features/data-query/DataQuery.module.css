@@ -605,3 +605,22 @@
     text-align: left;
   }
 }
+
+/* ---------- Shared bits added with Reports ---------- */
+
+.bulk {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.bulkDivider {
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+}
+
+.linkButton[aria-disabled='true'] {
+  color: var(--ink-faint);
+  cursor: default;
+  text-decoration: none;
+}

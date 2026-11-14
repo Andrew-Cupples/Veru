@@ -4,6 +4,7 @@ import styles from './AppLayout.module.css';
 
 const NAV = [
   { to: '/', label: 'Raw data', end: true },
+  { to: '/reports', label: 'Reports', end: false },
   { to: '/ledger', label: 'Prompt ledger', end: false },
   { to: '/personalize', label: 'Personalize', end: false },
 ] as const;

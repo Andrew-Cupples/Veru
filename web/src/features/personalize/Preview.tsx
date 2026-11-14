@@ -1,8 +1,8 @@
 import type { Theme } from '../../theme/theme';
 import type { ColorScheme } from '../../theme/tokens';
 import { scopeStyle } from './scope';
-// The preview uses the real Raw data classes, so what you see here is what that page renders.
-import raw from '../raw-data/RawData.module.css';
+// The preview uses the shared data page classes (Raw data, Reports), so what you see here is what that page renders.
+import raw from '../data-query/DataQuery.module.css';
 import styles from './Personalize.module.css';
 
 /** Real UI pieces painted in one theme and scheme, independent of what the app currently shows. */

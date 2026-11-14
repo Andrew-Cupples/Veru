@@ -1,5 +1,5 @@
-import { COLUMN_BY_KEY, type ColumnKey, type QuerySpec, type Row } from './query';
-import styles from './RawData.module.css';
+import { COLUMN_BY_KEY, type ColumnKey, type QuerySpec, type Row } from '../data-query/query';
+import styles from '../data-query/DataQuery.module.css';
 
 const price = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const integer = new Intl.NumberFormat();
