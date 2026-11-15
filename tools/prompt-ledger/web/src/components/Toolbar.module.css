@@ -1,10 +1,11 @@
 .toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 16px;
-  height: 52px;
-  padding: 0 12px;
+  gap: 4px 16px;
+  min-height: 52px;
+  padding: 10px 12px;
   background: var(--pl-surface);
   border-bottom: 1px solid var(--pl-rule);
   flex-shrink: 0;
@@ -12,6 +13,7 @@
 
 .group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   min-width: 0;

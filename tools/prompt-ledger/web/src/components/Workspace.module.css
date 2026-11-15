@@ -51,20 +51,28 @@
     position: relative;
   }
 
-  .panes > :not(main) {
+  .panes > :not(.documentScroll) {
     position: absolute;
     inset-block: 0;
     z-index: 5;
     box-shadow: var(--pl-paper-shadow);
   }
 
-  .panes > :first-child:not(main) {
+  .panes > :first-child:not(.documentScroll) {
     left: 0;
     width: min(var(--pl-pane-outline), 85%);
   }
 
-  .panes > :last-child:not(main) {
+  .panes > :last-child:not(.documentScroll) {
     right: 0;
     width: min(var(--pl-pane-annotations), 92%);
+  }
+}
+
+/* Very narrow (or heavily zoomed): an open side pane takes the full width, as a sheet over the document. */
+@container pl-workspace (max-width: 480px) {
+  .panes > :first-child:not(.documentScroll),
+  .panes > :last-child:not(.documentScroll) {
+    width: 100%;
   }
 }

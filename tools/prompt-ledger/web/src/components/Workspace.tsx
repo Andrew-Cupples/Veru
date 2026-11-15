@@ -19,6 +19,8 @@ interface WorkspaceProps {
 
 /** Matches the container query in Workspace.module.css. */
 const NARROW_WIDTH = 1100;
+/** Below this the annotation pane starts closed; it would cover most of the document. */
+const VERY_NARROW_WIDTH = 640;
 
 const isTypingTarget =(el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
@@ -43,11 +45,15 @@ export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
   const [showOutline, setShowOutline] = useState(true);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
-  // In a narrow host, start with the outline tucked away so the document stays readable.
-  useLayoutEffect(() => {
-    if ((workspaceRef.current?.clientWidth ?? Infinity) < NARROW_WIDTH) setShowOutline(false);
-  }, []);
   const [showAnnotations, setShowAnnotations] = useState(true);
+
+  // In a narrow host, start with the outline tucked away so the document stays readable. When very
+  // narrow (a phone, or the desktop zoomed to 300%+), the notes pane would cover the document too.
+  useLayoutEffect(() => {
+    const width = workspaceRef.current?.clientWidth ?? Infinity;
+    if (width < NARROW_WIDTH) setShowOutline(false);
+    if (width < VERY_NARROW_WIDTH) setShowAnnotations(false);
+  }, []);
 
   const currentId = pinnedId ?? activeId ?? ids[0] ?? null;
   const currentIndex = currentId == null ? -1 : ids.indexOf(currentId);

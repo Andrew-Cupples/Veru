@@ -325,8 +325,10 @@
 
 .toolbarActions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
+  min-width: 0;
 }
 
 .toolbarActions button:disabled {
@@ -748,7 +750,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .library {
-    position: static;
+    /* Relative, not static: it stays the containing block for .libraryHighlight, which is placed inside it. */
+    position: relative;
     max-height: none;
   }
 }

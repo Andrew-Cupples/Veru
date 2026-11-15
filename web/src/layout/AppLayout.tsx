@@ -31,6 +31,8 @@ export function AppLayout() {
   useEffect(() => {
     if (lastPath.current === pathname) return;
     lastPath.current = pathname;
+    // When zoomed in, the whole document scrolls (see the reflow rules in AppLayout.module.css): start the new page at its top.
+    if (document.scrollingElement && document.scrollingElement.scrollTop > 0) window.scrollTo({ top: 0 });
     mainRef.current?.focus({ preventScroll: true });
   }, [pathname]);
 
