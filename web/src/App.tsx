@@ -25,13 +25,14 @@ export function App() {
           <BrowserRouter useTransitions={false}>
             <Routes>
               <Route element={<AppLayout />}>
-                <Route index element={<RawDataPage />} />
+                <Route index element={<Navigate to="/reports" replace />} />
                 <Route path="reports" element={<ReportsPage />} />
+                <Route path="raw-data" element={<RawDataPage />} />
                 <Route path="compare" element={<ComparePage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="ledger" element={<ThemedLedger queryClient={queryClient} />} />
                 <Route path="personalize" element={<PersonalizePage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/reports" replace />} />
               </Route>
             </Routes>
           </BrowserRouter>

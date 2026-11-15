@@ -5,8 +5,8 @@ import { usePageTracking } from '../analytics/autoTrack';
 import styles from './AppLayout.module.css';
 
 const NAV = [
-  { to: '/', label: 'Raw data', end: true },
   { to: '/reports', label: 'Reports', end: false },
+  { to: '/raw-data', label: 'Raw data', end: false },
   { to: '/compare', label: 'Compare', end: false },
   { to: '/analytics', label: 'Analytics', end: false },
   { to: '/ledger', label: 'Prompt ledger', end: false },

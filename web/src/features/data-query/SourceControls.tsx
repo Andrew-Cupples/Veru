@@ -29,7 +29,7 @@ export function Clause({ keyword, children }: { keyword: string; children: React
 }
 
 /** Symbol, interval, range, pre/post and Run. Place inside a form whose onSubmit is `ds.submit`. */
-export function SourceFields({ ds, hint = true }: { ds: DataSource; hint?: boolean }) {
+export function SourceFields({ ds }: { ds: DataSource }) {
   const ids = useId();
   const { draft, ready, running, symbolError, symbolRef } = ds;
   const intervals = ds.options.data?.intervals ?? [];
@@ -67,7 +67,7 @@ export function SourceFields({ ds, hint = true }: { ds: DataSource; hint?: boole
               onMatches={ds.learnMatches}
               keyShortcut="/"
               invalid={symbolError}
-              describedBy={[symbolError && `${ids}-symbol-error`, hint && `${ids}-symbol-hint`].filter(Boolean).join(' ') || undefined}
+              describedBy={symbolError ? `${ids}-symbol-error` : undefined}
             />
             <FavouriteToggle ds={ds} />
           </span>
@@ -114,14 +114,6 @@ export function SourceFields({ ds, hint = true }: { ds: DataSource; hint?: boole
       {symbolError && (
         <p id={`${ids}-symbol-error`} className={styles.fieldError} role="alert">
           Enter a stock to query, like TSLA.
-        </p>
-      )}
-      {hint && (
-        <p id={`${ids}-symbol-hint`} className={styles.hint}>
-          Type a ticker or company name for suggestions. Stocks, ETFs, indexes (^GSPC), crypto (BTC-USD) and currencies
-          (EURUSD=X). Interval, range and pre/post changes re-run automatically.
-          {selectedInterval?.maxLookbackDays != null &&
-            ` Bars of ${selectedInterval.label} reach back ${selectedInterval.maxLookbackDays} days.`}
         </p>
       )}
     </>

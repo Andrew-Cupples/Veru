@@ -7,7 +7,9 @@
     "tools/prompt-ledger/web"
   ],
   "scripts": {
-    "dev": "concurrently --names market,ledger,web --prefix-colors green,blue,magenta \"npm:api\" \"npm:ledger:api\" \"npm:web -- --open\"",
+    "start": "node scripts/start.mjs",
+    "stop": "node scripts/stop.mjs",
+    "dev": "node scripts/start.mjs",
     "api": "dotnet run --project backend/src/Veru.Api --launch-profile http",
     "web": "npm run dev -w @veru/web",
     "test": "dotnet test backend && npm run check -w @veru/web",

@@ -55,9 +55,6 @@ export function Preview({ theme, scheme }: { theme: Theme; scheme: ColorScheme }
             </button>
           </div>
         </div>
-        <div className={raw.sql}>
-          <pre>SELECT * FROM bars WHERE volume &gt; 1000</pre>
-        </div>
       </div>
 
       <div className={raw.tableWrap} style={{ maxHeight: 'none' }}>
