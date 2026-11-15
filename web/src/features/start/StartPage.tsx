@@ -19,7 +19,7 @@ export function StartPage() {
     <div className={styles.page}>
       <header className={styles.hero}>
         <h1>
-          Stock in. <span className={styles.accent}>Charts out.</span>
+          Stocks in. <span className={styles.accent}>Charts out.</span>
         </h1>
         <div className={styles.quick} role="group" aria-label="Open a stock in Reports">
           <span className={styles.quickLabel} aria-hidden="true">
