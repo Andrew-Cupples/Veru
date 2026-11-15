@@ -18,7 +18,7 @@ export function Preview({ theme, scheme }: { theme: Theme; scheme: ColorScheme }
           <span className={raw.keyword}>FROM</span>
           <div className={raw.fromRow}>
             <label className={raw.field}>
-              <span className={raw.fieldLabel}>Symbol</span>
+              <span className={raw.fieldLabel}>Stock</span>
               <input className={`${raw.input} ${raw.symbolInput}`} defaultValue="AAPL" />
             </label>
             <label className={raw.field}>

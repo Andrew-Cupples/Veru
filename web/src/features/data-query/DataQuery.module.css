@@ -624,3 +624,121 @@
   cursor: default;
   text-decoration: none;
 }
+
+/* ---------- Symbol picker: autocomplete, favourite star, quick switch ---------- */
+
+.symbolGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.combo {
+  position: relative;
+}
+
+/* The editor card clips its corners; let the suggestions hang out of it while open. */
+.card:has(.combo[data-open='true']) {
+  overflow: visible;
+}
+
+.comboPopup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  width: min(440px, calc(100vw - 32px));
+  background: var(--surface-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.comboPopup[hidden] {
+  display: none;
+}
+
+.comboList {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.comboList:empty {
+  display: none;
+}
+
+.comboOption {
+  display: grid;
+  grid-template-columns: minmax(64px, auto) minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.comboOption[aria-selected='true'] {
+  background: var(--accent-soft);
+  /* Not colour alone: a bar marks the highlighted option too. */
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.comboSymbol {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.comboName {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comboMeta {
+  max-width: 150px;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comboStatus {
+  margin: 0;
+  padding: 6px 12px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.comboList:empty + .comboStatus {
+  border-top: none;
+}
+
+.starButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  background: none;
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.starButton:hover {
+  border-color: var(--rule-strong);
+  color: var(--accent);
+}
+
+.starButton[aria-pressed='true'] {
+  color: var(--accent);
+}

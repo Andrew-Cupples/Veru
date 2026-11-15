@@ -14,4 +14,7 @@ public sealed class MarketDataOptions
 
     /// <summary>How long identical queries are served from memory. Keeps repeat queries off Yahoo's rate limit.</summary>
     public TimeSpan CacheDuration { get; set; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>How long symbol search results are reused. Names and tickers rarely change, so this can be long.</summary>
+    public TimeSpan SearchCacheDuration { get; set; } = TimeSpan.FromHours(6);
 }

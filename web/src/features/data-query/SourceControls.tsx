@@ -2,6 +2,7 @@ import { useId, useRef, useState, type ReactNode } from 'react';
 import type { IntervalOption, PriceSeries, RangeOption } from '../../api/client';
 import { ApiError } from '../../api/client';
 import { COLUMNS, CONDITION_COLUMN_BY_KEY, OPERATORS_BY_KIND, isActive, type ColumnDef, type Condition, type ConditionColumn, type Operator } from './query';
+import { SymbolCombobox } from './SymbolCombobox';
 import type { DataSource } from './useDataSource';
 import styles from './DataQuery.module.css';
 
@@ -48,29 +49,29 @@ export function SourceFields({ ds, hint = true }: { ds: DataSource; hint?: boole
   return (
     <>
       <div className={styles.fromRow}>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Symbol</span>
-          <input
-            ref={symbolRef}
-            className={`${styles.input} ${styles.symbolInput}`}
-            value={draft.symbol}
-            onChange={(e) => ds.setDraft({ ...draft, symbol: e.target.value.toUpperCase() })}
-            placeholder="TSLA"
-            maxLength={20}
-            spellCheck={false}
-            autoComplete="off"
-            list={`${ids}-recent`}
-            aria-keyshortcuts="/"
-            aria-required="true"
-            aria-invalid={symbolError}
-            aria-describedby={[symbolError && `${ids}-symbol-error`, hint && `${ids}-symbol-hint`].filter(Boolean).join(' ') || undefined}
-          />
-          <datalist id={`${ids}-recent`}>
-            {ds.recent.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-        </label>
+        <div className={styles.field}>
+          <label htmlFor={`${ids}-symbol`} className={styles.fieldLabel}>
+            Stock
+          </label>
+          <span className={styles.symbolGroup}>
+            <SymbolCombobox
+              id={`${ids}-symbol`}
+              inputRef={symbolRef}
+              className={`${styles.input} ${styles.symbolInput}`}
+              value={draft.symbol}
+              onChange={(symbol) => ds.setDraft({ ...draft, symbol })}
+              onPick={ds.switchTo}
+              favourites={ds.favourites}
+              recent={ds.recent}
+              names={ds.names}
+              onMatches={ds.learnMatches}
+              keyShortcut="/"
+              invalid={symbolError}
+              describedBy={[symbolError && `${ids}-symbol-error`, hint && `${ids}-symbol-hint`].filter(Boolean).join(' ') || undefined}
+            />
+            <FavouriteToggle ds={ds} />
+          </span>
+        </div>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Interval</span>
           <select className={styles.input} value={draft.interval} disabled={!ready} onChange={(e) => changeInterval(e.target.value)}>
@@ -112,18 +113,37 @@ export function SourceFields({ ds, hint = true }: { ds: DataSource; hint?: boole
       </div>
       {symbolError && (
         <p id={`${ids}-symbol-error`} className={styles.fieldError} role="alert">
-          Enter a symbol to query, like TSLA.
+          Enter a stock to query, like TSLA.
         </p>
       )}
       {hint && (
         <p id={`${ids}-symbol-hint`} className={styles.hint}>
-          Stocks, ETFs, indexes (^GSPC), crypto (BTC-USD) and currencies (EURUSD=X). Interval, range and pre/post
-          changes re-run automatically.
+          Type a ticker or company name for suggestions. Stocks, ETFs, indexes (^GSPC), crypto (BTC-USD) and currencies
+          (EURUSD=X). Interval, range and pre/post changes re-run automatically.
           {selectedInterval?.maxLookbackDays != null &&
             ` Bars of ${selectedInterval.label} reach back ${selectedInterval.maxLookbackDays} days.`}
         </p>
       )}
     </>
+  );
+}
+
+/** Star for the loaded stock: favourites come first in suggestions and start the comparison on Compare. */
+function FavouriteToggle({ ds }: { ds: DataSource }) {
+  const symbol = ds.source.symbol;
+  if (!symbol) return null;
+  const on = ds.favourites.includes(symbol);
+  return (
+    <button
+      type="button"
+      className={styles.starButton}
+      aria-pressed={on}
+      aria-label={`Favourite ${symbol}`}
+      title={on ? `Remove ${symbol} from favourites` : `Add ${symbol} to favourites`}
+      onClick={() => ds.toggleFavourite(symbol)}
+    >
+      <span aria-hidden="true">{on ? '★' : '☆'}</span>
+    </button>
   );
 }
 
@@ -390,7 +410,7 @@ export function SeriesGate({ ds, children }: { ds: DataSource; children: (data: 
   if (!source.symbol) {
     return (
       <div className={styles.empty}>
-        <p id="quick-picks-label">Enter a symbol and press Enter, or pick one to load it now:</p>
+        <p id="quick-picks-label">Enter a stock and press Enter, or pick one to load it now:</p>
         <div className={styles.chips} role="group" aria-labelledby="quick-picks-label">
           {ds.picks.map((symbol) => (
             <button key={symbol} type="button" className={styles.chip} onClick={() => ds.run({ ...ds.draft, symbol })}>
@@ -404,7 +424,7 @@ export function SeriesGate({ ds, children }: { ds: DataSource; children: (data: 
   if (series.isError) {
     return (
       <div className={styles.alert} role="alert">
-        <strong>{series.error instanceof ApiError && series.error.status === 404 ? 'Symbol not found. ' : 'Query failed. '}</strong>
+        <strong>{series.error instanceof ApiError && series.error.status === 404 ? 'Stock not found. ' : 'Query failed. '}</strong>
         {series.error.message}
         <button type="button" className={styles.linkButton} onClick={() => series.refetch()}>
           Try again

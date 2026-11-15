@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
+import type { SymbolMatch } from '../../api/client';
 import { usePriceSeries, useQueryOptions } from '../../api/hooks';
-import { loadLastSource, loadRecentSymbols, rememberRun } from './memory';
+import { loadFavourites, loadLastSource, loadRecentSymbols, loadSymbolNames, rememberNames, rememberRun, toggleFavourite } from './memory';
 import { toRows, type Source } from './query';
 import { track } from '../../analytics/tracker';
 
@@ -40,12 +41,30 @@ export function useDataSource() {
   const source = readSource(params, lastSource);
   const [draft, setDraft] = useState<Source>(source);
   const [recent, setRecent] = useState(loadRecentSymbols);
+  const [favourites, setFavourites] = useState(loadFavourites);
+  const [storedNames, setNames] = useState(loadSymbolNames);
   const [symbolError, setSymbolError] = useState(false);
   const symbolRef = useRef<HTMLInputElement>(null);
 
   const options = useQueryOptions();
   const series = usePriceSeries(source.symbol ? source : null);
   const rows = useMemo(() => toRows(series.data?.bars ?? []), [series.data]);
+
+  const learnNames = useCallback((entries: readonly (readonly [string, string | null | undefined])[]) => {
+    const next = rememberNames(entries);
+    if (next) setNames(next);
+  }, []);
+  const learnMatches = useCallback((matches: readonly SymbolMatch[]) => learnNames(matches.map((m) => [m.symbol, m.name])), [learnNames]);
+
+  // A loaded instrument's name labels its shortcut and suggestion: straight away here, and saved for next time.
+  const instrument = series.data?.instrument;
+  const names = useMemo(
+    () => (instrument?.name && storedNames[instrument.symbol] !== instrument.name ? { ...storedNames, [instrument.symbol]: instrument.name } : storedNames),
+    [storedNames, instrument],
+  );
+  useEffect(() => {
+    if (instrument) rememberNames([[instrument.symbol, instrument.name]]);
+  }, [instrument]);
 
   // "/" jumps to the symbol box from anywhere on the page, the quickest way to change the data.
   useEffect(() => {
@@ -104,6 +123,15 @@ export function useDataSource() {
 
   const picks = [...recent, ...QUICK_PICKS.filter((s) => !recent.includes(s))].slice(0, 10);
 
+  /** Loads a symbol with the current interval, range and pre/post. */
+  const switchTo = (symbol: string) => run({ ...draft, symbol });
+
+  const toggleFav = (symbol: string) => {
+    const on = !favourites.includes(symbol);
+    track('query', { target: on ? 'add favourite' : 'remove favourite', subject: symbol });
+    setFavourites(toggleFavourite(symbol));
+  };
+
   return {
     /** What is loaded (from the URL). */
     source,
@@ -117,6 +145,11 @@ export function useDataSource() {
     symbolRef,
     recent,
     picks,
+    favourites,
+    toggleFavourite: toggleFav,
+    names,
+    learnMatches,
+    switchTo,
     options,
     series,
     rows,
