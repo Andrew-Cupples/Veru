@@ -26,6 +26,54 @@
         }
       }
     },
+    "/api/market/search": {
+      "get": {
+        "tags": [
+          "Market data"
+        ],
+        "summary": "Symbols matching a ticker or company name, most popular first, for autocomplete",
+        "operationId": "SearchSymbols",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SymbolSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/market/{symbol}/bars": {
       "get": {
         "tags": [
@@ -590,6 +638,56 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "SymbolMatchDto": {
+        "required": [
+          "symbol",
+          "name",
+          "exchange",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exchange": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SymbolSearchResponse": {
+        "required": [
+          "query",
+          "matches"
+        ],
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SymbolMatchDto"
+            }
           }
         }
       }

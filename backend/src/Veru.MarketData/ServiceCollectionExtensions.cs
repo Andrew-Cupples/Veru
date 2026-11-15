@@ -15,17 +15,25 @@ public static class ServiceCollectionExtensions
         services.AddOptions<MarketDataOptions>().Bind(configuration.GetSection(MarketDataOptions.SectionName));
         services.AddMemoryCache();
 
-        services.AddHttpClient<YahooChartClient>((sp, http) =>
+        static void ConfigureYahoo(IServiceProvider sp, HttpClient http)
         {
             var options = sp.GetRequiredService<IOptions<MarketDataOptions>>().Value;
             http.BaseAddress = options.YahooBaseUrl;
             http.Timeout = options.RequestTimeout;
             http.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
             http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
+        }
+
+        services.AddHttpClient<YahooChartClient>(ConfigureYahoo);
+        services.AddHttpClient<YahooSearchClient>(ConfigureYahoo);
 
         services.AddTransient<IMarketDataProvider>(sp => new CachingMarketDataProvider(
             sp.GetRequiredService<YahooChartClient>(),
+            sp.GetRequiredService<IMemoryCache>(),
+            sp.GetRequiredService<IOptions<MarketDataOptions>>()));
+
+        services.AddTransient<ISymbolSearch>(sp => new CachingSymbolSearch(
+            sp.GetRequiredService<YahooSearchClient>(),
             sp.GetRequiredService<IMemoryCache>(),
             sp.GetRequiredService<IOptions<MarketDataOptions>>()));
 

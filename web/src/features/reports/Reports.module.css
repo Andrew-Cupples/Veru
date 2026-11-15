@@ -90,7 +90,10 @@
 .libraryItem {
   position: relative;
   z-index: 1;
-  /* Room on the right for the compare button that sits over the row. */
+}
+
+/* Room on the right for the compare button that sits over the row, when the page compares reports. */
+.library[data-compare] .libraryItem {
   padding-right: 44px;
 }
 
@@ -748,4 +751,49 @@
     position: static;
     max-height: none;
   }
+}
+
+/* ---------- Compare grouped by report or stock ---------- */
+
+.compareGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.compareGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compareSymbolHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.compareSymbol {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.compareSymbolHead .libraryMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compareReportName {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.compareOpen {
+  margin-left: auto;
+  flex: none;
 }

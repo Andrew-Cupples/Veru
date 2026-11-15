@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Symbols matching a ticker or company name, most popular first, for autocomplete */
+        get: operations["SearchSymbols"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/market/{symbol}/bars": {
         parameters: {
             query?: never;
@@ -163,6 +180,16 @@ export interface components {
             message: string;
             page: null | string;
         };
+        SymbolMatchDto: {
+            symbol: string;
+            name: null | string;
+            exchange: null | string;
+            type: null | string;
+        };
+        SymbolSearchResponse: {
+            query: string;
+            matches: components["schemas"]["SymbolMatchDto"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -188,6 +215,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueryOptionsResponse"];
+                };
+            };
+        };
+    };
+    SearchSymbols: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SymbolSearchResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };

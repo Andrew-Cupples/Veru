@@ -60,7 +60,7 @@ export function RawDataPage() {
       <div className={styles.heading}>
         <h1>Raw data</h1>
         <p>
-          Query the bars the market data API returns, before any aggregation. Press <kbd>/</kbd> to jump to the symbol.
+          Query the bars the market data API returns, before any aggregation. Press <kbd>/</kbd> to jump to the stock.
         </p>
       </div>
 

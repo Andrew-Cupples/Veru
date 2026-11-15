@@ -15,6 +15,11 @@ interface Props {
   onCreate: (dims: 2 | 3) => void;
   /** A live miniature of each report on the current data, or null while there's nothing to draw. */
   thumbFor: (report: Report) => Thumb | null;
+  /** Pinning reports to compare them side by side (Analytics). Without it the list only opens reports. */
+  compare?: LibraryCompare;
+}
+
+export interface LibraryCompare {
   pins: readonly string[];
   onTogglePin: (id: string) => void;
   comparing: boolean;
@@ -22,7 +27,10 @@ interface Props {
 }
 
 /** Templates and the user's reports. One click opens a report; the chart draws straight away. */
-export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thumbFor, pins, onTogglePin, comparing, onCompare }: Props) {
+export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thumbFor, compare }: Props) {
+  const pins = compare?.pins ?? [];
+  const comparing = compare?.comparing ?? false;
+  const canCompare = pins.length >= 2;
   const navRef = useRef<HTMLElement>(null);
   const highlightRef = useRef<HTMLSpanElement>(null);
   // While comparing, no single report is "open", so nothing is marked current.
@@ -77,22 +85,24 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
             </span>
           </span>
         </button>
-        <button
-          type="button"
-          className={styles.compareToggle}
-          aria-pressed={pinned}
-          aria-label={`Compare ${r.name}`}
-          title={pinned ? 'In comparison: click to remove' : 'Add to comparison'}
-          onClick={() => onTogglePin(r.id)}
-        >
-          {pinned ? <CheckIcon /> : <PlusIcon />}
-        </button>
+        {compare && (
+          <button
+            type="button"
+            className={styles.compareToggle}
+            aria-pressed={pinned}
+            aria-label={`Compare ${r.name}`}
+            title={pinned ? 'In comparison: click to remove' : 'Add to comparison'}
+            onClick={() => compare.onTogglePin(r.id)}
+          >
+            {pinned ? <CheckIcon /> : <PlusIcon />}
+          </button>
+        )}
       </li>
     );
   };
 
   return (
-    <nav ref={navRef} className={styles.library} aria-label="Reports">
+    <nav ref={navRef} className={styles.library} aria-label="Reports" data-compare={compare ? '' : undefined}>
       <span ref={highlightRef} className={styles.libraryHighlight} aria-hidden="true" hidden />
       <div className={styles.newButtons}>
         <button type="button" className={dq.secondaryButton} onClick={() => onCreate(2)}>
@@ -103,22 +113,24 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
         </button>
       </div>
 
-      <div className={styles.compareBox}>
-        <button
-          type="button"
-          className={comparing ? dq.secondaryButton : dq.runButton}
-          disabled={!comparing && pins.length < 2}
-          aria-describedby={comparing || pins.length >= 2 ? 'compare-hint' : undefined}
-          onClick={() => onCompare(!comparing)}
-        >
-          {comparing ? 'Back to editor' : `Compare (${pins.length})`}
-        </button>
-        {(comparing || pins.length >= 2) && (
-          <p id="compare-hint" className={styles.compareHint}>
-            {comparing ? 'Hover one chart to see the same moment on the others. Add more with +.' : `${pins.length} reports ready to compare.`}
-          </p>
-        )}
-      </div>
+      {compare && (
+        <div className={styles.compareBox}>
+          <button
+            type="button"
+            className={comparing ? dq.secondaryButton : dq.runButton}
+            disabled={!comparing && !canCompare}
+            aria-describedby={comparing || canCompare ? 'compare-hint' : undefined}
+            onClick={() => compare.onCompare(!comparing)}
+          >
+            {comparing ? 'Back to editor' : `Compare (${pins.length})`}
+          </button>
+          {(comparing || canCompare) && (
+            <p id="compare-hint" className={styles.compareHint}>
+              {comparing ? 'Hover one chart to see the same moment on the others. Add more with +.' : `${pins.length} reports ready to compare.`}
+            </p>
+          )}
+        </div>
+      )}
 
       <h2 className={styles.libraryHeading} id="mine-heading">
         My reports

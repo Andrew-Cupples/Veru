@@ -12,7 +12,7 @@ public interface IMarketDataProvider
 public abstract class MarketDataException(string message, Exception? inner = null) : Exception(message, inner);
 
 public sealed class SymbolNotFoundException(string symbol)
-    : MarketDataException($"No market data found for '{symbol}'. Check the symbol; it may be misspelled or delisted.")
+    : MarketDataException($"No market data found for '{symbol}'. Check the ticker; it may be misspelled or delisted.")
 {
     public string Symbol { get; } = symbol;
 }

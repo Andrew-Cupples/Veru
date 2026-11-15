@@ -10,6 +10,7 @@ export type QueryOptions = Schemas['QueryOptionsResponse'];
 export type IntervalOption = Schemas['IntervalOptionDto'];
 export type RangeOption = Schemas['RangeOptionDto'];
 export type MarketSession = NonNullable<PriceBar['session']>;
+export type SymbolMatch = Schemas['SymbolMatchDto'];
 
 /** Typed client for the market data API. Same origin: the dev server proxies `/api/market`. */
 export const marketApi = createClient<paths>({ baseUrl: '' });

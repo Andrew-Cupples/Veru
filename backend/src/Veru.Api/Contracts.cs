@@ -46,6 +46,17 @@ public sealed record QueryOptionsResponse(
     string DefaultInterval,
     string DefaultRange);
 
+public sealed record SymbolSearchResponse(string Query, IReadOnlyList<SymbolMatchDto> Matches);
+
+public sealed record SymbolMatchDto(
+    string Symbol,
+    /// <summary>Company or instrument name, e.g. "Tesla, Inc.".</summary>
+    string? Name,
+    /// <summary>Display name of the exchange, e.g. "NASDAQ".</summary>
+    string? Exchange,
+    /// <summary>Equity, ETF, Index, Cryptocurrency, Currency, Futures...</summary>
+    string? Type);
+
 public sealed record IntervalOptionDto(string Code, string Label, bool Intraday, int? MaxLookbackDays);
 
 public sealed record RangeOptionDto(string Code, string Label, int? Days);

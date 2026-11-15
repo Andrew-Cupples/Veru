@@ -71,7 +71,7 @@ public sealed partial record ChartQuery(string Symbol, ChartInterval Interval, C
         var normalized = symbol?.Trim().ToUpperInvariant() ?? "";
         if (!SymbolPattern().IsMatch(normalized))
         {
-            errors["symbol"] = ["Enter a ticker symbol such as TSLA, BRK-B, ^GSPC or BTC-USD (up to 20 characters)."];
+            errors["symbol"] = ["Enter a stock ticker such as TSLA, BRK-B, ^GSPC or BTC-USD (up to 20 characters)."];
         }
 
         var chartInterval = string.IsNullOrWhiteSpace(interval) ? ChartInterval.FifteenMinutes : ChartInterval.Find(interval.Trim());

@@ -52,14 +52,22 @@ interface Props {
   gate: (content: () => ReactNode, mode: 'editor' | 'compare') => ReactNode;
   /** The page's polite status line, given what the chart area would say. */
   status: (text: string) => string;
+  /**
+   * Compare pinned reports side by side on this page's data (Analytics). Off on Reports, which has its own
+   * Compare page for comparing stocks.
+   */
+  compare?: boolean;
+  /** Shows a "Compare stocks" action in the toolbar that hands the open report to the Compare page. */
+  onCompareStocks?: (report: Report) => void;
 }
 
 /**
  * The report framework: a library of templates and saved reports, the chart canvas with export, the
  * Data / Style inspector, and the compare view. Pages supply the rows and their own FROM / WHERE card.
  */
-export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate, status: statusFor }: Props) {
+export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate, status: statusFor, compare = true, onCompareStocks }: Props) {
   const { active, templates } = reports;
+  const comparing = compare && reports.comparing;
   const colors = useThemeColors();
   const chartRef = useRef<ChartHandle>(null);
   // `arrived` is the side the shown panel slid in from; null at first so nothing animates on load.
@@ -79,10 +87,10 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   const calmOpen = useCalmSwitch();
   const { duration } = useMotion();
   const openReport = (id: string) => {
-    if (id === active.id && !reports.comparing) return;
+    if (id === active.id && !comparing) return;
     const order = [...reports.mine.map((r) => r.id), ...templates.map((t) => t.id)];
     // Leaving the compare view mounts a fresh canvas; no drift needed for that.
-    pendingDrift.current = !reports.comparing && calmOpen() ? (order.indexOf(id) > order.indexOf(active.id) ? 1 : -1) : null;
+    pendingDrift.current = !comparing && calmOpen() ? (order.indexOf(id) > order.indexOf(active.id) ? 1 : -1) : null;
     reports.open(id);
   };
 
@@ -109,15 +117,17 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   const compareItems = useMemo<CompareItem[]>(
     () =>
       pinned.map((r) => {
-        const reportRows = rowsFor(r.where);
+        const base = { key: r.id, report: r, symbol: null, label: r.name };
         const needs = !!CHART_BY_TYPE[r.chart].slots.series && !r.enc.series.length;
-        if (needs) return { report: r, shaped: null, label: r.name, message: 'Nothing to plot yet. Open it to pick values.' };
-        if (!reportRows.length) return { report: r, shaped: null, label: r.name, message: `No ${noun} match this report's conditions.` };
-        const s = shape(reportRows, r);
-        return { report: r, shaped: s, label: describe(r, pointCount(s), subject) };
+        if (needs) return { ...base, shaped: null, message: 'Nothing to plot yet. Open it to pick values.' };
+        const reportRows = rowsFor(r.where);
+        if (!reportRows.length) return { ...base, shaped: null, message: `No ${noun} match this report's conditions.` };
+        const sh = shape(reportRows, r);
+        return { ...base, shaped: sh, label: describe(r, pointCount(sh), subject) };
       }),
     [pinned, rowsFor, subject, noun],
   );
+
   useLayoutEffect(() => {
     const dir = pendingDrift.current;
     pendingDrift.current = null;
@@ -163,7 +173,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
       ? `Saved your changes as a new report, ${notice.name}, in My reports`
       : notice?.kind === 'deleted'
         ? `Deleted ${notice.report.name}`
-        : statusFor(reports.comparing ? `Comparing ${pinned.length} reports` : description);
+        : statusFor(comparing ? `Comparing ${pinned.length} reports` : description);
 
   return (
     <>
@@ -171,7 +181,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
         {status}
       </p>
 
-      <div className={reports.comparing ? `${styles.workspace} ${styles.workspaceCompare}` : styles.workspace}>
+      <div className={comparing ? `${styles.workspace} ${styles.workspaceCompare}` : styles.workspace}>
         <ReportLibrary
           mine={reports.mine}
           templates={templates}
@@ -179,17 +189,20 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
           onOpen={openReport}
           onCreate={reports.create}
           thumbFor={thumbFor}
-          pins={pins}
-          onTogglePin={togglePin}
-          comparing={reports.comparing}
-          onCompare={reports.setComparing}
+          compare={compare ? { pins, onTogglePin: togglePin, comparing, onCompare: reports.setComparing } : undefined}
         />
 
-        {reports.comparing ? (
+        {comparing ? (
           gate(
             () =>
               compareItems.length && colors ? (
-                <CompareView items={compareItems} colors={colors} onOpen={openReport} onUnpin={togglePin} />
+                <CompareView
+                  items={compareItems}
+                  colors={colors}
+                  heading={`Comparing ${pinned.length} report${pinned.length === 1 ? '' : 's'}`}
+                  onOpen={(item) => openReport(item.report.id)}
+                  onRemoveReport={togglePin}
+                />
               ) : (
                 <div className={dq.empty}>
                   Nothing to compare yet. Add reports with the + button in the list.{' '}
@@ -222,6 +235,11 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                   </span>
                 )}
                 <div className={styles.toolbarActions} role="group" aria-label="Report actions">
+                  {onCompareStocks && (
+                    <button type="button" className={dq.linkButton} onClick={() => onCompareStocks(active)}>
+                      Compare stocks
+                    </button>
+                  )}
                   <button type="button" className={dq.linkButton} onClick={reports.duplicate}>
                     Duplicate
                   </button>
