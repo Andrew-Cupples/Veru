@@ -65,7 +65,6 @@ export function SourceFields({ ds }: { ds: DataSource }) {
               recent={ds.recent}
               names={ds.names}
               onMatches={ds.learnMatches}
-              keyShortcut="/"
               invalid={symbolError}
               describedBy={symbolError ? `${ids}-symbol-error` : undefined}
             />

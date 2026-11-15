@@ -633,6 +633,11 @@
   overflow: hidden;
 }
 
+.comboPopup[data-align='end'] {
+  left: auto;
+  right: 0;
+}
+
 .comboPopup[hidden] {
   display: none;
 }

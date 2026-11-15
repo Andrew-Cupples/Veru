@@ -52,7 +52,7 @@ export type ConditionColumn = ColumnKey | AnalyticsColumnKey;
 
 export const ANALYTICS_COLUMNS: readonly ColumnDef<AnalyticsColumnKey>[] = [
   { key: 'event', label: 'event', kind: 'text', description: 'Kind of event', choices: EVENT_KINDS },
-  { key: 'page', label: 'page', kind: 'text', description: 'Page the event happened on', choices: ['Raw data', 'Reports', 'Analytics', 'Prompt ledger', 'Personalize'] },
+  { key: 'page', label: 'page', kind: 'text', description: 'Page the event happened on', choices: ['Start', 'Reports', 'Raw data', 'Compare', 'Analytics', 'Prompt ledger', 'Personalize'] },
   { key: 'target', label: 'control', kind: 'text', description: 'The button, control or action used' },
   { key: 'detail', label: 'detail', kind: 'text', description: 'Chart type, export format, status code...' },
   { key: 'subject', label: 'subject', kind: 'text', description: 'Report, symbol, theme or state' },

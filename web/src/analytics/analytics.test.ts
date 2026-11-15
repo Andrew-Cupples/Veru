@@ -106,7 +106,7 @@ describe('rows', () => {
   });
 
   it('labels pages by their nav name', () => {
-    expect(pageLabel('/')).toBe('Reports');
+    expect(pageLabel('/')).toBe('Start');
     expect(pageLabel('/raw-data')).toBe('Raw data');
     expect(pageLabel('/reports')).toBe('Reports');
     expect(pageLabel('/analytics')).toBe('Analytics');

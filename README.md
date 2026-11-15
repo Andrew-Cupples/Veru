@@ -28,7 +28,7 @@ window was closed. Set `VERU_NO_BROWSER=1` to skip opening the browser.
 Everything is reached through the one address, **http://localhost:5173**. Behind it the UI's dev server forwards `/api`
 calls to the market data API (:5080) and the Prompt Ledger API (:5180); you never need to open those directly.
 
-**Reports** is the home page: it builds 2D and 3D charts (Plotly) with templates and a style editor. **Raw data**
+The **Start** page shows the flow as a picture (pick a stock, choose a chart, compare stocks, export). **Reports** builds 2D and 3D charts (Plotly) with templates and a style editor. **Raw data**
 queries the same bars as a table, before any aggregation. **Analytics** charts how the app itself is used (clicks, reports, exports,
 page time, API latency, errors...) with the same report framework; events stay in the browser and nothing typed is recorded.
 The **Prompt ledger** is in the header.

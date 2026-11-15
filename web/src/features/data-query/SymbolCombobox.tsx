@@ -24,6 +24,8 @@ interface Props {
   ariaLabel?: string;
   keyShortcut?: string;
   className?: string;
+  /** Which edge of the input the suggestions line up with; 'end' for inputs near the right of the screen. */
+  align?: 'start' | 'end';
 }
 
 const SOURCE_LABEL: Record<Suggestion['source'], string> = { favourite: 'Favourite', recent: 'Recent', search: '' };
@@ -49,6 +51,7 @@ export function SymbolCombobox({
   ariaLabel,
   keyShortcut,
   className,
+  align = 'start',
 }: Props) {
   const listId = useId();
   const [open, setOpen] = useState(false);
@@ -158,7 +161,7 @@ export function SymbolCombobox({
         onBlur={close}
       />
       {/* Mouse down on the popup must not blur the input, or the list would close before the click lands. */}
-      <div className={styles.comboPopup} hidden={!shown} onMouseDown={(e) => e.preventDefault()}>
+      <div className={styles.comboPopup} data-align={align} hidden={!shown} onMouseDown={(e) => e.preventDefault()}>
         <ul id={listId} role="listbox" aria-label="Stock suggestions" className={styles.comboList}>
           {options.map((o, i) => (
             <li

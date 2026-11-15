@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { PromptLedger } from '@veru/prompt-ledger';
 import { AppLayout } from './layout/AppLayout';
+import { StartPage } from './features/start/StartPage';
 import { RawDataPage } from './features/raw-data/RawDataPage';
 import { PersonalizePage } from './features/personalize/PersonalizePage';
 import { ReportsPage } from './features/reports/ReportsPage';
@@ -25,14 +26,14 @@ export function App() {
           <BrowserRouter useTransitions={false}>
             <Routes>
               <Route element={<AppLayout />}>
-                <Route index element={<Navigate to="/reports" replace />} />
+                <Route index element={<StartPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="raw-data" element={<RawDataPage />} />
                 <Route path="compare" element={<ComparePage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="ledger" element={<ThemedLedger queryClient={queryClient} />} />
                 <Route path="personalize" element={<PersonalizePage />} />
-                <Route path="*" element={<Navigate to="/reports" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
           </BrowserRouter>
