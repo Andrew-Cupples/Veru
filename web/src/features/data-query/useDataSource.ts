@@ -8,6 +8,7 @@ import { track } from '../../analytics/tracker';
 
 const DEFAULT_INTERVAL = '15m';
 const DEFAULT_RANGE = '1mo';
+const MAX_RECENT = 8; // matches memory.ts
 const QUICK_PICKS = ['TSLA', 'AAPL', 'NVDA', 'SPY', '^GSPC', 'BTC-USD'];
 const SOURCE_PARAMS = ['symbol', 'interval', 'range', 'ext'] as const;
 
@@ -25,8 +26,9 @@ function readSource(params: URLSearchParams, last: Source | null): Source {
   };
 }
 
-const isTypingTarget = (el: EventTarget | null) =>
-  el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
+/** The recents list with `symbol` moved to the front (as rememberRun stores it). */
+const withFirst = (list: readonly string[], symbol: string) =>
+  symbol ? [symbol, ...list.filter((s) => s !== symbol)].slice(0, MAX_RECENT) : [...list];
 
 /**
  * Everything a data page needs to pick and load bars: the source in the URL, the draft being edited,
@@ -40,7 +42,7 @@ export function useDataSource() {
   const [lastSource] = useState(loadLastSource);
   const source = readSource(params, lastSource);
   const [draft, setDraft] = useState<Source>(source);
-  const [recent, setRecent] = useState(loadRecentSymbols);
+  const [recent, setRecent] = useState(() => withFirst(loadRecentSymbols(), source.symbol));
   const [favourites, setFavourites] = useState(loadFavourites);
   const [storedNames, setNames] = useState(loadSymbolNames);
   const [symbolError, setSymbolError] = useState(false);
@@ -66,17 +68,19 @@ export function useDataSource() {
     if (instrument) rememberNames([[instrument.symbol, instrument.name]]);
   }, [instrument]);
 
-  // "/" jumps to the symbol box from anywhere on the page, the quickest way to change the data.
+  // The source can change from outside the page's own fields (the menu bar's stock search, back/forward):
+  // show it in the inputs and remember it like a run, so recents and the next page pick it up.
+  const { symbol, interval, range, extendedHours } = source;
+  const [shownKey, setShownKey] = useState(`${symbol}|${interval}|${range}|${extendedHours}`);
+  const key = `${symbol}|${interval}|${range}|${extendedHours}`;
+  if (key !== shownKey) {
+    setShownKey(key);
+    setDraft({ symbol, interval, range, extendedHours });
+    if (symbol) setRecent((list) => withFirst(list, symbol));
+  }
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return;
-      e.preventDefault();
-      symbolRef.current?.focus();
-      symbolRef.current?.select();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, []);
+    if (symbol) rememberRun({ symbol, interval, range, extendedHours });
+  }, [symbol, interval, range, extendedHours]);
 
   const run = (next: Source = draft) => {
     const symbol = next.symbol.trim().toUpperCase();
@@ -84,7 +88,6 @@ export function useDataSource() {
     track('query', { target: 'run', subject: symbol, detail: `${ran.interval} · ${ran.range}${ran.extendedHours ? ' · pre/post' : ''}` });
     setDraft(ran);
     setSymbolError(false);
-    setRecent(rememberRun(ran));
     setParams((prev) => {
       const p = new URLSearchParams(prev);
       for (const key of SOURCE_PARAMS) p.delete(key);

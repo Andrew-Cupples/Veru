@@ -37,7 +37,7 @@ export function ReportsPage() {
       <div className={dq.card}>
         <form className={dq.editor} onSubmit={ds.submit} aria-label="Report data">
           <Clause keyword="FROM">
-            <SourceFields ds={ds} hint={false} />
+            <SourceFields ds={ds} />
           </Clause>
           <Clause keyword="WHERE">
             <ConditionsEditor where={active.where} onChange={(where) => reports.update((r) => ({ ...r, where }))} />

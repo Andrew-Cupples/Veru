@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
 import { InstrumentSummary } from '../data-query/InstrumentSummary';
 import { ApiAlert, GranularityNotice, SeriesGate, loadStatus } from '../data-query/SourceControls';
-import { COLUMNS, runQuery, toCsv, toSql, type ColumnKey, type QuerySpec } from '../data-query/query';
+import { COLUMNS, runQuery, toCsv, type ColumnKey, type QuerySpec } from '../data-query/query';
 import { useDataSource } from '../data-query/useDataSource';
 import { downloadText } from '../../lib/download';
 import { track } from '../../analytics/tracker';
@@ -13,15 +13,13 @@ import styles from '../data-query/DataQuery.module.css';
 
 export function RawDataPage() {
   const ds = useDataSource();
-  const { source, draft, series, rows } = ds;
+  const { source, series, rows } = ds;
   const [spec, setSpecState] = useState<QuerySpec>(loadSpec);
-  const [copied, setCopied] = useState(false);
 
   useDocumentTitle(source.symbol ? `${source.symbol} · Raw data` : 'Raw data');
 
   const result = useMemo(() => runQuery(rows, spec), [rows, spec]);
   const columns: ColumnKey[] = spec.select;
-  const sql = toSql(source.symbol ? source : draft, spec);
 
   const setSpec = (next: QuerySpec | ((s: QuerySpec) => QuerySpec)) =>
     setSpecState((current) => {
@@ -41,27 +39,13 @@ export function RawDataPage() {
     downloadText(toCsv(result.rows, columns), `${source.symbol}_${source.interval}_${source.range}.csv`, 'text/csv');
   };
 
-  const copySql = async () => {
-    try {
-      await navigator.clipboard.writeText(sql);
-      track('export', { target: 'SQL', detail: 'copied', subject: source.symbol });
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard can be blocked (permissions, insecure context); the SQL stays visible to copy by hand.
-    }
-  };
-
   // One polite message for screen readers describing what the page is doing now.
-  const status = copied ? 'SQL copied' : loadStatus(ds, `${result.rows.length.toLocaleString()} rows for ${source.symbol}`);
+  const status = loadStatus(ds, `${result.rows.length.toLocaleString()} rows for ${source.symbol}`);
 
   return (
     <div className={styles.page}>
       <div className={styles.heading}>
         <h1>Raw data</h1>
-        <p>
-          Query the bars the market data API returns, before any aggregation. Press <kbd>/</kbd> to jump to the stock.
-        </p>
       </div>
 
       <p className="sr-only" role="status">
@@ -72,12 +56,6 @@ export function RawDataPage() {
 
       <div className={styles.card}>
         <QueryEditor ds={ds} spec={spec} onSpecChange={setSpec} />
-        <div className={styles.sql}>
-          <pre aria-label="Equivalent SQL">{sql}</pre>
-          <button type="button" className={styles.linkButton} onClick={copySql} aria-label="Copy SQL">
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-        </div>
       </div>
 
       <SeriesGate ds={ds}>

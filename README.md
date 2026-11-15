@@ -9,13 +9,27 @@ A full-stack app over Yahoo Finance's public chart API: a .NET 10 market data AP
 
 ## Run
 
+From the repo root, in any terminal (PowerShell, cmd, bash, zsh):
+
 ```bash
-npm install
-npm run dev        # market API :5080, ledger API :5180, UI :5173 (opens the browser)
+npm start          # start everything; opens http://localhost:5173 when it's ready
 ```
 
-Open **http://localhost:5173**. **Raw data** is the home page. **Reports** builds 2D and 3D charts (Plotly) from the same
-data source, with templates and a style editor. **Analytics** charts how the app itself is used (clicks, reports, exports,
+```bash
+npm stop           # stop everything (or press Ctrl+C in the window running npm start)
+```
+
+That's all you need. `npm start` checks for Node 22+ and the .NET 10 SDK (and says where to get them if they're
+missing), installs packages on the first run, stops anything left over from an earlier run so ports are never
+"already in use", then waits until all servers are healthy before opening the browser. If a server crashes, the rest
+are stopped too, so it's never half-running. `npm stop` works from any other terminal, including after the original
+window was closed. Set `VERU_NO_BROWSER=1` to skip opening the browser.
+
+Everything is reached through the one address, **http://localhost:5173**. Behind it the UI's dev server forwards `/api`
+calls to the market data API (:5080) and the Prompt Ledger API (:5180); you never need to open those directly.
+
+The **Start** page shows the flow as a picture (pick a stock, choose a chart, compare stocks, export). **Reports** builds 2D and 3D charts (Plotly) with templates and a style editor. **Raw data**
+queries the same bars as a table, before any aggregation. **Analytics** charts how the app itself is used (clicks, reports, exports,
 page time, API latency, errors...) with the same report framework; events stay in the browser and nothing typed is recorded.
 The **Prompt ledger** is in the header.
 

@@ -64,10 +64,12 @@ export const toAnalyticsRows = (events: readonly AnalyticsEvent[]): AnalyticsRow
 
 /** Nav label for a path, used as the event's page. */
 export function pageLabel(pathname: string): string {
-  if (pathname === '/' || pathname === '') return 'Raw data';
+  if (pathname === '/' || pathname === '') return 'Start';
   const first = pathname.split('/')[1] ?? '';
   const known: Record<string, string> = {
     reports: 'Reports',
+    'raw-data': 'Raw data',
+    compare: 'Compare',
     analytics: 'Analytics',
     ledger: 'Prompt ledger',
     personalize: 'Personalize',

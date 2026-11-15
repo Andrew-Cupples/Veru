@@ -2,64 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "market-api-alt (port 5081, separate build output)",
-      "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "backend/src/Veru.Api", "--launch-profile", "http", "--artifacts-path", ".artifacts-alt", "--urls", "http://localhost:5081"],
-      "port": 5081
-    },
-    {
-      "name": "web-alt-api (UI on 5177, uses market-api-alt)",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "set MARKET_API=http://localhost:5081&& npm run dev -w @veru/web -- --port 5177"],
-      "port": 5177
-    },
-    {
       "name": "app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 5173
-    },
-    {
-      "name": "market-api",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "api"],
-      "port": 5080
-    },
-    {
-      "name": "web-only (needs market-api running)",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web"],
-      "port": 5173
-    },
-    {
-      "name": "web-alt-port (UI on 5174, needs market-api running)",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "@veru/web", "--", "--port", "5174"],
-      "port": 5174
-    },
-    {
-      "name": "web-alt-port-2 (UI on 5175, needs market-api running)",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "@veru/web", "--", "--port", "5175"],
-      "port": 5175
-    },
-    {
-      "name": "ledger",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "ledger"],
-      "port": 5181
-    },
-    {
-      "name": "ledger-api",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "ledger:api"],
-      "port": 5180
-    },
-    {
-      "name": "ledger-web",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "ledger:dev"],
-      "port": 5181
+      "runtimeArgs": ["start"],
+      "env": { "VERU_NO_BROWSER": "1" },
+      "port": 5173,
+      "autoPort": false
     }
   ]
 }

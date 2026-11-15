@@ -2,11 +2,13 @@ import { useEffect, useRef, type MouseEvent } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useMotion } from '../motion/MotionProvider';
 import { usePageTracking } from '../analytics/autoTrack';
+import { HeaderSearch } from './HeaderSearch';
 import styles from './AppLayout.module.css';
 
 const NAV = [
-  { to: '/', label: 'Raw data', end: true },
+  { to: '/', label: 'Start', end: true },
   { to: '/reports', label: 'Reports', end: false },
+  { to: '/raw-data', label: 'Raw data', end: false },
   { to: '/compare', label: 'Compare', end: false },
   { to: '/analytics', label: 'Analytics', end: false },
   { to: '/ledger', label: 'Prompt ledger', end: false },
@@ -50,7 +52,7 @@ export function AppLayout() {
       <header className={styles.header}>
         <span className={styles.brand}>
           <span className={styles.mark} aria-hidden="true" />
-          Veru
+          <span className={styles.brandName}>Veru</span>
         </span>
         <nav className={styles.nav} aria-label="Main">
           {NAV.map((item, index) => (
@@ -70,6 +72,7 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
+        <HeaderSearch />
       </header>
       <main id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
         <Outlet />

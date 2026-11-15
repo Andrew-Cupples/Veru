@@ -119,7 +119,6 @@ export function ComparePage() {
     <div className={dq.page}>
       <div className={dq.heading}>
         <h1>Compare</h1>
-        <p>The same reports across several stocks. Every report is drawn for every stock, over the same bars.</p>
       </div>
 
       {options.isError && (

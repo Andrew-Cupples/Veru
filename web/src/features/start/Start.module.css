@@ -1,0 +1,529 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4.5vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.accent {
+  background: linear-gradient(90deg, var(--accent), var(--keyword));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (forced-colors: active) {
+  .accent {
+    color: CanvasText;
+  }
+}
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.quickLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  margin-right: 4px;
+}
+
+.ticker {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--surface-raised);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 120ms, border-color 120ms, color 120ms, transform 120ms;
+}
+
+.ticker:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ---------- Flow ---------- */
+
+.flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 44px;
+  row-gap: 44px;
+}
+
+.stepItem {
+  position: relative;
+  display: flex;
+}
+
+.step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 16px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--rule);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 140ms, transform 140ms;
+}
+
+.step:hover {
+  border-color: var(--accent);
+}
+
+:global(:root[data-motion='on']) .step:hover {
+  transform: translateY(-3px);
+}
+
+.badge {
+  position: absolute;
+  top: -13px;
+  left: 16px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  box-shadow: 0 0 0 4px var(--desk);
+}
+
+.art {
+  height: 132px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  border: 1px solid var(--rule);
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepTitle {
+  font-weight: 650;
+  font-size: var(--text-md);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* Arrow between steps, sitting in the grid gap */
+.connector {
+  position: absolute;
+  top: 50%;
+  right: -42px;
+  width: 40px;
+  height: 16px;
+  transform: translateY(-50%);
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.connectorLine {
+  stroke-dasharray: 4 4;
+}
+
+:global(:root[data-motion='on']) .connectorLine {
+  animation: flow 900ms linear infinite;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -8;
+  }
+}
+
+/* ---------- Illustrations ---------- */
+
+.glyph {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.up {
+  stroke: var(--session-regular);
+  fill: var(--session-regular);
+}
+
+.down {
+  stroke: var(--danger);
+  fill: var(--danger);
+}
+
+/* Pick a stock */
+.pick {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fakeInput {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--ink-muted);
+  box-shadow: var(--focus-ring);
+}
+
+.typed {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.caret {
+  width: 1.5px;
+  height: 14px;
+  background: var(--accent);
+  margin-left: -4px;
+}
+
+:global(:root[data-motion='on']) .caret {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.fakeMenu {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.fakeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-muted);
+}
+
+.fakeOption[data-active] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.fakeOption b {
+  width: 34px;
+}
+
+.bar {
+  height: 5px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+/* Choose a chart */
+.chartArt {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  align-content: center;
+}
+
+.pickerCell {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink-muted);
+}
+
+.pickerCell svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pickerCell[data-active] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.candles {
+  width: 100%;
+  height: 100%;
+}
+
+.candles line {
+  stroke-width: 1.2;
+}
+
+/* Compare stocks */
+.compare {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spark {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+}
+
+.spark b {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink);
+}
+
+.spark svg {
+  width: 100%;
+  height: 20px;
+}
+
+.sparkLine {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkFill {
+  stroke: none;
+  opacity: 0.15;
+}
+
+/* Export */
+.export {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  padding: 5px 8px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--rule);
+}
+
+.row span {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ink-faint);
+  opacity: 0.5;
+}
+
+.row[data-head] span {
+  background: var(--keyword);
+  opacity: 0.8;
+}
+
+.files {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.file {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+/* ---------- More ---------- */
+
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tile:hover {
+  border-color: var(--accent);
+}
+
+.tileArt {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tileArt svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.swatches {
+  display: flex;
+}
+
+.swatches span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-left: -2px;
+  box-shadow: 0 0 0 1.5px var(--accent-soft);
+}
+
+/* ---------- Narrow screens: 2 columns, then a vertical flow ---------- */
+
+@media (max-width: 960px) {
+  .flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Step 2 -> 3 wraps a row; its arrow points down-left would be confusing, so hide it. */
+  .stepItem:nth-child(2) .connector {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 28px 16px 40px;
+  }
+
+  .flow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .connector,
+  .stepItem:nth-child(2) .connector {
+    display: block;
+    top: auto;
+    right: auto;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+  }
+}
