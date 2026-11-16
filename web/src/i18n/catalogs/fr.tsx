@@ -87,13 +87,15 @@ export const fr: Messages = {
     quickGroup: 'Ouvrir une action dans Rapports',
     try: 'Essayez',
     chartIn: (symbol: string) => `Tracer ${symbol} dans Rapports`,
-    howItWorks: 'Comment ça marche',
-    stepPick: 'Choisir une action',
-    stepChart: 'Choisir un graphique',
-    stepCompare: 'Comparer des actions',
-    stepExport: 'Exporter les données',
-    stepLabel: (step: number, title: string, page: string) => `Étape ${step}${nb}: ${title}. Ouvre ${page}.`,
-    more: 'Plus',
+    features: 'Fonctionnalités',
+    desc: {
+      reports: 'Tracez n’importe quelle action avec des modèles ou vos propres rapports, en 2D ou 3D.',
+      compare: 'Mettez actions et rapports côte à côte, avec des graphiques liés.',
+      rawData: 'Filtrez et triez les barres de prix, puis téléchargez-les en CSV.',
+      analytics: 'Voyez comment l’app est utilisée, depuis ce navigateur uniquement.',
+      personalize: 'Choisissez ou créez un thème, et réglez les animations à votre goût.',
+      ledger: 'Parcourez les prompts qui ont servi à créer cette app.',
+    },
   },
 
   source: {

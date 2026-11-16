@@ -84,13 +84,15 @@ export const pt: Messages = {
     quickGroup: 'Abrir uma ação em Relatórios',
     try: 'Experimente',
     chartIn: (symbol: string) => `Ver o gráfico de ${symbol} em Relatórios`,
-    howItWorks: 'Como funciona',
-    stepPick: 'Escolha uma ação',
-    stepChart: 'Escolha um gráfico',
-    stepCompare: 'Compare ações',
-    stepExport: 'Exporte os dados',
-    stepLabel: (step: number, title: string, page: string) => `Passo ${step}: ${title}. Abre ${page}.`,
-    more: 'Mais',
+    features: 'Recursos',
+    desc: {
+      reports: 'Crie gráficos de qualquer ação com modelos ou seus próprios relatórios, em 2D ou 3D.',
+      compare: 'Coloque ações e relatórios lado a lado, com gráficos vinculados.',
+      rawData: 'Filtre e ordene as barras de preço e baixe-as em CSV.',
+      analytics: 'Veja como o app é usado, apenas a partir deste navegador.',
+      personalize: 'Escolha ou crie um tema e ajuste as animações do seu jeito.',
+      ledger: 'Navegue pelos prompts usados para criar este app.',
+    },
   },
 
   source: {

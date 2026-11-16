@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
 import { useT } from '../../i18n/I18nProvider';
@@ -7,8 +7,9 @@ import type { ChartType } from '../reports/model';
 import styles from './Start.module.css';
 
 /**
- * Start page: the app's flow as pictures. Each step is a miniature of the real screen and a link to it,
- * so there is almost nothing to read. Illustrations are decorative; each card's link names the step.
+ * Start page: every area of the app as a card, side by side. They are separate tools, not steps, so no
+ * card leads to another. Each card is a miniature of the real screen and a link to it; illustrations are
+ * decorative, and the link's name is the page, described by its one-line summary.
  */
 
 const QUICK = ['TSLA', 'AAPL', 'NVDA', 'SPY', 'BTC-USD'];
@@ -25,7 +26,7 @@ export function StartPage() {
         </h1>
         <div className={styles.quick} role="group" aria-label={t.start.quickGroup}>
           <span className={styles.quickLabel} aria-hidden="true">
-            <ArrowGlyph /> {t.start.try}
+            {t.start.try}
           </span>
           {QUICK.map((s) => (
             <Link key={s} to={`/reports?symbol=${encodeURIComponent(s)}`} className={styles.ticker} aria-label={t.start.chartIn(s)} translate="no">
@@ -35,86 +36,38 @@ export function StartPage() {
         </div>
       </header>
 
-      <ol className={styles.flow} aria-label={t.start.howItWorks}>
-        <Step n={1} title={t.start.stepPick} to="/reports" cta={t.nav.reports} art={<PickArt />} />
-        <Step n={2} title={t.start.stepChart} to="/reports" cta={t.nav.reports} art={<ChartArt />} />
-        <Step n={3} title={t.start.stepCompare} to="/compare" cta={t.nav.compare} art={<CompareArt />} />
-        <Step n={4} title={t.start.stepExport} to="/raw-data" cta={t.nav.rawData} art={<ExportArt />} last />
-      </ol>
-
-      <section className={styles.more} aria-label={t.start.more}>
-        <Tile to="/analytics" title={t.nav.analytics} art={<AnalyticsArt />} />
-        <Tile to="/personalize" title={t.nav.personalize} art={<ThemeArt />} />
-        <Tile to="/ledger" title={t.nav.ledger} art={<LedgerArt />} />
-      </section>
+      <ul className={styles.features} aria-label={t.start.features}>
+        <Feature to="/reports" title={t.nav.reports} desc={t.start.desc.reports} art={<ChartArt />} />
+        <Feature to="/compare" title={t.nav.compare} desc={t.start.desc.compare} art={<CompareArt />} />
+        <Feature to="/raw-data" title={t.nav.rawData} desc={t.start.desc.rawData} art={<ExportArt />} />
+        <Feature to="/analytics" title={t.nav.analytics} desc={t.start.desc.analytics} art={<AnalyticsArt />} />
+        <Feature to="/personalize" title={t.nav.personalize} desc={t.start.desc.personalize} art={<ThemeArt />} />
+        <Feature to="/ledger" title={t.nav.ledger} desc={t.start.desc.ledger} art={<LedgerArt />} />
+      </ul>
     </div>
   );
 }
 
-function Step({ n, title, to, cta, art, last = false }: { n: number; title: string; to: string; cta: string; art: ReactNode; last?: boolean }) {
-  const t = useT();
+function Feature({ to, title, desc, art }: { to: string; title: string; desc: string; art: ReactNode }) {
+  const id = useId();
   return (
-    <li className={styles.stepItem}>
-      <Link to={to} className={styles.step} aria-label={t.start.stepLabel(n, title, cta)}>
-        <span className={styles.badge} aria-hidden="true">
-          {n}
-        </span>
+    <li className={styles.featureItem}>
+      <Link to={to} className={styles.feature} aria-labelledby={`${id}-title`} aria-describedby={`${id}-desc`}>
         <div className={styles.art} aria-hidden="true">
           {art}
         </div>
-        <span className={styles.stepTitle}>{title}</span>
-        <span className={styles.cta} aria-hidden="true">
-          {cta} <ArrowGlyph />
+        <span id={`${id}-title`} className={styles.featureTitle}>
+          {title}
+        </span>
+        <span id={`${id}-desc`} className={styles.featureDesc}>
+          {desc}
         </span>
       </Link>
-      {!last && (
-        <svg className={styles.connector} viewBox="0 0 40 16" aria-hidden="true" focusable="false">
-          <path className={styles.connectorLine} d="M2 8H32" />
-          <path d="M28 3l6 5-6 5" fill="none" />
-        </svg>
-      )}
     </li>
   );
 }
 
-function Tile({ to, title, art }: { to: string; title: string; art: ReactNode }) {
-  return (
-    <Link to={to} className={styles.tile}>
-      <span className={styles.tileArt} aria-hidden="true">
-        {art}
-      </span>
-      {title}
-    </Link>
-  );
-}
-
 /* ---------- Illustrations (decorative miniatures of the real screens) ---------- */
-
-function PickArt() {
-  return (
-    <div className={styles.pick}>
-      <div className={styles.fakeInput}>
-        <SearchGlyph />
-        <span className={styles.typed}>TSLA</span>
-        <span className={styles.caret} />
-      </div>
-      <div className={styles.fakeMenu}>
-        <div className={styles.fakeOption} data-active="true">
-          <b>TSLA</b>
-          <span className={styles.bar} style={{ width: '58%' }} />
-        </div>
-        <div className={styles.fakeOption}>
-          <b>TSM</b>
-          <span className={styles.bar} style={{ width: '42%' }} />
-        </div>
-        <div className={styles.fakeOption}>
-          <b>TSN</b>
-          <span className={styles.bar} style={{ width: '34%' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const PICKER: ChartType[] = ['line', 'candlestick', 'bar', 'scatter', 'heatmap', 'surface'];
 
@@ -191,62 +144,72 @@ function ExportArt() {
         ))}
       </div>
       <div className={styles.files}>
-        {['PNG', 'SVG', 'CSV'].map((f) => (
-          <span key={f} className={styles.file}>
-            <FileGlyph />
-            {f}
+        <span className={styles.file}>
+          <FileGlyph />
+          CSV
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const USAGE = [38, 62, 45, 80, 56, 92, 70];
+
+function AnalyticsArt() {
+  return (
+    <div className={styles.analytics}>
+      <div className={styles.kpiRow}>
+        {[['128', 72], ['4.2k', 48]].map(([value, width]) => (
+          <span key={value} className={styles.kpiChip}>
+            <b>{value}</b>
+            <span className={styles.bar} style={{ width: `${width}%` }} />
           </span>
+        ))}
+      </div>
+      <div className={styles.usage}>
+        {USAGE.map((h, i) => (
+          <span key={i} style={{ height: `${h}%` }} />
         ))}
       </div>
     </div>
   );
 }
 
-function AnalyticsArt() {
-  return (
-    <svg viewBox="0 0 24 24">
-      <path d="M4 20V13M9.3 20V8M14.6 20V11M20 20V4" strokeWidth="3" />
-    </svg>
-  );
-}
+const THEMES = [
+  { surface: 'var(--surface)', accent: 'var(--accent)' },
+  { surface: '#f6f4ef', accent: '#c2410c' },
+  { surface: '#0f172a', accent: '#38bdf8' },
+];
 
 function ThemeArt() {
   return (
-    <span className={styles.swatches}>
-      <span style={{ background: 'var(--accent)' }} />
-      <span style={{ background: 'var(--keyword)' }} />
-      <span style={{ background: 'var(--session-regular)' }} />
-    </span>
+    <div className={styles.themes}>
+      {THEMES.map((th, i) => (
+        <span key={i} className={styles.themeCard} data-active={i === 0 || undefined} style={{ background: th.surface }}>
+          <span className={styles.themeBar} style={{ background: th.accent }} />
+          <span className={styles.themeLine} />
+          <span className={styles.themeLine} style={{ width: '60%' }} />
+        </span>
+      ))}
+    </div>
   );
 }
 
 function LedgerArt() {
   return (
-    <svg viewBox="0 0 24 24">
-      <path d="M6 3h9l4 4v14H6z" />
-      <path d="M9 11h7M9 15h7M9 7h3" />
-    </svg>
+    <div className={styles.ledger}>
+      {[['72%', 'feat'], ['54%', 'fix'], ['66%', 'ui']].map(([width, tag]) => (
+        <div key={tag} className={styles.ledgerRow}>
+          <span className={styles.ledgerDot} />
+          <span className={styles.bar} style={{ width }} />
+          <span className={styles.ledgerTag}>{tag}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
 /* ---------- Glyphs ---------- */
-
-function ArrowGlyph() {
-  return (
-    <svg className={styles.glyph} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" />
-    </svg>
-  );
-}
-
-function SearchGlyph() {
-  return (
-    <svg className={styles.glyph} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-      <circle cx="7" cy="7" r="4.5" />
-      <path d="M10.5 10.5L14 14" />
-    </svg>
-  );
-}
 
 function FileGlyph() {
   return (

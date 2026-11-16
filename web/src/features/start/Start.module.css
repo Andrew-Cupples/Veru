@@ -46,9 +46,6 @@
 }
 
 .quickLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   color: var(--ink-muted);
   font-size: var(--text-sm);
   margin-right: 4px;
@@ -73,30 +70,27 @@
   color: var(--accent-ink);
 }
 
-/* ---------- Flow ---------- */
+/* ---------- Features: equal cards, no order between them ---------- */
 
-.flow {
+.features {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  column-gap: 44px;
-  row-gap: 44px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
-.stepItem {
-  position: relative;
+.featureItem {
   display: flex;
 }
 
-.step {
-  position: relative;
+.feature {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px 16px 14px;
+  gap: 8px;
+  padding: 16px 16px 18px;
   border-radius: var(--radius-md);
   border: 1px solid var(--rule);
   background: var(--surface-raised);
@@ -106,32 +100,17 @@
   transition: border-color 140ms, transform 140ms;
 }
 
-.step:hover {
+.feature:hover {
   border-color: var(--accent);
 }
 
-:global(:root[data-motion='on']) .step:hover {
+:global(:root[data-motion='on']) .feature:hover {
   transform: translateY(-3px);
-}
-
-.badge {
-  position: absolute;
-  top: -13px;
-  left: 16px;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 700;
-  font-size: var(--text-sm);
-  box-shadow: 0 0 0 4px var(--desk);
 }
 
 .art {
   height: 132px;
+  margin-bottom: 6px;
   border-radius: var(--radius-sm);
   background: var(--surface-sunken);
   border: 1px solid var(--rule);
@@ -142,48 +121,19 @@
   justify-content: center;
 }
 
-.stepTitle {
+.featureTitle {
   font-weight: 650;
   font-size: var(--text-md);
 }
 
-.cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: auto;
+.feature:hover .featureTitle {
   color: var(--accent);
+}
+
+.featureDesc {
+  color: var(--ink-muted);
   font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-/* Arrow between steps, sitting in the grid gap */
-.connector {
-  position: absolute;
-  top: 50%;
-  right: -42px;
-  width: 40px;
-  height: 16px;
-  transform: translateY(-50%);
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
-
-.connectorLine {
-  stroke-dasharray: 4 4;
-}
-
-:global(:root[data-motion='on']) .connectorLine {
-  animation: flow 900ms linear infinite;
-}
-
-@keyframes flow {
-  to {
-    stroke-dashoffset: -8;
-  }
+  line-height: 1.45;
 }
 
 /* ---------- Illustrations ---------- */
@@ -207,78 +157,6 @@
 .down {
   stroke: var(--danger);
   fill: var(--danger);
-}
-
-/* Pick a stock */
-.pick {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.fakeInput {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--accent);
-  background: var(--surface);
-  color: var(--ink-muted);
-  box-shadow: var(--focus-ring);
-}
-
-.typed {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  color: var(--ink);
-}
-
-.caret {
-  width: 1.5px;
-  height: 14px;
-  background: var(--accent);
-  margin-left: -4px;
-}
-
-:global(:root[data-motion='on']) .caret {
-  animation: blink 1s steps(1) infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-.fakeMenu {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--rule);
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.fakeOption {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  color: var(--ink-muted);
-}
-
-.fakeOption[data-active] {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.fakeOption b {
-  width: 34px;
 }
 
 .bar {
@@ -436,75 +314,135 @@
   font-weight: 600;
 }
 
-/* ---------- More ---------- */
-
-.more {
+/* Analytics */
+.analytics {
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.tile {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px 10px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--rule);
-  background: var(--surface-raised);
-  color: var(--ink);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.tile:hover {
-  border-color: var(--accent);
-}
-
-.tileArt {
+.kpiRow {
   display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.kpiChip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--keyword);
+}
+
+.kpiChip b {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink);
+}
+
+.usage {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.usage span {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent);
+  opacity: 0.8;
+}
+
+/* Personalize */
+.themes {
+  display: flex;
+  gap: 8px;
+}
+
+.themeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 58px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--rule-strong);
+}
+
+.themeCard[data-active] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.themeBar {
+  height: 10px;
+  border-radius: 3px;
+}
+
+.themeLine {
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  color: var(--ink-faint);
+  opacity: 0.6;
+}
+
+/* Prompt ledger */
+.ledger {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ledgerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  color: var(--ink-muted);
+}
+
+.ledgerRow + .ledgerRow {
+  border-top: 1px solid var(--rule);
+}
+
+.ledgerDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
+  background: var(--accent);
+}
+
+.ledgerTag {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
 }
 
-.tileArt svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 
-.swatches {
-  display: flex;
-}
-
-.swatches span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  margin-left: -2px;
-  box-shadow: 0 0 0 1.5px var(--accent-soft);
-}
-
-/* ---------- Narrow screens: 2 columns, then a vertical flow ---------- */
+/* ---------- Narrow screens: 2 columns, then 1 ---------- */
 
 @media (max-width: 960px) {
-  .flow {
+  .features {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Step 2 -> 3 wraps a row; its arrow points down-left would be confusing, so hide it. */
-  .stepItem:nth-child(2) .connector {
-    display: none;
   }
 }
 
@@ -513,17 +451,7 @@
     padding: 28px 16px 40px;
   }
 
-  .flow {
+  .features {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .connector,
-  .stepItem:nth-child(2) .connector {
-    display: block;
-    top: auto;
-    right: auto;
-    bottom: -32px;
-    left: 50%;
-    transform: translateX(-50%) rotate(90deg);
   }
 }
