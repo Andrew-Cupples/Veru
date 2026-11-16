@@ -473,7 +473,6 @@ export const fr: Messages = {
     reportName: 'Nom du rapport',
     templateNote: 'Modèle · les modifications créent une copie',
     actions: 'Actions du rapport',
-    compareStocks: 'Comparer des actions',
     exportImage: (format: string) => `Exporter l’image en ${format}`,
     exportCsv: 'Exporter les données du graphique en CSV',
     forked: (name: ReactNode) => (
@@ -489,8 +488,6 @@ export const fr: Messages = {
     pickOne: 'Choisissez au moins une valeur à tracer.',
     noRows: (noun: 'bars' | 'events') =>
       `${noun === 'bars' ? 'Aucune barre ne correspond' : 'Aucun événement ne correspond'} à ces conditions.`,
-    noRowsForReport: (noun: 'bars' | 'events') =>
-      `${noun === 'bars' ? 'Aucune barre ne correspond' : 'Aucun événement ne correspond'} aux conditions de ce rapport.`,
     dataTable: (rows: number, shown: number | null) =>
       `Tableau des données (${n(rows)} ${s(rows, 'ligne', 'lignes')}${shown == null ? '' : `, ${n(shown)} premières affichées`})`,
     dataOf: (name: string) => `Données de ${name}`,
@@ -498,15 +495,6 @@ export const fr: Messages = {
     settingsTabs: 'Réglages',
     dataTab: 'Données',
     styleTab: 'Style',
-    comparing: (count: number) => `Comparaison de ${n(count)} ${s(count, 'rapport', 'rapports')}`,
-    nothingToCompare: 'Rien à comparer pour l’instant. Ajoutez des rapports avec le bouton + de la liste.',
-    backToEditor: 'Revenir à l’éditeur',
-    compareCount: (count: number) => `Comparer (${n(count)})`,
-    compareHint: 'Survolez un graphique pour voir le même moment sur les autres. Ajoutez-en avec +.',
-    readyToCompare: (count: number) => `${n(count)} ${s(count, 'rapport prêt', 'rapports prêts')} à comparer.`,
-    compareItem: (name: string) => `Comparer ${name}`,
-    inComparison: `Dans la comparaison${nb}: cliquez pour retirer`,
-    addToComparison: 'Ajouter à la comparaison',
     chartType: 'Type de graphique',
     fields: 'Champs',
     combine: (rows: 'bars' | 'events', per: 'x' | 'cell') => `Combiner les ${rowsNoun[rows]} par ${per === 'x' ? 'X' : 'cellule'}`,

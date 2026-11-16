@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
-import { compareLink } from '../compare/compareState';
 import { ApiAlert, Clause, ConditionsEditor, GranularityNotice, SeriesGate, SourceFields, loadStatus } from '../data-query/SourceControls';
 import { filterRows, type Condition } from '../data-query/query';
 import { useDataSource } from '../data-query/useDataSource';
@@ -19,7 +17,6 @@ import { useT } from '../../i18n/I18nProvider';
 export function ReportsPage() {
   const ds = useDataSource();
   const reports = useReports();
-  const navigate = useNavigate();
   const { active } = reports;
   const t = useT();
 
@@ -54,8 +51,6 @@ export function ReportsPage() {
         subject={ds.source.symbol}
         noun="bars"
         status={(text) => loadStatus(ds, text)}
-        compare={false}
-        onCompareStocks={(report) => navigate(compareLink(report.id, ds.source))}
         gate={(content) => (
           <SeriesGate ds={ds}>
             {(data) => (

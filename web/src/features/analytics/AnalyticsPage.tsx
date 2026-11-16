@@ -20,7 +20,7 @@ import { formatNumber, useT } from '../../i18n/I18nProvider';
 const CONFIG: ReportConfig = {
   dataset: 'analytics',
   templates: ANALYTICS_TEMPLATES,
-  keys: { reports: 'veru.analytics.reports', active: 'veru.analytics.active', pins: 'veru.analytics.pinned' },
+  keys: { reports: 'veru.analytics.reports', active: 'veru.analytics.active' },
 };
 
 const HOUR = 3_600_000;
@@ -85,7 +85,7 @@ export function AnalyticsPage() {
     });
 
   const t = useT();
-  useDocumentTitle(`${reports.comparing ? t.nav.compare : active.name} · ${t.nav.analytics}`);
+  useDocumentTitle(`${active.name} · ${t.nav.analytics}`);
 
   const allRows = useMemo(() => toAnalyticsRows(events), [events]);
   const windowRows = useMemo(() => {
@@ -125,16 +125,14 @@ export function AnalyticsPage() {
               </p>
             </div>
           </Clause>
-          {!reports.comparing && (
-            <Clause keyword={t.query.where}>
-              <ConditionsEditor
-                where={active.where}
-                onChange={(where) => reports.update((r) => ({ ...r, where }))}
-                columns={ANALYTICS_COLUMNS}
-                defaultColumn="event"
-              />
-            </Clause>
-          )}
+          <Clause keyword={t.query.where}>
+            <ConditionsEditor
+              where={active.where}
+              onChange={(where) => reports.update((r) => ({ ...r, where }))}
+              columns={ANALYTICS_COLUMNS}
+              defaultColumn="event"
+            />
+          </Clause>
         </div>
         <TrackingBar paused={paused} count={events.length} onExport={exportEvents} hasEvents={windowRows.length > 0} />
       </div>

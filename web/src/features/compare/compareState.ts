@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { readJson, writeJson } from '../../lib/storage';
 import { isRecord, loadFavourites, loadLastSource } from '../data-query/memory';
-import type { Source } from '../data-query/query';
 import type { CompareGrouping } from '../reports/CompareView';
 import { loadActiveId } from '../reports/storage';
 import { TEMPLATES } from '../reports/templates';
@@ -89,23 +88,6 @@ export function toParams(state: CompareState): URLSearchParams {
   if (state.extendedHours) p.set(PARAMS.ext, '1');
   if (state.groupBy === 'stock') p.set(PARAMS.by, 'stock');
   return p;
-}
-
-/**
- * Link from the Reports editor: the report you're editing, on the stock you're looking at, added to your
- * last comparison (put first, so it is the one you see), over the editor's bars.
- */
-export function compareLink(reportId: string, source: Source): string {
-  const base = loadStored() ?? defaultState();
-  const next: CompareState = {
-    ...base,
-    stocks: source.symbol ? [source.symbol, ...base.stocks.filter((s) => s !== source.symbol)].slice(0, MAX_STOCKS) : base.stocks,
-    reports: [reportId, ...base.reports.filter((r) => r !== reportId)].slice(0, MAX_REPORTS),
-    interval: source.interval,
-    range: source.range,
-    extendedHours: source.extendedHours,
-  };
-  return `/compare?${toParams(next).toString()}`;
 }
 
 export function useCompareState() {

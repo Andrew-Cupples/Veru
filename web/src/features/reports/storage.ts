@@ -45,14 +45,13 @@ export function parseReport(v: unknown): Report | null {
   };
 }
 
-/** Where one page's reports are kept: Reports and Analytics each have their own list, open report and pins. */
+/** Where one page's reports are kept: Reports and Analytics each have their own list and open report. */
 export interface ReportStoreKeys {
   reports: string;
   active: string;
-  pins: string;
 }
 
-export const MARKET_KEYS: ReportStoreKeys = { ...KEYS, pins: 'veru.reports.pinned' };
+export const MARKET_KEYS: ReportStoreKeys = KEYS;
 
 export function reportStore(keys: ReportStoreKeys) {
   return {

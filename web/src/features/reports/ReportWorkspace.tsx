@@ -14,8 +14,6 @@ import { StylePanel } from './StylePanel';
 import { tableToCsv, toTable } from './table';
 import type { ReportsState } from './useReports';
 import { useThemeColors } from './themeColors';
-import { CompareView, type CompareItem } from './CompareView';
-import { usePins } from './pins';
 import { thumbnailOf, type Thumb } from './thumbGeometry';
 import { formatNumber, messages, useT } from '../../i18n/I18nProvider';
 import { en } from '../../i18n/catalogs/en';
@@ -54,26 +52,18 @@ interface Props {
   /** What one row is, for empty states. */
   noun: 'bars' | 'events';
   /** Wraps the chart area with the page's loading, error and empty states. */
-  gate: (content: () => ReactNode, mode: 'editor' | 'compare') => ReactNode;
+  gate: (content: () => ReactNode) => ReactNode;
   /** The page's polite status line, given what the chart area would say. */
   status: (text: string) => string;
-  /**
-   * Compare pinned reports side by side on this page's data (Analytics). Off on Reports, which has its own
-   * Compare page for comparing stocks.
-   */
-  compare?: boolean;
-  /** Shows a "Compare stocks" action in the toolbar that hands the open report to the Compare page. */
-  onCompareStocks?: (report: Report) => void;
 }
 
 /**
  * The report framework: a library of templates and saved reports, the chart canvas with export, the
- * Data / Style inspector, and the compare view. Pages supply the rows and their own FROM / WHERE card.
+ * Data / Style inspector. Comparing reports happens on the Compare page. Pages supply the rows and their own FROM / WHERE card.
  */
-export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate, status: statusFor, compare = true, onCompareStocks }: Props) {
+export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate, status: statusFor }: Props) {
   const t = useT();
   const { active, templates } = reports;
-  const comparing = compare && reports.comparing;
   const colors = useThemeColors();
   const chartRef = useRef<ChartHandle>(null);
   // `arrived` is the side the shown panel slid in from; null at first so nothing animates on load.
@@ -93,46 +83,17 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   const calmOpen = useCalmSwitch();
   const { duration } = useMotion();
   const openReport = (id: string) => {
-    if (id === active.id && !comparing) return;
+    if (id === active.id) return;
     const order = [...reports.mine.map((r) => r.id), ...templates.map((t) => t.id)];
-    // Leaving the compare view mounts a fresh canvas; no drift needed for that.
-    pendingDrift.current = !comparing && calmOpen() ? (order.indexOf(id) > order.indexOf(active.id) ? 1 : -1) : null;
+    pendingDrift.current = calmOpen() ? (order.indexOf(id) > order.indexOf(active.id) ? 1 : -1) : null;
     reports.open(id);
   };
-
-  const { pins, toggle } = usePins(reports.pinsKey);
-  const togglePin = (id: string) => {
-    const r = reports.mine.find((m) => m.id === id) ?? reports.templateById.get(id);
-    track('report', { target: pins.includes(id) ? 'remove from compare' : 'add to compare', detail: r ? trackedChart(r.chart) : '', subject: r?.name ?? '' });
-    toggle(id);
-  };
-  const pinned = useMemo(
-    () =>
-      pins
-        .map((id) => reports.mine.find((r) => r.id === id) ?? reports.templateById.get(id))
-        .filter((r): r is Report => r !== undefined),
-    [pins, reports.mine, reports.templateById],
-  );
 
   // Library thumbnails: each report's chart in miniature, on the current data. Templates only redraw when
   // the data changes; your own reports also when you edit them.
   const templateThumbs = useMemo(() => thumbsFor(templates, hasData, rowsFor), [templates, hasData, rowsFor]);
   const mineThumbs = useMemo(() => thumbsFor(reports.mine, hasData, rowsFor), [reports.mine, hasData, rowsFor]);
   const thumbFor = (r: Report) => (r.template ? templateThumbs : mineThumbs).get(r.id) ?? null;
-
-  const compareItems = useMemo<CompareItem[]>(
-    () =>
-      pinned.map((r) => {
-        const base = { key: r.id, report: r, symbol: null, label: r.name };
-        const needs = !!CHART_BY_TYPE[r.chart].slots.series && !r.enc.series.length;
-        if (needs) return { ...base, shaped: null, message: t.compare.nothingToPlot };
-        const reportRows = rowsFor(r.where);
-        if (!reportRows.length) return { ...base, shaped: null, message: t.reports.noRowsForReport(noun) };
-        const sh = shape(reportRows, r);
-        return { ...base, shaped: sh, label: describe(r, pointCount(sh), subject) };
-      }),
-    [pinned, rowsFor, subject, noun, t],
-  );
 
   useLayoutEffect(() => {
     const dir = pendingDrift.current;
@@ -179,7 +140,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
       ? t.reports.forkedStatus(notice.name)
       : notice?.kind === 'deleted'
         ? t.reports.deletedStatus(notice.report.name)
-        : statusFor(comparing ? t.reports.comparing(pinned.length) : description);
+        : statusFor(description);
 
   return (
     <>
@@ -187,7 +148,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
         {status}
       </p>
 
-      <div className={comparing ? `${styles.workspace} ${styles.workspaceCompare}` : styles.workspace}>
+      <div className={styles.workspace}>
         <ReportLibrary
           mine={reports.mine}
           templates={templates}
@@ -195,32 +156,8 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
           onOpen={openReport}
           onCreate={reports.create}
           thumbFor={thumbFor}
-          compare={compare ? { pins, onTogglePin: togglePin, comparing, onCompare: reports.setComparing } : undefined}
         />
 
-        {comparing ? (
-          gate(
-            () =>
-              compareItems.length && colors ? (
-                <CompareView
-                  items={compareItems}
-                  colors={colors}
-                  heading={t.reports.comparing(pinned.length)}
-                  onOpen={(item) => openReport(item.report.id)}
-                  onRemoveReport={togglePin}
-                />
-              ) : (
-                <div className={dq.empty}>
-                  {t.reports.nothingToCompare}{' '}
-                  <button type="button" className={dq.linkButton} onClick={() => reports.setComparing(false)}>
-                    {t.reports.backToEditor}
-                  </button>
-                </div>
-              ),
-            'compare',
-          )
-        ) : (
-          <>
             <section ref={canvasRef} className={styles.canvas} aria-labelledby="report-name-label">
               <div className={styles.toolbar}>
                 <label className={styles.nameField}>
@@ -241,11 +178,6 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                   </span>
                 )}
                 <div className={styles.toolbarActions} role="group" aria-label={t.reports.actions}>
-                  {onCompareStocks && (
-                    <button type="button" className={dq.linkButton} onClick={() => onCompareStocks(active)}>
-                      {t.reports.compareStocks}
-                    </button>
-                  )}
                   <button type="button" className={dq.linkButton} onClick={reports.duplicate}>
                     {t.common.duplicate}
                   </button>
@@ -345,7 +277,6 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                     )}
                   </>
                 ),
-                'editor',
               )}
             </section>
 
@@ -387,8 +318,6 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                 )}
               </div>
             </aside>
-          </>
-        )}
       </div>
     </>
   );

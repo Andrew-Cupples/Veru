@@ -469,7 +469,6 @@ export const pt: Messages = {
     reportName: 'Nome do relatório',
     templateNote: 'Modelo · alterações criam uma cópia',
     actions: 'Ações do relatório',
-    compareStocks: 'Comparar ações',
     exportImage: (format: string) => `Exportar imagem como ${format}`,
     exportCsv: 'Exportar os dados do gráfico como CSV',
     forked: (name: ReactNode) => <>Suas alterações foram salvas como um novo relatório, {name}, em Meus relatórios. O modelo não mudou.</>,
@@ -483,8 +482,6 @@ export const pt: Messages = {
     pickOne: 'Escolha pelo menos um valor para desenhar.',
     noRows: (noun: 'bars' | 'events') =>
       `${noun === 'bars' ? 'Nenhuma barra atende' : 'Nenhum evento atende'} a estas condições.`,
-    noRowsForReport: (noun: 'bars' | 'events') =>
-      `${noun === 'bars' ? 'Nenhuma barra atende' : 'Nenhum evento atende'} às condições deste relatório.`,
     dataTable: (rows: number, shown: number | null) =>
       `Tabela de dados (${n(rows)} ${s(rows, 'linha', 'linhas')}${shown == null ? '' : `, mostrando as primeiras ${n(shown)}`})`,
     dataOf: (name: string) => `Dados de ${name}`,
@@ -492,15 +489,6 @@ export const pt: Messages = {
     settingsTabs: 'Configurações',
     dataTab: 'Dados',
     styleTab: 'Estilo',
-    comparing: (count: number) => `Comparando ${n(count)} ${s(count, 'relatório', 'relatórios')}`,
-    nothingToCompare: 'Ainda não há nada para comparar. Adicione relatórios com o botão + da lista.',
-    backToEditor: 'Voltar ao editor',
-    compareCount: (count: number) => `Comparar (${n(count)})`,
-    compareHint: 'Passe o mouse sobre um gráfico para ver o mesmo momento nos outros. Adicione mais com +.',
-    readyToCompare: (count: number) => `${n(count)} ${s(count, 'relatório pronto', 'relatórios prontos')} para comparar.`,
-    compareItem: (name: string) => `Comparar ${name}`,
-    inComparison: 'Na comparação: clique para remover',
-    addToComparison: 'Adicionar à comparação',
     chartType: 'Tipo de gráfico',
     fields: 'Campos',
     combine: (rows: 'bars' | 'events', per: 'x' | 'cell') => `Combinar ${rowsNoun[rows]} por ${per === 'x' ? 'X' : 'célula'}`,
