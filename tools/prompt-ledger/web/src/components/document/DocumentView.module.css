@@ -271,6 +271,28 @@
   border: 1px solid color-mix(in srgb, var(--pl-star) 28%, transparent);
 }
 
+.noteField + .noteField {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--pl-star) 22%, transparent);
+}
+
+.noteField .chip {
+  height: 18px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.noteTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--pl-font-ui);
+}
+
 .noteText {
   margin: 0;
   font-family: var(--pl-font-ui);

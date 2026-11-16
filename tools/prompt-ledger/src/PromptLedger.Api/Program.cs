@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using PromptLedger.Api;
 using PromptLedger.Api.Endpoints;
 using PromptLedger.Core.Data;
+using PromptLedger.Core.Export;
 using PromptLedger.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,7 +32,15 @@ var isBuildTimeOpenApi = System.Reflection.Assembly.GetEntryAssembly()?.GetName(
 if (!isBuildTimeOpenApi)
 {
     await using var scope = app.Services.CreateAsyncScope();
-    await LedgerDatabase.InitializeAsync(scope.ServiceProvider.GetRequiredService<LedgerDbContext>());
+    var db = scope.ServiceProvider.GetRequiredService<LedgerDbContext>();
+    await LedgerDatabase.InitializeAsync(db);
+
+    // The database isn't committed; a fresh clone starts from the committed snapshot instead.
+    var imported = await new SnapshotImporter(db).ImportIfEmptyAsync(options.SnapshotPath);
+    if (imported > 0)
+    {
+        app.Logger.LogInformation("Loaded {Count} prompts from {Snapshot} into the empty ledger", imported, options.SnapshotPath);
+    }
 }
 
 app.UseExceptionHandler();

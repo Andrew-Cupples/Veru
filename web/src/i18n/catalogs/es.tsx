@@ -82,7 +82,6 @@ export const es: Messages = {
     headline: 'Entran acciones.',
     headlineAccent: 'Salen gráficos.',
     quickGroup: 'Abrir una acción en Informes',
-    try: 'Prueba',
     chartIn: (symbol: string) => `Graficar ${symbol} en Informes`,
     features: 'Funciones',
     desc: {

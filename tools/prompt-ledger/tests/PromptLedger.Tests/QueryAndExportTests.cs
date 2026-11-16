@@ -71,6 +71,57 @@ public class QueryAndExportTests
         Assert.Equal(md, await new PromptLogExporter(db).RenderAsync()); // deterministic
     }
 
+    [Fact]
+    public async Task Snapshot_round_trips_into_an_empty_database()
+    {
+        var first = Path.Combine(Path.GetTempPath(), $"snapshot-{Guid.NewGuid():N}.jsonl");
+        var second = Path.Combine(Path.GetTempPath(), $"snapshot-{Guid.NewGuid():N}.jsonl");
+        try
+        {
+            await using var source = await TestDb.CreateAsync();
+            await using (var db = source.Open())
+            {
+                await Seed(db);
+                var migration = await db.Prompts.FirstAsync(p => p.Sequence == 1);
+                var change = await db.ManualChanges.FirstAsync();
+                migration.TranscriptUuid = "uuid-1";
+                change.RelatedPromptId = migration.Id;
+                await db.SaveChangesAsync();
+                await new SnapshotExporter(db).WriteAsync(first);
+            }
+
+            await using var target = await TestDb.CreateAsync();
+            await using (var db = target.Open())
+            {
+                Assert.Equal(3, await new SnapshotImporter(db).ImportIfEmptyAsync(first));
+            }
+
+            await using (var db = target.Open())
+            {
+                await new SnapshotExporter(db).WriteAsync(second);
+                Assert.Equal(await File.ReadAllTextAsync(first), await File.ReadAllTextAsync(second));
+
+                // Imported rows are searchable (the FTS triggers ran) and a second import is a no-op.
+                Assert.Equal(1, await new PromptQuery(db).Build(new PromptFilter { Search = "flaky" }).CountAsync());
+                Assert.Equal(0, await new SnapshotImporter(db).ImportIfEmptyAsync(first));
+                Assert.Equal(3, await db.Prompts.CountAsync());
+            }
+        }
+        finally
+        {
+            File.Delete(first);
+            File.Delete(second);
+        }
+    }
+
+    [Fact]
+    public async Task Snapshot_import_skips_a_missing_file()
+    {
+        await using var testDb = await TestDb.CreateAsync();
+        await using var db = testDb.Open();
+        Assert.Equal(0, await new SnapshotImporter(db).ImportIfEmptyAsync(Path.Combine(Path.GetTempPath(), "no-such-snapshot.jsonl")));
+    }
+
     private static async Task Seed(PromptLedger.Core.Data.LedgerDbContext db)
     {
         var tags = new TagService(db);

@@ -80,7 +80,6 @@ export const en = {
     headline: 'Stocks in.',
     headlineAccent: 'Charts out.',
     quickGroup: 'Open a stock in Reports',
-    try: '',
     chartIn: (symbol: string) => `Chart ${symbol} in Reports`,
     features: 'Features',
     desc: {

@@ -25,9 +25,6 @@ export function StartPage() {
           {t.start.headline} <span className={styles.accent}>{t.start.headlineAccent}</span>
         </h1>
         <div className={styles.quick} role="group" aria-label={t.start.quickGroup}>
-          <span className={styles.quickLabel} aria-hidden="true">
-            {t.start.try}
-          </span>
           {QUICK.map((s) => (
             <Link key={s} to={`/reports?symbol=${encodeURIComponent(s)}`} className={styles.ticker} aria-label={t.start.chartIn(s)} translate="no">
               {s}

@@ -35,7 +35,9 @@ within 5 minutes) rather than stored twice. Hook failures never interrupt Claude
 ## Storage
 
 - `data/ledger.db`: SQLite in WAL mode, with an FTS5 full-text index. **Not committed.**
-- `snapshot/prompt-log.jsonl`: full data export, one record per line. **Committed** (diffs cleanly).
+- `snapshot/prompt-log.jsonl`: full data export, one record per line. **Committed** (diffs cleanly). When the API
+  starts on an empty database (a fresh clone), it loads this file, so every prompt and annotation is there from
+  the first run. It never touches a database that already has data.
 - `PROMPT_LOG.md` (repo root): the generated deliverable. **Committed.**
 
 Schema changes go through EF Core migrations in `src/PromptLedger.Core/Data/Migrations`.
