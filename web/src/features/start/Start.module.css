@@ -45,12 +45,6 @@
   gap: 8px;
 }
 
-.quickLabel {
-  color: var(--ink-muted);
-  font-size: var(--text-sm);
-  margin-right: 4px;
-}
-
 .ticker {
   font-family: var(--font-mono);
   font-size: var(--text-sm);

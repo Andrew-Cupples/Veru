@@ -82,7 +82,6 @@ export const pt: Messages = {
     headline: 'Entram ações.',
     headlineAccent: 'Saem gráficos.',
     quickGroup: 'Abrir uma ação em Relatórios',
-    try: 'Experimente',
     chartIn: (symbol: string) => `Ver o gráfico de ${symbol} em Relatórios`,
     features: 'Recursos',
     desc: {
