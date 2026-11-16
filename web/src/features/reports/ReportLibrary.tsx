@@ -16,27 +16,13 @@ interface Props {
   onCreate: (dims: 2 | 3) => void;
   /** A live miniature of each report on the current data, or null while there's nothing to draw. */
   thumbFor: (report: Report) => Thumb | null;
-  /** Pinning reports to compare them side by side (Analytics). Without it the list only opens reports. */
-  compare?: LibraryCompare;
-}
-
-export interface LibraryCompare {
-  pins: readonly string[];
-  onTogglePin: (id: string) => void;
-  comparing: boolean;
-  onCompare: (on: boolean) => void;
 }
 
 /** Templates and the user's reports. One click opens a report; the chart draws straight away. */
-export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thumbFor, compare }: Props) {
-  const pins = compare?.pins ?? [];
-  const comparing = compare?.comparing ?? false;
-  const canCompare = pins.length >= 2;
+export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thumbFor }: Props) {
   const t = useT();
   const navRef = useRef<HTMLElement>(null);
   const highlightRef = useRef<HTMLSpanElement>(null);
-  // While comparing, no single report is "open", so nothing is marked current.
-  const currentId = comparing ? null : activeId;
 
   // One highlight that glides to the open report, rather than each item switching its own background.
   useLayoutEffect(() => {
@@ -65,18 +51,17 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [currentId, mine]);
+  }, [activeId, mine]);
 
   const item = (r: Report, showDescription: boolean) => {
     const thumb = thumbFor(r);
-    const pinned = pins.includes(r.id);
     return (
-      <li key={r.id} className={styles.libraryRow} data-pinned={pinned || undefined}>
+      <li key={r.id} className={styles.libraryRow}>
         <button
           type="button"
           className={styles.libraryItem}
           data-track={r.name}
-          aria-current={r.id === currentId ? 'true' : undefined}
+          aria-current={r.id === activeId ? 'true' : undefined}
           onClick={() => onOpen(r.id)}
         >
           <span className={styles.thumbSlot}>{thumb ? <Thumbnail thumb={thumb} /> : <ChartIcon type={r.chart} />}</span>
@@ -87,24 +72,12 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
             </span>
           </span>
         </button>
-        {compare && (
-          <button
-            type="button"
-            className={styles.compareToggle}
-            aria-pressed={pinned}
-            aria-label={t.reports.compareItem(r.name)}
-            title={pinned ? t.reports.inComparison : t.reports.addToComparison}
-            onClick={() => compare.onTogglePin(r.id)}
-          >
-            {pinned ? <CheckIcon /> : <PlusIcon />}
-          </button>
-        )}
       </li>
     );
   };
 
   return (
-    <nav ref={navRef} className={styles.library} aria-label={t.nav.reports} data-compare={compare ? '' : undefined}>
+    <nav ref={navRef} className={styles.library} aria-label={t.nav.reports}>
       <span ref={highlightRef} className={styles.libraryHighlight} aria-hidden="true" hidden />
       <div className={styles.newButtons}>
         <button type="button" className={dq.secondaryButton} onClick={() => onCreate(2)}>
@@ -114,25 +87,6 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
           <span aria-hidden="true">+ </span>{t.reports.new3d}
         </button>
       </div>
-
-      {compare && (
-        <div className={styles.compareBox}>
-          <button
-            type="button"
-            className={comparing ? dq.secondaryButton : dq.runButton}
-            disabled={!comparing && !canCompare}
-            aria-describedby={comparing || canCompare ? 'compare-hint' : undefined}
-            onClick={() => compare.onCompare(!comparing)}
-          >
-            {comparing ? t.reports.backToEditor : t.reports.compareCount(pins.length)}
-          </button>
-          {(comparing || canCompare) && (
-            <p id="compare-hint" className={styles.compareHint}>
-              {comparing ? t.reports.compareHint : t.reports.readyToCompare(pins.length)}
-            </p>
-          )}
-        </div>
-      )}
 
       <h2 className={styles.libraryHeading} id="mine-heading">
         {t.reports.myReports}
@@ -152,21 +106,5 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
         {templates.map((r) => item(r, true))}
       </ul>
     </nav>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

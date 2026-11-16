@@ -1,6 +1,6 @@
 import { readJson, writeJson } from '../../lib/storage';
 import { isRecord } from '../data-query/memory';
-import { isConditionList } from '../data-query/query';
+import { readWhere } from '../data-query/query';
 import { FIELD_BY_KEY } from './fields';
 import { CHART_BY_TYPE, DEFAULT_STYLE, type Report, type Series } from './model';
 
@@ -26,7 +26,8 @@ export function parseReport(v: unknown): Report | null {
   if (!isRecord(e) || !isNonNullField(e.x) || !isNonNullField(e.y) || !isNonNullField(e.z)) return null;
   if (!isField(e.color) || !isField(e.size) || !Array.isArray(e.series) || !e.series.every(isSeries)) return null;
   if (typeof e.aggregate !== 'string') return null;
-  if (!isConditionList(v.where)) return null;
+  const where = readWhere(v.where);
+  if (where === null) return null;
   const style = isRecord(v.style) ? v.style : {};
   const enc = e as unknown as Report['enc'];
   return {
@@ -37,7 +38,7 @@ export function parseReport(v: unknown): Report | null {
       ...enc,
       series: enc.series.map((s) => ({ field: s.field, axis: s.axis, mark: s.mark ?? null, color: s.color ?? null })),
     },
-    where: v.where,
+    where,
     style: { ...DEFAULT_STYLE, ...(style as Partial<Report['style']>) },
     description: typeof v.description === 'string' ? v.description : undefined,
     dataset: v.dataset === 'analytics' ? 'analytics' : undefined,
@@ -45,14 +46,13 @@ export function parseReport(v: unknown): Report | null {
   };
 }
 
-/** Where one page's reports are kept: Reports and Analytics each have their own list, open report and pins. */
+/** Where one page's reports are kept: Reports and Analytics each have their own list and open report. */
 export interface ReportStoreKeys {
   reports: string;
   active: string;
-  pins: string;
 }
 
-export const MARKET_KEYS: ReportStoreKeys = { ...KEYS, pins: 'veru.reports.pinned' };
+export const MARKET_KEYS: ReportStoreKeys = KEYS;
 
 export function reportStore(keys: ReportStoreKeys) {
   return {

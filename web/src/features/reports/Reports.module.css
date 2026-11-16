@@ -92,11 +92,6 @@
   z-index: 1;
 }
 
-/* Room on the right for the compare button that sits over the row, when the page compares reports. */
-.library[data-compare] .libraryItem {
-  padding-right: 44px;
-}
-
 .libraryRow {
   position: relative;
 }
@@ -117,46 +112,7 @@
   display: block;
 }
 
-/* Add to / remove from the comparison: a real button-sized target (32px), always visible. */
-.compareToggle {
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  transform: translateY(-50%);
-  border: 1px solid var(--rule-strong);
-  border-radius: 8px;
-  background: var(--surface-raised);
-  color: var(--ink-muted);
-  cursor: pointer;
-  transition: color var(--motion-exit, 120ms), background var(--motion-exit, 120ms), border-color var(--motion-exit, 120ms);
-}
-
-.compareToggle:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.compareToggle[aria-pressed='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-}
-
-.compareToggle[aria-pressed='true']:hover {
-  background: var(--accent-hover);
-}
-
 /* ---------- Compare ---------- */
-
-.workspaceCompare {
-  grid-template-columns: 232px minmax(0, 1fr);
-}
 
 .compare {
   display: flex;
@@ -212,16 +168,6 @@
 
 .compareCardHead h3 {
   margin: 0;
-}
-
-.compareBox {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.compareBox button {
-  width: 100%;
 }
 
 .compareHint {
@@ -730,8 +676,7 @@
 }
 
 @media (max-width: 1200px) {
-  .workspace,
-  .workspaceCompare {
+  .workspace {
     grid-template-columns: 200px minmax(0, 1fr);
   }
   .inspector {
@@ -745,8 +690,7 @@
   .page {
     padding: 16px 16px 40px;
   }
-  .workspace,
-  .workspaceCompare {
+  .workspace {
     grid-template-columns: minmax(0, 1fr);
   }
   .library {

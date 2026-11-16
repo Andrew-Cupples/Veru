@@ -16,7 +16,7 @@ export const pt: Messages = {
   appTitle: (page: string) => (page ? `${page} · Veru` : 'Veru'),
 
   query: {
-    select: 'SELEÇÃO', from: 'DE', where: 'ONDE', orderBy: 'ORDENAR POR', limit: 'LIMITE',
+    select: 'SELEÇÃO', from: 'DE', where: 'ONDE', orderBy: 'ORDENAR POR',
     asc: 'ASC', desc: 'DESC', ascending: 'Crescente', descending: 'Decrescente',
   },
 
@@ -84,13 +84,15 @@ export const pt: Messages = {
     quickGroup: 'Abrir uma ação em Relatórios',
     try: 'Experimente',
     chartIn: (symbol: string) => `Ver o gráfico de ${symbol} em Relatórios`,
-    howItWorks: 'Como funciona',
-    stepPick: 'Escolha uma ação',
-    stepChart: 'Escolha um gráfico',
-    stepCompare: 'Compare ações',
-    stepExport: 'Exporte os dados',
-    stepLabel: (step: number, title: string, page: string) => `Passo ${step}: ${title}. Abre ${page}.`,
-    more: 'Mais',
+    features: 'Recursos',
+    desc: {
+      reports: 'Crie gráficos de qualquer ação com modelos ou seus próprios relatórios, em 2D ou 3D.',
+      compare: 'Coloque ações e relatórios lado a lado, com gráficos vinculados.',
+      rawData: 'Filtre e ordene as barras de preço e baixe-as em CSV.',
+      analytics: 'Veja como o app é usado, apenas a partir deste navegador.',
+      personalize: 'Escolha ou crie um tema e ajuste as animações do seu jeito.',
+      ledger: 'Navegue pelos prompts usados para criar este app.',
+    },
   },
 
   source: {
@@ -104,15 +106,27 @@ export const pt: Messages = {
     favourite: (symbol: string) => `${symbol} como favorito`,
     addFavourite: (symbol: string) => `Adicionar ${symbol} aos favoritos`,
     removeFavourite: (symbol: string) => `Remover ${symbol} dos favoritos`,
-    addCondition: 'Adicionar condição',
     clearAll: 'Limpar tudo',
-    condition: (i: number) => `Condição ${i}`,
-    conditionColumn: (i: number) => `Coluna da condição ${i}`,
-    conditionOperator: (i: number) => `Operador da condição ${i}`,
-    conditionValue: (i: number) => `Valor da condição ${i}`,
-    removeCondition: (i: number) => `Remover a condição ${i}`,
-    choose: 'escolher…',
     needsNumber: (column: string, example: string) => `${column} precisa de um número, como ${example}.`,
+    expression: {
+      label: 'Expressão ONDE',
+      datapoints: 'Dados',
+      comparisons: 'Comparações',
+      logic: 'Lógica',
+      values: (datapoint: string) => `Valores de ${datapoint}`,
+      insert: (token: string, label: string) => (token === label ? `Inserir ${token}` : `Inserir ${token} (${label})`),
+      showError: 'Mostrar onde',
+      errors: {
+        unexpected: (token: string) => `“${token}” inesperado.`,
+        expectedOperand: (token: string) => `Falta um dado ou valor antes de “${token}”.`,
+        expectedOperandAtEnd: 'Falta um dado ou valor no final.',
+        expectedOperator: (token: string) => `Falta uma comparação (=, >, CONTAINS…) depois de “${token}”.`,
+        expectedClose: 'Falta o “)” de um “(”.',
+        unclosedQuote: 'Falta fechar as aspas.',
+        unknownDatapoint: (token: string) => `“${token}” não é um dado. Escolha um abaixo ou coloque entre aspas como texto.`,
+        noDatapoint: 'Cada comparação precisa de um dado, como close > 100.',
+      },
+    },
     apiDown: 'Não foi possível conectar à API de dados de mercado.',
     apiDownHelp: (api: ReactNode, dev: ReactNode) => (
       <>
@@ -434,8 +448,6 @@ export const pt: Messages = {
     columns: 'Colunas',
     orderBy: 'Ordenar por coluna',
     direction: 'Direção',
-    rowLimit: 'Limite de linhas',
-    limitAll: 'todas',
     status: (rows: number, symbol: string) => `${n(rows)} ${s(rows, 'linha', 'linhas')} de ${symbol}`,
     rows: (count: number) => (
       <>
@@ -443,13 +455,12 @@ export const pt: Messages = {
       </>
     ),
     ofBars: (count: number) => ` de ${n(count)} barras`,
-    matchedBeforeLimit: (count: number) => ` · ${n(count)} correspondentes antes do LIMIT`,
     showingFirst: (count: number) => ` · mostrando as primeiras ${n(count)}`,
     downloadCsv: 'Baixar CSV',
     noColumns: 'Nenhuma coluna selecionada.',
     selectAllColumns: 'Selecionar todas as colunas',
     noMatches: 'Nenhuma barra atende a estas condições.',
-    clearConditions: 'Limpar condições',
+    clearConditions: 'Limpar filtro',
     caption: (symbol: string, interval: string, range: string) => `Barras de ${interval} de ${symbol} em ${range}`,
     scrollable: (caption: string) => `${caption} (rolável)`,
     sortedBy: (column: string, asc: boolean) => `, ordenado por ${column} ${asc ? 'crescente' : 'decrescente'}`,
@@ -469,7 +480,6 @@ export const pt: Messages = {
     reportName: 'Nome do relatório',
     templateNote: 'Modelo · alterações criam uma cópia',
     actions: 'Ações do relatório',
-    compareStocks: 'Comparar ações',
     exportImage: (format: string) => `Exportar imagem como ${format}`,
     exportCsv: 'Exportar os dados do gráfico como CSV',
     forked: (name: ReactNode) => <>Suas alterações foram salvas como um novo relatório, {name}, em Meus relatórios. O modelo não mudou.</>,
@@ -483,8 +493,6 @@ export const pt: Messages = {
     pickOne: 'Escolha pelo menos um valor para desenhar.',
     noRows: (noun: 'bars' | 'events') =>
       `${noun === 'bars' ? 'Nenhuma barra atende' : 'Nenhum evento atende'} a estas condições.`,
-    noRowsForReport: (noun: 'bars' | 'events') =>
-      `${noun === 'bars' ? 'Nenhuma barra atende' : 'Nenhum evento atende'} às condições deste relatório.`,
     dataTable: (rows: number, shown: number | null) =>
       `Tabela de dados (${n(rows)} ${s(rows, 'linha', 'linhas')}${shown == null ? '' : `, mostrando as primeiras ${n(shown)}`})`,
     dataOf: (name: string) => `Dados de ${name}`,
@@ -492,15 +500,6 @@ export const pt: Messages = {
     settingsTabs: 'Configurações',
     dataTab: 'Dados',
     styleTab: 'Estilo',
-    comparing: (count: number) => `Comparando ${n(count)} ${s(count, 'relatório', 'relatórios')}`,
-    nothingToCompare: 'Ainda não há nada para comparar. Adicione relatórios com o botão + da lista.',
-    backToEditor: 'Voltar ao editor',
-    compareCount: (count: number) => `Comparar (${n(count)})`,
-    compareHint: 'Passe o mouse sobre um gráfico para ver o mesmo momento nos outros. Adicione mais com +.',
-    readyToCompare: (count: number) => `${n(count)} ${s(count, 'relatório pronto', 'relatórios prontos')} para comparar.`,
-    compareItem: (name: string) => `Comparar ${name}`,
-    inComparison: 'Na comparação: clique para remover',
-    addToComparison: 'Adicionar à comparação',
     chartType: 'Tipo de gráfico',
     fields: 'Campos',
     combine: (rows: 'bars' | 'events', per: 'x' | 'cell') => `Combinar ${rowsNoun[rows]} por ${per === 'x' ? 'X' : 'célula'}`,

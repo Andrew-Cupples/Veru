@@ -53,8 +53,11 @@ export function Preview({ theme, scheme }: { theme: Theme; scheme: ColorScheme }
                 desc
               </button>
             </div>
+            <button type="button" className={`${raw.chip} ${raw.keywordChip}`}>
+              AND
+            </button>
             <button type="button" className={raw.linkButton}>
-              + {t.source.addCondition}
+              {t.source.clearAll}
             </button>
           </div>
         </div>

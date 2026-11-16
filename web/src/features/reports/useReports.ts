@@ -49,7 +49,6 @@ export function useReports(config: ReportConfig = MARKET_REPORTS) {
       return next;
     });
 
-  /** Opening a report always shows it in the editor, leaving the compare view. */
   const open = (id: string, keepNotice = false) => {
     store.saveActiveId(id);
     if (!keepNotice) setNotice(null);
@@ -57,7 +56,6 @@ export function useReports(config: ReportConfig = MARKET_REPORTS) {
       (prev) => {
         const p = new URLSearchParams(prev);
         p.set('report', id);
-        p.delete('view');
         return p;
       },
       { replace: false },
@@ -69,21 +67,6 @@ export function useReports(config: ReportConfig = MARKET_REPORTS) {
     const r = mine.find((m) => m.id === id) ?? templateById.get(id);
     if (r) track('report', { target: 'open', detail: chartLabel(r), subject: r.template ? `${r.name} (template)` : r.name });
     open(id);
-  };
-
-  // The compare view lives in the URL too (?view=compare), so Back returns to the editor.
-  const comparing = params.get('view') === 'compare';
-  const setComparing = (on: boolean) => {
-    track('report', { target: on ? 'compare' : 'leave compare' });
-    setParams(
-      (prev) => {
-        const p = new URLSearchParams(prev);
-        if (on) p.set('view', 'compare');
-        else p.delete('view');
-        return p;
-      },
-      { replace: false },
-    );
   };
 
   const update = (change: (r: Report) => Report) => {
@@ -136,7 +119,6 @@ export function useReports(config: ReportConfig = MARKET_REPORTS) {
     dataset,
     templates,
     templateById,
-    pinsKey: keys.pins,
     mine,
     active,
     open: view,
@@ -147,8 +129,6 @@ export function useReports(config: ReportConfig = MARKET_REPORTS) {
     undoDelete,
     notice,
     dismissNotice: () => setNotice(null),
-    comparing,
-    setComparing,
   };
 }
 

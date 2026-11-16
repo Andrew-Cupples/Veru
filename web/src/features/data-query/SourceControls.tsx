@@ -1,7 +1,6 @@
-import { useId, useRef, useState, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { IntervalOption, PriceSeries, RangeOption } from '../../api/client';
 import { ApiError } from '../../api/client';
-import { COLUMNS, CONDITION_COLUMN_BY_KEY, OPERATORS_BY_KIND, isActive, type ColumnDef, type Condition, type ConditionColumn, type Operator } from './query';
 import { SymbolCombobox } from './SymbolCombobox';
 import type { DataSource } from './useDataSource';
 import { messages, useT } from '../../i18n/I18nProvider';
@@ -9,10 +8,9 @@ import styles from './DataQuery.module.css';
 
 /*
  * The building blocks every data page uses to choose its data: FROM (symbol, interval, range, pre/post),
- * WHERE conditions, multi-select chips with All / None, and the load states around a fetched series.
+ * multi-select chips with All / None, and the load states around a fetched series.
  */
 
-const SESSIONS = ['pre', 'regular', 'post'] as const;
 
 export function rangeFits(interval: IntervalOption | undefined, range: RangeOption): boolean {
   if (!interval || interval.maxLookbackDays == null) return true;
@@ -214,175 +212,6 @@ export function MultiSelectChips<K extends string>({
       )}
     </div>
   );
-}
-
-/** WHERE: AND-ed conditions over the raw bar columns. New conditions take focus; removing one returns it to Add. */
-export function ConditionsEditor({
-  where,
-  onChange,
-  columns = COLUMNS,
-  defaultColumn = 'volume',
-}: {
-  where: readonly Condition[];
-  onChange: (where: Condition[]) => void;
-  /** The columns a condition can test; the raw bar columns unless given. */
-  columns?: readonly ColumnDef<ConditionColumn>[];
-  defaultColumn?: ConditionColumn;
-}) {
-  const t = useT();
-  const [newConditionId, setNewConditionId] = useState<string | null>(null);
-  const addConditionRef = useRef<HTMLButtonElement>(null);
-
-  const update = (id: string, patch: Partial<Condition>) => onChange(where.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-
-  const add = () => {
-    const id = crypto.randomUUID();
-    setNewConditionId(id);
-    const kind = CONDITION_COLUMN_BY_KEY[defaultColumn].kind;
-    onChange([...where, { id, column: defaultColumn, operator: OPERATORS_BY_KIND[kind][0]!, value: '' }]);
-  };
-
-  const remove = (id: string) => {
-    onChange(where.filter((w) => w.id !== id));
-    addConditionRef.current?.focus();
-  };
-
-  return (
-    <div className={styles.conditions}>
-      {where.map((c, i) => (
-        <ConditionRow
-          key={c.id}
-          condition={c}
-          index={i}
-          columns={columns}
-          autoFocus={c.id === newConditionId}
-          onChange={(patch) => update(c.id, patch)}
-          onRemove={() => remove(c.id)}
-        />
-      ))}
-      <span className={styles.inlineRow}>
-        <button ref={addConditionRef} type="button" className={styles.linkButton} onClick={add}>
-          <span aria-hidden="true">+ </span>
-          {t.source.addCondition}
-        </button>
-        {where.length > 1 && (
-          <button type="button" className={styles.linkButton} onClick={() => onChange([])}>
-            {t.source.clearAll}
-          </button>
-        )}
-      </span>
-    </div>
-  );
-}
-
-function ConditionRow({
-  condition,
-  index,
-  columns,
-  autoFocus,
-  onChange,
-  onRemove,
-}: {
-  condition: Condition;
-  index: number;
-  columns: readonly ColumnDef<ConditionColumn>[];
-  autoFocus: boolean;
-  onChange: (patch: Partial<Condition>) => void;
-  onRemove: () => void;
-}) {
-  const errorId = useId();
-  const t = useT();
-  const n = index + 1;
-  const kind = CONDITION_COLUMN_BY_KEY[condition.column].kind;
-  const operators = OPERATORS_BY_KIND[kind];
-  const invalid = condition.value.trim() !== '' && !isActive(condition);
-  const choicesOf = (column: ConditionColumn) =>
-    CONDITION_COLUMN_BY_KEY[column].choices ?? (CONDITION_COLUMN_BY_KEY[column].kind === 'session' ? SESSIONS : null);
-  const choices = choicesOf(condition.column);
-
-  const changeColumn = (column: ConditionColumn) => {
-    const nextKind = CONDITION_COLUMN_BY_KEY[column].kind;
-    const nextOps = OPERATORS_BY_KIND[nextKind];
-    const nextChoices = choicesOf(column);
-    const keep = nextKind === kind && (!nextChoices || nextChoices.includes(condition.value));
-    onChange({
-      column,
-      operator: nextOps.includes(condition.operator) ? condition.operator : nextOps[0]!,
-      value: keep ? condition.value : '',
-    });
-  };
-
-  return (
-    <div className={styles.conditionWrap} role="group" aria-label={t.source.condition(n)}>
-      <div className={styles.condition}>
-        <span className={styles.conjunction}>{index === 0 ? '' : t.common.and}</span>
-        <select
-          className={styles.input}
-          aria-label={t.source.conditionColumn(n)}
-          value={condition.column}
-          onChange={(e) => changeColumn(e.target.value as ConditionColumn)}
-        >
-          {columns.map((c) => (
-            <option key={c.key} value={c.key}>{c.label}</option>
-          ))}
-        </select>
-        <select
-          className={`${styles.input} ${styles.operator}`}
-          aria-label={t.source.conditionOperator(n)}
-          value={condition.operator}
-          onChange={(e) => onChange({ operator: e.target.value as Operator })}
-        >
-          {operators.map((op) => (
-            <option key={op} value={op}>{op === '!=' ? '≠' : op === '>=' ? '≥' : op === '<=' ? '≤' : op}</option>
-          ))}
-        </select>
-        {choices && condition.operator !== 'contains' ? (
-          <select
-            className={styles.input}
-            aria-label={t.source.conditionValue(n)}
-            autoFocus={autoFocus}
-            value={condition.value}
-            onChange={(e) => onChange({ value: e.target.value })}
-          >
-            <option value="">{t.source.choose}</option>
-            {choices.map((s) => (
-              <option key={s} value={s}>{kind === 'session' ? t.common.sessions[s as keyof typeof t.common.sessions] : s}</option>
-            ))}
-          </select>
-        ) : (
-          <input
-            className={styles.input}
-            aria-label={t.source.conditionValue(n)}
-            autoFocus={autoFocus}
-            aria-invalid={invalid}
-            aria-describedby={invalid ? errorId : undefined}
-            inputMode={kind === 'number' ? 'decimal' : 'text'}
-            placeholder={placeholderFor(condition.column)}
-            value={condition.value}
-            onChange={(e) => onChange({ value: e.target.value })}
-          />
-        )}
-        <button type="button" className={styles.iconButton} aria-label={t.source.removeCondition(n)} onClick={onRemove}>
-          ×
-        </button>
-      </div>
-      {invalid && (
-        <p id={errorId} className={styles.fieldError}>
-          {t.source.needsNumber(CONDITION_COLUMN_BY_KEY[condition.column].label, placeholderFor(condition.column))}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function placeholderFor(column: ConditionColumn): string {
-  switch (column) {
-    case 'date': return 'YYYY-MM-DD';
-    case 'clock': return 'HH:MM';
-    case 'time': return '2026-11-13T09:30';
-    case 'volume': return '1000000';
-    default: return '0.00';
-  }
 }
 
 /** Shown when the API can't be reached at all. */

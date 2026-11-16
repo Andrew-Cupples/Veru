@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { filterRows } from '../features/data-query/query';
+import { ANALYTICS_COLUMNS, filterRows } from '../features/data-query/query';
 import { ANALYTICS_TEMPLATES } from '../features/analytics/templates';
 import { buildFigure, type ThemeColors } from '../features/reports/figure';
 import { CHART_BY_TYPE, blankReport, chartsFor, fits, switchChart } from '../features/reports/model';
@@ -113,9 +113,9 @@ describe('rows', () => {
   });
 
   it('is filtered by WHERE like any other rows', () => {
-    const clicks = filterRows(rows, [{ id: '1', column: 'event', operator: '=', value: 'click' }]);
+    const clicks = filterRows(rows, 'event = click', ANALYTICS_COLUMNS);
     expect(clicks).toHaveLength(12);
-    const slow = filterRows(rows, [{ id: '1', column: 'duration', operator: '>', value: '1' }]);
+    const slow = filterRows(rows, 'duration > 1', ANALYTICS_COLUMNS);
     expect(slow.map((r) => r.event)).toEqual(['page_view', 'page_view']);
   });
 });
@@ -123,7 +123,7 @@ describe('rows', () => {
 describe('charts on analytics', () => {
   it('counts events by summing', () => {
     const r = blankReport(2, 'Clicks', 'analytics');
-    const s = shape(filterRows(rows, [{ id: '1', column: 'event', operator: '=', value: 'click' }]), { ...r, enc: { ...r.enc, x: 'target' } });
+    const s = shape(filterRows(rows, 'event = click', ANALYTICS_COLUMNS), { ...r, enc: { ...r.enc, x: 'target' } });
     if (s.kind !== 'cartesian') throw new Error('expected cartesian');
     expect(Object.fromEntries(s.traces[0]!.x.map((x, i) => [x, s.traces[0]!.y[i]]))).toEqual({ PNG: 8, Run: 4 });
   });
@@ -143,14 +143,14 @@ describe('charts on analytics', () => {
 
   it('orders category bars largest first when asked', () => {
     const t = ANALYTICS_TEMPLATES.find((x) => x.id === 'analytics:top-controls')!;
-    const figure = buildFigure(shape(filterRows(rows, t.where), t), t, colors);
+    const figure = buildFigure(shape(filterRows(rows, t.where, ANALYTICS_COLUMNS), t), t, colors);
     expect((figure.layout.xaxis as { categoryarray: string[] }).categoryarray).toEqual(['PNG', 'Run']);
   });
 
   it.each(ANALYTICS_TEMPLATES.map((t) => [t.name, t]))('%s fits its chart and draws', (_, t) => {
     const def = CHART_BY_TYPE[t.chart];
     for (const slot of ['x', 'y', 'z'] as const) if (def.slots[slot]) expect(fits(def.slots[slot], t.enc[slot])).toBe(true);
-    const figure = buildFigure(shape(filterRows(rows, t.where), t), t, colors);
+    const figure = buildFigure(shape(filterRows(rows, t.where, ANALYTICS_COLUMNS), t), t, colors);
     expect(figure.data.length).toBeGreaterThan(0);
   });
 });

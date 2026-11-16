@@ -106,14 +106,6 @@
   letter-spacing: 0.02em;
 }
 
-.limitInput {
-  width: 110px;
-}
-
-.operator {
-  width: 96px;
-}
-
 .checkbox {
   display: inline-flex;
   align-items: center;
@@ -223,39 +215,6 @@
 
 .linkButton:hover {
   text-decoration: underline;
-}
-
-.conditions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding-top: 3px;
-}
-
-.conditionWrap {
-  display: flex;
-  flex-direction: column;
-  max-width: 100%;
-}
-
-.conditionWrap .fieldError {
-  margin: 2px 0 0 42px;
-}
-
-.condition {
-  display: grid;
-  grid-template-columns: 36px 120px 96px minmax(0, 180px) 30px;
-  gap: 6px;
-  align-items: center;
-  max-width: 100%;
-}
-
-.conjunction {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--keyword);
-  font-weight: 600;
 }
 
 .iconButton {
@@ -573,9 +532,6 @@
   .keyword {
     padding-top: 0;
   }
-  .condition {
-    grid-template-columns: 30px minmax(0, 1fr) 70px minmax(0, 1fr) 30px;
-  }
   .summary {
     grid-template-columns: 1fr;
   }
@@ -724,4 +680,69 @@
 
 .starButton[aria-pressed='true'] {
   color: var(--accent);
+}
+
+/* WHERE: a typed expression with insertable tokens below it. */
+.expression {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.expressionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.expressionInput {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  line-height: 1.45;
+  resize: vertical;
+  field-sizing: content;
+}
+
+.inlineLink {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* One row: datapoint dropdown, then comparison and logic tokens; wraps on narrow screens. */
+.tokenBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+
+.tokenGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.datapointSelect {
+  height: 28px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.keywordChip {
+  color: var(--keyword);
+  font-weight: 600;
 }

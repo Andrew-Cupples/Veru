@@ -63,7 +63,7 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
         bus,
         id: key,
         hoverKey: linked ? `x:${r.enc.x}` : null,
-        rangeKey: linked ? `x:${r.enc.x}|${JSON.stringify(r.where)}|${r.style.skipGaps}` : null,
+        rangeKey: linked ? `x:${r.enc.x}|${r.where}|${r.style.skipGaps}` : null,
       });
     }
     return map;

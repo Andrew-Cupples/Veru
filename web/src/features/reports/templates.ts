@@ -31,7 +31,7 @@ const template = (
   },
   chart,
   enc: enc(encoding),
-  where: [],
+  where: '',
   style: { ...DEFAULT_STYLE, ...style },
   template: true,
   updatedAt: 0,
