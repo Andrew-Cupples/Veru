@@ -1,3 +1,4 @@
+import { messages } from '../../i18n/I18nProvider';
 import type { AnalyticsRow } from '../../analytics/rows';
 import type { Row } from '../data-query/query';
 
@@ -49,35 +50,35 @@ const BOTH = ['market', 'analytics'] as const;
 
 export const FIELDS: readonly FieldDef[] = [
   // Time fields are shared: exchange time for bars, the user's local time for analytics events.
-  { key: 'time', label: 'Time', kind: 'time', description: 'Bar start or event time', datasets: BOTH },
-  { key: 'date', label: 'Date', kind: 'category', description: 'Trading day, or the day of the event', datasets: BOTH },
-  { key: 'clock', label: 'Time of day', kind: 'category', description: 'HH:MM', datasets: BOTH },
-  { key: 'weekday', label: 'Weekday', kind: 'category', description: 'Mon to Sun', datasets: BOTH },
-  { key: 'session', label: 'Session', kind: 'category', description: 'pre, regular or post market', datasets: M },
-  { key: 'hour', label: 'Hour', kind: 'number', description: 'Hour of day, 0 to 23', datasets: BOTH },
-  { key: 'bar', label: 'Bar #', kind: 'number', description: 'Position of the bar, from 0', datasets: M },
-  { key: 'open', label: 'Open', kind: 'number', description: 'First trade price in the bar', unit: 'price', datasets: M },
-  { key: 'high', label: 'High', kind: 'number', description: 'Highest price in the bar', unit: 'price', datasets: M },
-  { key: 'low', label: 'Low', kind: 'number', description: 'Lowest price in the bar', unit: 'price', datasets: M },
-  { key: 'close', label: 'Close', kind: 'number', description: 'Last trade price in the bar', unit: 'price', datasets: M },
-  { key: 'volume', label: 'Volume', kind: 'number', description: 'Shares (or units) traded', unit: 'shares', datasets: M },
-  { key: 'change', label: 'Change', kind: 'number', description: 'Close minus open', unit: 'price', datasets: M },
-  { key: 'changePct', label: 'Change %', kind: 'number', description: 'Close vs open, percent', unit: 'percent', datasets: M },
-  { key: 'spread', label: 'Range', kind: 'number', description: 'High minus low', unit: 'price', datasets: M },
-  { key: 'spreadPct', label: 'Range %', kind: 'number', description: 'High minus low, percent of low', unit: 'percent', datasets: M },
-  { key: 'return', label: 'Return %', kind: 'number', description: 'Close vs the first close shown, percent', unit: 'percent', datasets: M },
+  { key: 'time', get label() { return messages().fields.time.label; }, kind: 'time', get description() { return messages().fields.time.description; }, datasets: BOTH },
+  { key: 'date', get label() { return messages().fields.date.label; }, kind: 'category', get description() { return messages().fields.date.description; }, datasets: BOTH },
+  { key: 'clock', get label() { return messages().fields.clock.label; }, kind: 'category', get description() { return messages().fields.clock.description; }, datasets: BOTH },
+  { key: 'weekday', get label() { return messages().fields.weekday.label; }, kind: 'category', get description() { return messages().fields.weekday.description; }, datasets: BOTH },
+  { key: 'session', get label() { return messages().fields.session.label; }, kind: 'category', get description() { return messages().fields.session.description; }, datasets: M },
+  { key: 'hour', get label() { return messages().fields.hour.label; }, kind: 'number', get description() { return messages().fields.hour.description; }, datasets: BOTH },
+  { key: 'bar', get label() { return messages().fields.bar.label; }, kind: 'number', get description() { return messages().fields.bar.description; }, datasets: M },
+  { key: 'open', get label() { return messages().fields.open.label; }, kind: 'number', get description() { return messages().fields.open.description; }, unit: 'price', datasets: M },
+  { key: 'high', get label() { return messages().fields.high.label; }, kind: 'number', get description() { return messages().fields.high.description; }, unit: 'price', datasets: M },
+  { key: 'low', get label() { return messages().fields.low.label; }, kind: 'number', get description() { return messages().fields.low.description; }, unit: 'price', datasets: M },
+  { key: 'close', get label() { return messages().fields.close.label; }, kind: 'number', get description() { return messages().fields.close.description; }, unit: 'price', datasets: M },
+  { key: 'volume', get label() { return messages().fields.volume.label; }, kind: 'number', get description() { return messages().fields.volume.description; }, unit: 'shares', datasets: M },
+  { key: 'change', get label() { return messages().fields.change.label; }, kind: 'number', get description() { return messages().fields.change.description; }, unit: 'price', datasets: M },
+  { key: 'changePct', get label() { return messages().fields.changePct.label; }, kind: 'number', get description() { return messages().fields.changePct.description; }, unit: 'percent', datasets: M },
+  { key: 'spread', get label() { return messages().fields.spread.label; }, kind: 'number', get description() { return messages().fields.spread.description; }, unit: 'price', datasets: M },
+  { key: 'spreadPct', get label() { return messages().fields.spreadPct.label; }, kind: 'number', get description() { return messages().fields.spreadPct.description; }, unit: 'percent', datasets: M },
+  { key: 'return', get label() { return messages().fields.return.label; }, kind: 'number', get description() { return messages().fields.return.description; }, unit: 'percent', datasets: M },
 
-  { key: 'seq', label: 'Event #', kind: 'number', description: 'Order the event happened in, from 1', datasets: A },
-  { key: 'event', label: 'Event', kind: 'category', description: 'Kind of event: click, page_view, export...', datasets: A },
-  { key: 'page', label: 'Page', kind: 'category', description: 'Page the event happened on', datasets: A },
-  { key: 'target', label: 'Control', kind: 'category', description: 'The button, control or action used', datasets: A },
-  { key: 'detail', label: 'Detail', kind: 'category', description: 'Chart type, export format, status code, control role...', datasets: A },
-  { key: 'subject', label: 'Subject', kind: 'category', description: 'What it was about: report, symbol, theme, state', datasets: A },
-  { key: 'input', label: 'Input method', kind: 'category', description: 'mouse, keyboard, touch or pen', datasets: A },
-  { key: 'visit', label: 'Visit', kind: 'category', description: 'Which visit (page load) the event was in', datasets: A },
-  { key: 'count', label: 'Events', kind: 'number', description: '1 per event, so Sum counts them', datasets: A },
-  { key: 'duration', label: 'Duration (s)', kind: 'number', description: 'Time on page, slow-frame length', unit: 'seconds', datasets: A },
-  { key: 'value', label: 'Value', kind: 'number', description: 'Scroll depth %, characters copied, reports compared...', datasets: A },
+  { key: 'seq', get label() { return messages().fields.seq.label; }, kind: 'number', get description() { return messages().fields.seq.description; }, datasets: A },
+  { key: 'event', get label() { return messages().fields.event.label; }, kind: 'category', get description() { return messages().fields.event.description; }, datasets: A },
+  { key: 'page', get label() { return messages().fields.page.label; }, kind: 'category', get description() { return messages().fields.page.description; }, datasets: A },
+  { key: 'target', get label() { return messages().fields.target.label; }, kind: 'category', get description() { return messages().fields.target.description; }, datasets: A },
+  { key: 'detail', get label() { return messages().fields.detail.label; }, kind: 'category', get description() { return messages().fields.detail.description; }, datasets: A },
+  { key: 'subject', get label() { return messages().fields.subject.label; }, kind: 'category', get description() { return messages().fields.subject.description; }, datasets: A },
+  { key: 'input', get label() { return messages().fields.input.label; }, kind: 'category', get description() { return messages().fields.input.description; }, datasets: A },
+  { key: 'visit', get label() { return messages().fields.visit.label; }, kind: 'category', get description() { return messages().fields.visit.description; }, datasets: A },
+  { key: 'count', get label() { return messages().fields.count.label; }, kind: 'number', get description() { return messages().fields.count.description; }, datasets: A },
+  { key: 'duration', get label() { return messages().fields.duration.label; }, kind: 'number', get description() { return messages().fields.duration.description; }, unit: 'seconds', datasets: A },
+  { key: 'value', get label() { return messages().fields.value.label; }, kind: 'number', get description() { return messages().fields.value.description; }, datasets: A },
 ];
 
 export const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((f) => [f.key, f])) as Record<FieldKey, FieldDef>;

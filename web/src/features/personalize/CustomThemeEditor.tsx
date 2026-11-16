@@ -11,6 +11,8 @@ import {
 import { THEMES } from '../../theme/themes';
 import type { ColorScheme } from '../../theme/tokens';
 import { radioGroup } from '../../a11y/radioGroup';
+import { formatNumber, useT } from '../../i18n/I18nProvider';
+import { themeName } from './themeText';
 import styles from './Personalize.module.css';
 
 const HEX = /^#?[0-9a-f]{6}$/i;
@@ -27,6 +29,7 @@ interface FieldProps {
 
 /** A color picker, a hex box that only commits valid colors, and any readability warning for this color. */
 function ColorField({ label, hint, value, issues, onChange, onFix }: FieldProps) {
+  const t = useT();
   const id = useId();
   const hexRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(value);
@@ -47,7 +50,7 @@ function ColorField({ label, hint, value, issues, onChange, onFix }: FieldProps)
           className={styles.colorPicker}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          aria-label={`${label} color picker`}
+          aria-label={t.custom.picker(label)}
           aria-describedby={describedBy}
         />
         <div className={styles.colorText}>
@@ -79,26 +82,25 @@ function ColorField({ label, hint, value, issues, onChange, onFix }: FieldProps)
       </div>
       {invalid && (
         <p id={`${id}-error`} className={styles.fieldError}>
-          Use 6 hex digits, like #3d5afe.
+          {t.custom.hexError}
         </p>
       )}
       {issues.length > 0 && (
         <div className={styles.issue}>
           <p id={`${id}-issue`}>
-            Hard to read: {issues[0]!.where.toLowerCase()} at {issues[0]!.ratio.toFixed(1)}:1 (needs {issues[0]!.min}:1)
-            {issues.length > 1 && ` (and ${issues.length - 1} more ${issues.length === 2 ? 'place' : 'places'})`}.
+            {t.custom.hardToRead(issues[0]!.where.toLowerCase(), formatNumber(issues[0]!.ratio, { maximumFractionDigits: 1, minimumFractionDigits: 1 }), formatNumber(issues[0]!.min), issues.length - 1)}
           </p>
           <button
             type="button"
             className={styles.fixButton}
-            aria-label={`Fix ${label}`}
+            aria-label={t.custom.fixLabel(label)}
             onClick={() => {
               onFix();
               // The Fix button goes away once fixed; keep keyboard focus on this color instead of losing it.
               hexRef.current?.focus();
             }}
           >
-            Fix
+            {t.custom.fix}
           </button>
         </div>
       )}
@@ -114,6 +116,7 @@ interface Props {
 
 /** Edit the custom theme's colors, one scheme at a time. Everything else is derived from these. */
 export function CustomThemeEditor({ colors, scheme, onChange }: Props) {
+  const t = useT();
   const [editing, setEditing] = useState<ColorScheme>(scheme);
   const summaryRef = useRef<HTMLDivElement>(null);
   const tabs = radioGroup(SCHEMES, editing, setEditing);
@@ -134,28 +137,28 @@ export function CustomThemeEditor({ colors, scheme, onChange }: Props) {
   return (
     <div className={styles.editor}>
       <div className={styles.editorBar}>
-        <div className={styles.segmented} role="radiogroup" aria-label="Colors to edit" onKeyDown={tabs.onKeyDown}>
+        <div className={styles.segmented} role="radiogroup" aria-label={t.custom.colorsToEdit} onKeyDown={tabs.onKeyDown}>
           {SCHEMES.map((s) => (
             <button key={s} type="button" {...tabs.radioProps(s)}>
-              {s === 'light' ? 'Light colors' : 'Dark colors'}
+              {s === 'light' ? t.custom.lightColors : t.custom.darkColors}
             </button>
           ))}
         </div>
         <label className={styles.startFrom}>
-          Start from
+          {t.custom.startFrom}
           <select
             value=""
             onChange={(e) => {
-              const base = THEMES.find((t) => t.id === e.target.value);
+              const base = THEMES.find((th) => th.id === e.target.value);
               if (base) onChange(colorsFromTheme(base));
             }}
           >
             <option value="" disabled>
-              Pick a theme…
+              {t.custom.pickTheme}
             </option>
-            {THEMES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            {THEMES.map((th) => (
+              <option key={th.id} value={th.id}>
+                {themeName(th, t)}
               </option>
             ))}
           </select>
@@ -165,31 +168,28 @@ export function CustomThemeEditor({ colors, scheme, onChange }: Props) {
       {/* Announced when it changes, so screen reader users hear the effect of each color they pick. */}
       <div ref={summaryRef} tabIndex={-1} className={styles.readability} role="status" data-ok={fieldsWithIssues.length === 0}>
         {fieldsWithIssues.length === 0 ? (
-          <span>✓ Everything in {editing} mode is easy to read.</span>
+          <span>{t.custom.allGood(editing)}</span>
         ) : (
           <>
-            <span>
-              {fieldsWithIssues.length} {fieldsWithIssues.length === 1 ? 'color is' : 'colors are'} hard to read in {editing}{' '}
-              mode.
-            </span>
+            <span>{t.custom.someBad(fieldsWithIssues.length, editing)}</span>
             <button type="button" className={styles.fixButton} onClick={fixAll}>
-              Fix all
+              {t.custom.fixAll}
             </button>
           </>
         )}
         {otherIssues > 0 && (
           <button type="button" className={styles.linkButton} onClick={() => setEditing(editing === 'light' ? 'dark' : 'light')}>
-            {editing === 'light' ? 'Dark' : 'Light'} mode has issues too
+            {t.custom.otherToo(editing === 'light' ? 'dark' : 'light')}
           </button>
         )}
       </div>
 
       <div className={styles.colorGrid}>
-        {CUSTOM_FIELDS.map(({ key, label, hint }) => (
+        {CUSTOM_FIELDS.map(({ key }) => (
           <ColorField
             key={key}
-            label={label}
-            hint={hint}
+            label={t.custom.fields[key].label}
+            hint={t.custom.fields[key].hint}
             value={colors[editing][key]}
             issues={issues.filter((i) => i.field === key)}
             onChange={(v) => set(key, v)}
@@ -198,7 +198,7 @@ export function CustomThemeEditor({ colors, scheme, onChange }: Props) {
         ))}
       </div>
       <p className={styles.note}>
-        Borders, muted text and hover shades are worked out from these. Changes save automatically.
+        {t.custom.derived}
       </p>
     </div>
   );

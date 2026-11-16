@@ -9,6 +9,7 @@ import { DocumentView } from './document/DocumentView';
 import { Outline } from './outline/Outline';
 import { EmptyState, ErrorState, LoadingState } from './StatusStates';
 import { Toolbar } from './Toolbar';
+import { useLedgerI18n } from '../i18n';
 import styles from './Workspace.module.css';
 
 interface WorkspaceProps {
@@ -19,11 +20,14 @@ interface WorkspaceProps {
 
 /** Matches the container query in Workspace.module.css. */
 const NARROW_WIDTH = 1100;
+/** Below this the annotation pane starts closed; it would cover most of the document. */
+const VERY_NARROW_WIDTH = 640;
 
 const isTypingTarget =(el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
 
 export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
+  const { t } = useLedgerI18n();
   const document = useDocument();
   const prompts = useMemo(() => document.data ?? [], [document.data]);
   const groups = useMemo(() => groupBySession(prompts), [prompts]);
@@ -43,11 +47,15 @@ export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
   const [showOutline, setShowOutline] = useState(true);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
-  // In a narrow host, start with the outline tucked away so the document stays readable.
-  useLayoutEffect(() => {
-    if ((workspaceRef.current?.clientWidth ?? Infinity) < NARROW_WIDTH) setShowOutline(false);
-  }, []);
   const [showAnnotations, setShowAnnotations] = useState(true);
+
+  // In a narrow host, start with the outline tucked away so the document stays readable. When very
+  // narrow (a phone, or the desktop zoomed to 300%+), the notes pane would cover the document too.
+  useLayoutEffect(() => {
+    const width = workspaceRef.current?.clientWidth ?? Infinity;
+    if (width < NARROW_WIDTH) setShowOutline(false);
+    if (width < VERY_NARROW_WIDTH) setShowAnnotations(false);
+  }, []);
 
   const currentId = pinnedId ?? activeId ?? ids[0] ?? null;
   const currentIndex = currentId == null ? -1 : ids.indexOf(currentId);
@@ -156,7 +164,7 @@ export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
         )}
 
         {/* A region, not <main>: the host app already provides the page's main landmark. */}
-        <section ref={scrollRef} className={styles.documentScroll} tabIndex={0} aria-label="Prompt document">
+        <section ref={scrollRef} className={styles.documentScroll} tabIndex={0} aria-label={t.document.region}>
           {body ?? <DocumentView groups={groups} selectedId={currentId} onSelect={(id) => goTo(id)} />}
         </section>
 

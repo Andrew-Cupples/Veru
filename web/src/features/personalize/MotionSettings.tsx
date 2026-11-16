@@ -1,25 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { radioGroup } from '../../a11y/radioGroup';
 import { DURATION, exitDuration, useMotion, type MotionPreference } from '../../motion/MotionProvider';
+import { formatNumber, useT } from '../../i18n/I18nProvider';
 import styles from './Personalize.module.css';
 
-const MOTIONS: { value: MotionPreference; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'on', label: 'On' },
-  { value: 'off', label: 'Off' },
-];
+const MOTIONS: readonly MotionPreference[] = ['system', 'on', 'off'];
 
-const SAMPLE_PAGES = ['First page', 'Second page'] as const;
+const SAMPLE_PAGES = ['first', 'second'] as const;
 type SamplePage = (typeof SAMPLE_PAGES)[number];
 
 /** Motion on/off, how long moves take, and a small sample that moves exactly like the app's pages do. */
 export function MotionSettings() {
+  const t = useT();
   const motion = useMotion();
-  const group = radioGroup(
-    MOTIONS.map((m) => m.value),
-    motion.preference,
-    motion.setPreference,
-  );
+  const group = radioGroup(MOTIONS, motion.preference, motion.setPreference);
+  const ms = (value: number) => formatNumber(value, { style: 'unit', unit: 'millisecond', unitDisplay: 'short' });
   const sample = useSample();
 
   // Replay the sample shortly after the slider settles, so the new timing can be felt without another click.
@@ -35,10 +30,9 @@ export function MotionSettings() {
 
   return (
     <section className={styles.section} aria-labelledby="motion-heading">
-      <h2 id="motion-heading">Motion</h2>
+      <h2 id="motion-heading">{t.motion.title}</h2>
       <p id="motion-note" className={styles.note}>
-        Pages and panels drift a short way into place instead of switching instantly. System follows your device, which{' '}
-        {motion.systemReduces ? 'asks for reduced motion, so motion is off' : 'allows motion, so motion is on'}.
+        {t.motion.note(motion.systemReduces)}
       </p>
 
       <div className={styles.motionRow}>
@@ -50,21 +44,21 @@ export function MotionSettings() {
           onKeyDown={group.onKeyDown}
         >
           {MOTIONS.map((m) => (
-            <button key={m.value} type="button" {...group.radioProps(m.value)}>
-              {m.label}
+            <button key={m} type="button" {...group.radioProps(m)}>
+              {t.common[m]}
             </button>
           ))}
         </div>
 
         <div className={styles.timing}>
           <div className={styles.timingHead}>
-            <label htmlFor="motion-duration">Speed</label>
+            <label htmlFor="motion-duration">{t.motion.speed}</label>
             <output htmlFor="motion-duration" className={styles.timingValue}>
-              {motion.duration} ms
+              {ms(motion.duration)}
             </output>
             {motion.duration !== DURATION.default && (
               <button type="button" className={styles.resetButton} onClick={() => motion.setDuration(DURATION.default)}>
-                Reset
+                {t.motion.reset}
               </button>
             )}
           </div>
@@ -79,16 +73,16 @@ export function MotionSettings() {
             disabled={!motion.enabled}
             onChange={(e) => motion.setDuration(Number(e.target.value))}
             aria-describedby="motion-duration-note"
-            aria-valuetext={`${motion.duration} milliseconds`}
+            aria-valuetext={formatNumber(motion.duration, { style: 'unit', unit: 'millisecond', unitDisplay: 'long' })}
           />
           <div className={styles.timingScale} aria-hidden="true">
-            <span>Quicker</span>
-            <span>Gentler</span>
+            <span>{t.motion.quicker}</span>
+            <span>{t.motion.gentler}</span>
           </div>
           <p id="motion-duration-note" className={styles.note}>
             {motion.enabled
-              ? `New content settles over ${motion.duration} ms; what it replaces leaves in ${exitDuration(motion.duration)} ms.`
-              : 'Motion is off, so changes are instant. Turn it on to adjust the speed.'}
+              ? t.motion.timing(ms(motion.duration), ms(exitDuration(motion.duration)))
+              : t.motion.offNote}
           </p>
         </div>
       </div>
@@ -96,12 +90,12 @@ export function MotionSettings() {
       <div className={styles.sample}>
         <div className={styles.sampleBar}>
           <span className={styles.sampleLabel} id="motion-sample-label">
-            Try it
+            {t.motion.tryIt}
           </span>
           <div className={styles.segmented} role="radiogroup" aria-labelledby="motion-sample-label" onKeyDown={sample.group.onKeyDown}>
             {SAMPLE_PAGES.map((p) => (
               <button key={p} type="button" {...sample.group.radioProps(p)}>
-                {p}
+                {t.motion.samplePages[p]}
               </button>
             ))}
           </div>
@@ -179,6 +173,7 @@ function SamplePageView({
   dir: 'forward' | 'back';
   onAnimationEnd?: () => void;
 }) {
+  const t = useT();
   const first = page === SAMPLE_PAGES[0];
   return (
     <div
@@ -186,7 +181,7 @@ function SamplePageView({
       data-dir={dir}
       onAnimationEnd={onAnimationEnd}
     >
-      <div className={styles.sampleTitle}>{page}</div>
+      <div className={styles.sampleTitle}>{t.motion.samplePages[page]}</div>
       {first ? (
         <div className={styles.sampleRows}>
           {[90, 70, 82, 60, 76].map((w, i) => (

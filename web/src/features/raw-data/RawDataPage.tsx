@@ -9,14 +9,16 @@ import { track } from '../../analytics/tracker';
 import { QueryEditor } from './QueryEditor';
 import { MAX_RENDERED_ROWS, ResultsTable } from './ResultsTable';
 import { loadSpec, saveSpec } from './specMemory';
+import { useT } from '../../i18n/I18nProvider';
 import styles from '../data-query/DataQuery.module.css';
 
 export function RawDataPage() {
   const ds = useDataSource();
   const { source, series, rows } = ds;
   const [spec, setSpecState] = useState<QuerySpec>(loadSpec);
+  const t = useT();
 
-  useDocumentTitle(source.symbol ? `${source.symbol} · Raw data` : 'Raw data');
+  useDocumentTitle(source.symbol ? `${source.symbol} · ${t.raw.title}` : t.raw.title);
 
   const result = useMemo(() => runQuery(rows, spec), [rows, spec]);
   const columns: ColumnKey[] = spec.select;
@@ -40,12 +42,12 @@ export function RawDataPage() {
   };
 
   // One polite message for screen readers describing what the page is doing now.
-  const status = loadStatus(ds, `${result.rows.length.toLocaleString()} rows for ${source.symbol}`);
+  const status = loadStatus(ds, t.raw.status(result.rows.length, source.symbol));
 
   return (
     <div className={styles.page}>
       <div className={styles.heading}>
-        <h1>Raw data</h1>
+        <h1>{t.raw.title}</h1>
       </div>
 
       <p className="sr-only" role="status">
@@ -66,10 +68,10 @@ export function RawDataPage() {
 
             <div className={styles.resultBar}>
               <span>
-                <strong>{result.rows.length.toLocaleString()}</strong> rows
-                {result.rows.length !== rows.length && <> of {rows.length.toLocaleString()} bars</>}
-                {result.matched !== result.rows.length && <> · {result.matched.toLocaleString()} matched before LIMIT</>}
-                {result.rows.length > MAX_RENDERED_ROWS && <> · showing the first {MAX_RENDERED_ROWS.toLocaleString()}</>}
+                {t.raw.rows(result.rows.length)}
+                {result.rows.length !== rows.length && t.raw.ofBars(rows.length)}
+                {result.matched !== result.rows.length && t.raw.matchedBeforeLimit(result.matched)}
+                {result.rows.length > MAX_RENDERED_ROWS && t.raw.showingFirst(MAX_RENDERED_ROWS)}
               </span>
               <button
                 type="button"
@@ -77,19 +79,19 @@ export function RawDataPage() {
                 onClick={downloadCsv}
                 disabled={!result.rows.length || !columns.length}
               >
-                Download CSV
+                {t.raw.downloadCsv}
               </button>
             </div>
 
             {!columns.length ? (
               <div className={styles.empty}>
-                No columns selected.{' '}
+                {t.raw.noColumns}{' '}
                 <button
                   type="button"
                   className={styles.linkButton}
                   onClick={() => setSpec((s) => ({ ...s, select: COLUMNS.map((c) => c.key) }))}
                 >
-                  Select all columns
+                  {t.raw.selectAllColumns}
                 </button>
               </div>
             ) : result.rows.length ? (
@@ -98,13 +100,13 @@ export function RawDataPage() {
                 columns={columns}
                 orderBy={spec.orderBy}
                 onSort={sortBy}
-                caption={`${source.symbol} ${source.interval} bars over ${source.range}`}
+                caption={t.raw.caption(source.symbol, t.intervals[source.interval] ?? source.interval, t.ranges[source.range] ?? source.range)}
               />
             ) : (
               <div className={styles.empty}>
-                No bars match these conditions.{' '}
+                {t.raw.noMatches}{' '}
                 <button type="button" className={styles.linkButton} onClick={() => setSpec((s) => ({ ...s, where: [] }))}>
-                  Clear conditions
+                  {t.raw.clearConditions}
                 </button>
               </div>
             )}

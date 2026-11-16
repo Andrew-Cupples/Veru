@@ -1,11 +1,13 @@
 import type { Instrument } from '../../api/client';
+import { formatNumber, useT } from '../../i18n/I18nProvider';
 import styles from './DataQuery.module.css';
 
 const number = (value: number | null | undefined, digits = 2) =>
-  value == null ? '—' : value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  value == null ? '—' : formatNumber(value, { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 /** The descriptive fields Yahoo returns alongside the bars. */
 export function InstrumentSummary({ instrument }: { instrument: Instrument }) {
+  const t = useT();
   const change =
     instrument.regularMarketPrice != null && instrument.previousClose
       ? instrument.regularMarketPrice - instrument.previousClose
@@ -13,20 +15,20 @@ export function InstrumentSummary({ instrument }: { instrument: Instrument }) {
   const changePct = change != null && instrument.previousClose ? (change / instrument.previousClose) * 100 : null;
 
   const facts: [string, string][] = [
-    ['Previous close', number(instrument.previousClose)],
-    ['Day range', `${number(instrument.dayLow)} – ${number(instrument.dayHigh)}`],
-    ['52-week range', `${number(instrument.fiftyTwoWeekLow)} – ${number(instrument.fiftyTwoWeekHigh)}`],
-    ['Day volume', number(instrument.dayVolume, 0)],
-    ['Time zone', instrument.timeZone],
-    ['First trade', instrument.firstTradeDate?.slice(0, 10) ?? '—'],
+    [t.instrument.previousClose, number(instrument.previousClose)],
+    [t.instrument.dayRange, `${number(instrument.dayLow)} – ${number(instrument.dayHigh)}`],
+    [t.instrument.yearRange, `${number(instrument.fiftyTwoWeekLow)} – ${number(instrument.fiftyTwoWeekHigh)}`],
+    [t.instrument.dayVolume, number(instrument.dayVolume, 0)],
+    [t.instrument.timeZone, instrument.timeZone],
+    [t.instrument.firstTrade, instrument.firstTradeDate?.slice(0, 10) ?? '—'],
   ];
 
   return (
-    <section className={styles.summary} aria-label="Instrument">
+    <section className={styles.summary} aria-label={t.instrument.label}>
       <div className={styles.identity}>
         <div className={styles.symbolLine}>
-          <span className={styles.symbol}>{instrument.symbol}</span>
-          {instrument.instrumentType && <span className={styles.tag}>{instrument.instrumentType.toLowerCase()}</span>}
+          <span className={styles.symbol} translate="no">{instrument.symbol}</span>
+          {instrument.instrumentType && <span className={styles.tag}>{t.assetTypes[instrument.instrumentType.toLowerCase()] ?? instrument.instrumentType.toLowerCase()}</span>}
         </div>
         <div className={styles.name}>
           {[instrument.name, instrument.exchange, instrument.currency].filter(Boolean).join(' · ')}
@@ -38,7 +40,7 @@ export function InstrumentSummary({ instrument }: { instrument: Instrument }) {
           <span className={styles.change} data-direction={change >= 0 ? 'up' : 'down'}>
             {change >= 0 ? '+' : ''}
             {number(change)} ({change >= 0 ? '+' : ''}
-            {changePct.toFixed(2)}%)
+            {formatNumber(changePct, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%)
           </span>
         )}
       </div>

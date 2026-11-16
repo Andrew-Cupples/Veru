@@ -359,3 +359,18 @@
 .shortcuts {
   white-space: nowrap;
 }
+
+.footer {
+  flex-wrap: wrap;
+}
+
+/* Short screens (or heavy zoom): scroll the whole pane as one, so the fields aren't squeezed between a fixed header and footer. */
+@media (max-height: 480px) {
+  .panel {
+    overflow-y: auto;
+  }
+  .body {
+    flex: none;
+    overflow: visible;
+  }
+}

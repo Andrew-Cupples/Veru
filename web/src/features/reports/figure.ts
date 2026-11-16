@@ -1,3 +1,4 @@
+import { messages } from '../../i18n/I18nProvider';
 import { FIELD_BY_KEY, compareValues, type FieldKey } from './fields';
 import { CHART_BY_TYPE, type CameraPreset, type NumberFormat, type PaletteId, type Report } from './model';
 import type { Axis3D, Shaped } from './shape';
@@ -53,15 +54,6 @@ export function toHex(color: string, fallback = '#888888'): string {
   const rgb = parseColor(color);
   return rgb ? `#${rgb.map((n) => Math.round(n).toString(16).padStart(2, '0')).join('')}` : fallback;
 }
-
-export const PALETTE_LABELS: Record<PaletteId, string> = {
-  theme: 'Theme',
-  colorblind: 'Colour-blind safe',
-  vivid: 'Vivid',
-  warm: 'Warm',
-  cool: 'Cool',
-  mono: 'Single hue',
-};
 
 export function paletteColors(id: PaletteId, c: ThemeColors): string[] {
   switch (id) {
@@ -177,7 +169,8 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
       return {
         ...base,
         type: 'category',
-        tickangle: 0,
+        // Level while the labels fit; tilted only when the chart is narrow (small window or zoomed in) and they'd overlap.
+        tickangle: 'auto',
         tickmode: 'array',
         tickvals: ticks.tickvals.map((i) => values[i]),
         ticktext: ticks.ticktext.map((t) => (daily ? t.slice(0, 10) : `${t.slice(5, 10)} ${t.slice(11, 16)}`)),
@@ -300,7 +293,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         const max = Math.max(1, ...shaped.volume);
         data.push({
           type: 'bar',
-          name: 'Volume',
+          name: FIELD_BY_KEY.volume.label,
           x: shaped.x,
           y: shaped.volume,
           yaxis: 'y2',
@@ -315,7 +308,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         ...xAxisFor(enc.x, shaped.x.map(String)),
         rangeslider: { visible: st.rangeSlider, bgcolor: c.surface, bordercolor: c.rule },
       };
-      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, 'Price')), type: st.yLog ? 'log' : 'linear', ...numberFormat(st.yFormat, 'price') };
+      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, messages().figure.price)), type: st.yLog ? 'log' : 'linear', ...numberFormat(st.yFormat, 'price') };
       break;
     }
 
@@ -331,7 +324,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         }),
       );
       layout.xaxis = { ...axisBase, title: title(axisTitle(st.xTitle, enc.x)), ...numberFormat('auto', FIELD_BY_KEY[enc.x].unit) };
-      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, 'Bars')), type: st.yLog ? 'log' : 'linear' };
+      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, messages().figure.bars)), type: st.yLog ? 'log' : 'linear' };
       layout.barmode = st.barMode;
       layout.bargap = 0.04;
       break;
@@ -443,6 +436,8 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
   const titleText = (st.title.trim() || report.name).trim();
   const hasTitle = st.showTitle && !!titleText;
   const legendTop = legendShown && legendAt === 'top';
+  // Space the title takes at the top of the chart, in px.
+  const titleBlock = hasTitle ? (st.subtitle.trim() ? 72 : 48) : 16;
 
   layout.title = hasTitle
     ? {
@@ -460,7 +455,9 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
       ? { orientation: 'h', x: 0, y: -0.18, yanchor: 'top' }
       : legendAt === 'right'
         ? { orientation: 'v', x: 1.02, y: 1, xanchor: 'left' }
-        : { orientation: 'h', x: 0, y: 1.01, yanchor: 'bottom' };
+        : // Hung from just under the title, measured on the whole chart, so when a narrow chart wraps the
+          // legend onto several rows it grows down (Plotly pushes the plot down to fit) instead of up over the title.
+          { orientation: 'h', x: 0, yref: 'container', y: 1 - titleBlock / st.height, yanchor: 'top' };
   layout.legend = { ...(layout.legend as object), font: { color: c.inkMuted, size: st.fontSize }, bgcolor: 'rgba(0,0,0,0)' };
   layout.paper_bgcolor = background;
   layout.plot_bgcolor = background;
@@ -473,7 +470,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
   layout.margin = {
     l: def.dims === 3 ? 0 : 56,
     r: def.dims === 3 ? 0 : hasY2 ? 56 : 20,
-    t: (hasTitle ? (st.subtitle.trim() ? 72 : 48) : 16) + (legendTop && def.dims === 2 ? 26 : 0),
+    t: titleBlock + (legendTop && def.dims === 2 ? 26 : 0),
     b: def.dims === 3 ? 0 : 44,
   };
   // Keeps zoom, pan and 3D rotation across edits; changes when the report or camera preset does.

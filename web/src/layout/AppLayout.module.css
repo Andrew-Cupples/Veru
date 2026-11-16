@@ -210,6 +210,41 @@
   color: var(--ink-muted);
 }
 
+/* ---------- Language ---------- */
+
+.language {
+  flex: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.languageIcon {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--ink-muted);
+  stroke-width: 1.3;
+  pointer-events: none;
+}
+
+.languageSelect {
+  height: 34px;
+  padding: 0 10px 0 31px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.languageSelect:hover {
+  border-color: var(--accent);
+}
+
 @media (max-width: 900px) {
   .price {
     display: none;
@@ -219,19 +254,55 @@
   }
 }
 
-@media (max-width: 560px) {
-  .header {
-    gap: 10px;
-    padding: 0 10px;
+/*
+ * Reflow mode: narrow or short viewports, which is also what the desktop looks like at 300-400% zoom.
+ * The fixed header and inner-scrolling main would leave little room for content, so the page scrolls
+ * as one document instead: the header scrolls away with it, and every nav tab wraps into view
+ * rather than hiding in a sideways-scrolling tray.
+ */
+@media (max-width: 640px), (max-height: 480px) {
+  .shell {
+    display: block;
+    height: auto;
+    min-height: 100%;
   }
+  .header {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 8px 10px;
+  }
+  .nav {
+    order: 3;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    overflow: visible;
+    border-radius: var(--radius-md);
+  }
+  .main {
+    overflow: visible;
+  }
+  /* The ledger lays out its own panes and needs a definite height: one screen, below the header. */
+  .main:has(> :global(.pl-root)) {
+    height: 100vh;
+    height: 100dvh;
+  }
+  .tools {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+  .search {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
   .brandName {
     display: none;
   }
   .link {
     padding: 0 10px;
-  }
-  .search {
-    width: 120px;
   }
   .searchKey {
     display: none;

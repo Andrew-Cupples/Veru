@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
+import { useT } from '../../i18n/I18nProvider';
 import { ChartIcon } from '../reports/ChartIcon';
 import type { ChartType } from '../reports/model';
 import styles from './Start.module.css';
@@ -13,46 +14,48 @@ import styles from './Start.module.css';
 const QUICK = ['TSLA', 'AAPL', 'NVDA', 'SPY', 'BTC-USD'];
 
 export function StartPage() {
-  useDocumentTitle('Start');
+  const t = useT();
+  useDocumentTitle(t.nav.start);
 
   return (
     <div className={styles.page}>
       <header className={styles.hero}>
         <h1>
-          Stocks in. <span className={styles.accent}>Charts out.</span>
+          {t.start.headline} <span className={styles.accent}>{t.start.headlineAccent}</span>
         </h1>
-        <div className={styles.quick} role="group" aria-label="Open a stock in Reports">
+        <div className={styles.quick} role="group" aria-label={t.start.quickGroup}>
           <span className={styles.quickLabel} aria-hidden="true">
-            <ArrowGlyph /> Try
+            <ArrowGlyph /> {t.start.try}
           </span>
           {QUICK.map((s) => (
-            <Link key={s} to={`/reports?symbol=${encodeURIComponent(s)}`} className={styles.ticker} aria-label={`Chart ${s} in Reports`}>
+            <Link key={s} to={`/reports?symbol=${encodeURIComponent(s)}`} className={styles.ticker} aria-label={t.start.chartIn(s)} translate="no">
               {s}
             </Link>
           ))}
         </div>
       </header>
 
-      <ol className={styles.flow} aria-label="How it works">
-        <Step n={1} title="Pick a stock" to="/reports" cta="Reports" art={<PickArt />} />
-        <Step n={2} title="Choose a chart" to="/reports" cta="Reports" art={<ChartArt />} />
-        <Step n={3} title="Compare stocks" to="/compare" cta="Compare" art={<CompareArt />} />
-        <Step n={4} title="Export the data" to="/raw-data" cta="Raw data" art={<ExportArt />} last />
+      <ol className={styles.flow} aria-label={t.start.howItWorks}>
+        <Step n={1} title={t.start.stepPick} to="/reports" cta={t.nav.reports} art={<PickArt />} />
+        <Step n={2} title={t.start.stepChart} to="/reports" cta={t.nav.reports} art={<ChartArt />} />
+        <Step n={3} title={t.start.stepCompare} to="/compare" cta={t.nav.compare} art={<CompareArt />} />
+        <Step n={4} title={t.start.stepExport} to="/raw-data" cta={t.nav.rawData} art={<ExportArt />} last />
       </ol>
 
-      <section className={styles.more} aria-label="More">
-        <Tile to="/analytics" title="Analytics" art={<AnalyticsArt />} />
-        <Tile to="/personalize" title="Personalize" art={<ThemeArt />} />
-        <Tile to="/ledger" title="Prompt ledger" art={<LedgerArt />} />
+      <section className={styles.more} aria-label={t.start.more}>
+        <Tile to="/analytics" title={t.nav.analytics} art={<AnalyticsArt />} />
+        <Tile to="/personalize" title={t.nav.personalize} art={<ThemeArt />} />
+        <Tile to="/ledger" title={t.nav.ledger} art={<LedgerArt />} />
       </section>
     </div>
   );
 }
 
 function Step({ n, title, to, cta, art, last = false }: { n: number; title: string; to: string; cta: string; art: ReactNode; last?: boolean }) {
+  const t = useT();
   return (
     <li className={styles.stepItem}>
-      <Link to={to} className={styles.step} aria-label={`Step ${n}: ${title}. Opens ${cta}.`}>
+      <Link to={to} className={styles.step} aria-label={t.start.stepLabel(n, title, cta)}>
         <span className={styles.badge} aria-hidden="true">
           {n}
         </span>

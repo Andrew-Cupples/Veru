@@ -1,9 +1,11 @@
 import { Icon } from './Icon';
+import { useLedgerI18n } from '../i18n';
 import styles from './StatusStates.module.css';
 
 export function LoadingState() {
+  const { t } = useLedgerI18n();
   return (
-    <div className={styles.paper} aria-busy="true" aria-label="Loading prompts">
+    <div className={styles.paper} aria-busy="true" aria-label={t.status.loading}>
       {[0, 1, 2].map((i) => (
         <div key={i} className={styles.skeletonSection}>
           <div className={styles.bar} style={{ width: '22%' }} />
@@ -18,19 +20,20 @@ export function LoadingState() {
 }
 
 export function ErrorState({ error, onRetry }: { error: Error; onRetry: () => void }) {
+  const { t } = useLedgerI18n();
   return (
     <div className={styles.center}>
       <div className={styles.card} role="alert">
         <div className={styles.cardIcon}>
           <Icon name="alert" size={22} />
         </div>
-        <h2>Couldn’t load the ledger</h2>
+        <h2>{t.status.errorTitle}</h2>
         <p>{error.message}</p>
         <p className={styles.hint}>
-          Is the API running? Start it with <code>dotnet run --project tools/prompt-ledger/src/PromptLedger.Api</code>
+          {t.status.errorHelp(<code translate="no">dotnet run --project tools/prompt-ledger/src/PromptLedger.Api</code>)}
         </p>
         <button type="button" className={styles.button} onClick={onRetry}>
-          Try again
+          {t.status.tryAgain}
         </button>
       </div>
     </div>
@@ -38,14 +41,15 @@ export function ErrorState({ error, onRetry }: { error: Error; onRetry: () => vo
 }
 
 export function EmptyState() {
+  const { t } = useLedgerI18n();
   return (
     <div className={styles.center}>
       <div className={styles.card}>
         <div className={styles.cardIcon}>¶</div>
-        <h2>No prompts yet</h2>
-        <p>Prompts appear here as you send them to Claude Code in this repository.</p>
+        <h2>{t.status.emptyTitle}</h2>
+        <p>{t.status.empty}</p>
         <p className={styles.hint}>
-          To backfill from existing transcripts, use <strong>Sync transcripts</strong> in the toolbar.
+          {t.status.backfill(<strong>{t.toolbar.sync}</strong>)}
         </p>
       </div>
     </div>

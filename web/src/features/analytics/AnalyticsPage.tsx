@@ -15,6 +15,7 @@ import { SuggestionBox } from './SuggestionBox';
 import styles from './Analytics.module.css';
 import rs from '../reports/Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
+import { formatNumber, useT } from '../../i18n/I18nProvider';
 
 const CONFIG: ReportConfig = {
   dataset: 'analytics',
@@ -24,11 +25,11 @@ const CONFIG: ReportConfig = {
 
 const HOUR = 3_600_000;
 const WINDOWS = [
-  { value: '1h', label: 'Hour', ms: HOUR },
-  { value: '24h', label: '24 hours', ms: 24 * HOUR },
-  { value: '7d', label: '7 days', ms: 7 * 24 * HOUR },
-  { value: '30d', label: '30 days', ms: 30 * 24 * HOUR },
-  { value: 'all', label: 'All time', ms: Infinity },
+  { value: '1h', ms: HOUR },
+  { value: '24h', ms: 24 * HOUR },
+  { value: '7d', ms: 7 * 24 * HOUR },
+  { value: '30d', ms: 30 * 24 * HOUR },
+  { value: 'all', ms: Infinity },
 ] as const;
 type WindowId = (typeof WINDOWS)[number]['value'];
 const isWindow = (v: string | null): v is WindowId => WINDOWS.some((w) => w.value === v);
@@ -83,7 +84,8 @@ export function AnalyticsPage() {
       return p;
     });
 
-  useDocumentTitle(`${reports.comparing ? 'Compare' : active.name} · Analytics`);
+  const t = useT();
+  useDocumentTitle(`${reports.comparing ? t.nav.compare : active.name} · ${t.nav.analytics}`);
 
   const allRows = useMemo(() => toAnalyticsRows(events), [events]);
   const windowRows = useMemo(() => {
@@ -110,21 +112,21 @@ export function AnalyticsPage() {
   return (
     <div className={rs.page}>
       <div className={dq.heading}>
-        <h1>Analytics</h1>
+        <h1>{t.nav.analytics}</h1>
       </div>
 
       <div className={dq.card}>
-        <div className={dq.editor} role="group" aria-label="Analytics data">
-          <Clause keyword="FROM">
+        <div className={dq.editor} role="group" aria-label={t.analytics.data}>
+          <Clause keyword={t.query.from}>
             <div className={styles.fromRow}>
-              <Segmented label="Events in the last" value={windowId} options={WINDOWS} onChange={setWindow} />
+              <Segmented label={t.analytics.window} value={windowId} options={WINDOWS.map((w) => ({ value: w.value, label: t.analytics.windows[w.value] }))} onChange={setWindow} />
               <p className={styles.fromSummary}>
-                <strong>{windowRows.length.toLocaleString()}</strong> of {events.length.toLocaleString()} events
+                {t.analytics.ofEvents(windowRows.length, events.length)}
               </p>
             </div>
           </Clause>
           {!reports.comparing && (
-            <Clause keyword="WHERE">
+            <Clause keyword={t.query.where}>
               <ConditionsEditor
                 where={active.where}
                 onChange={(where) => reports.update((r) => ({ ...r, where }))}
@@ -143,7 +145,7 @@ export function AnalyticsPage() {
         reports={reports}
         rowsFor={rowsFor}
         hasData={windowRows.length > 0}
-        subject="app usage"
+        subject={t.analytics.subject}
         noun="events"
         status={(text) => text}
         gate={(content) =>
@@ -152,10 +154,10 @@ export function AnalyticsPage() {
           ) : (
             <div className={dq.empty}>
               {events.length
-                ? 'No events in this time window yet. Pick a longer one above.'
+                ? t.analytics.emptyWindow
                 : paused
-                  ? 'Tracking is paused, so nothing has been recorded. Resume it above to start.'
-                  : 'Nothing recorded yet. Use the app and events will appear here within a couple of seconds.'}
+                  ? t.analytics.emptyPaused
+                  : t.analytics.empty}
             </div>
           )
         }
@@ -177,6 +179,7 @@ function TrackingBar({
   hasEvents: boolean;
   onExport: (format: 'CSV' | 'JSON') => void;
 }) {
+  const t = useT();
   const [confirming, setConfirming] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const clearRef = useRef<HTMLButtonElement>(null);
@@ -197,39 +200,39 @@ function TrackingBar({
     <div className={styles.trackingBar}>
       <span className={styles.recording} data-paused={paused || undefined}>
         <span className={styles.dot} aria-hidden="true" />
-        {paused ? 'Tracking paused' : 'Recording'}
+        {paused ? t.analytics.paused : t.analytics.recording}
       </span>
       <button type="button" className={dq.linkButton} aria-pressed={paused} onClick={() => setPaused(!paused)}>
-        {paused ? 'Resume tracking' : 'Pause tracking'}
+        {paused ? t.analytics.resume : t.analytics.pause}
       </button>
       <span className={rs.toolbarDivider} aria-hidden="true" />
       <span className={rs.exportLabel} aria-hidden="true">
-        Export events
+        {t.analytics.exportEvents}
       </span>
-      <button type="button" className={dq.linkButton} aria-label="Export events in this window as CSV" disabled={!hasEvents} onClick={() => onExport('CSV')}>
+      <button type="button" className={dq.linkButton} aria-label={t.analytics.exportAs('CSV')} disabled={!hasEvents} onClick={() => onExport('CSV')}>
         CSV
       </button>
-      <button type="button" className={dq.linkButton} aria-label="Export events in this window as JSON" disabled={!hasEvents} onClick={() => onExport('JSON')}>
+      <button type="button" className={dq.linkButton} aria-label={t.analytics.exportAs('JSON')} disabled={!hasEvents} onClick={() => onExport('JSON')}>
         JSON
       </button>
       <span className={rs.toolbarDivider} aria-hidden="true" />
       {confirming ? (
-        <span className={styles.confirm} role="group" aria-label="Confirm clearing data">
-          <span>Delete all {count.toLocaleString()} events? This can't be undone.</span>
+        <span className={styles.confirm} role="group" aria-label={t.analytics.confirmClear}>
+          <span>{t.analytics.deleteAll(count)}</span>
           <button type="button" className={styles.dangerButton} onClick={clear}>
-            Delete events
+            {t.analytics.deleteEvents}
           </button>
           <button ref={cancelRef} type="button" className={dq.linkButton} onClick={() => setConfirming(false)}>
-            Cancel
+            {t.common.cancel}
           </button>
         </span>
       ) : (
         <button ref={clearRef} type="button" className={dq.linkButton} disabled={!count} onClick={() => setConfirming(true)}>
-          Clear data…
+          {t.analytics.clearData}
         </button>
       )}
       <span className="sr-only" role="status">
-        {cleared && !count ? 'All analytics events deleted' : ''}
+        {cleared && !count ? t.analytics.cleared : ''}
       </span>
     </div>
   );
@@ -262,17 +265,21 @@ function Kpis({ rows }: { rows: readonly AnalyticsRow[] }) {
     return { visits: visits.size, clicks, keyboard, opened, exports, pageSeconds, views };
   }, [rows]);
 
-  const time = (s: number) => (s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 60 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`);
+  const t = useT();
+  // Hours, minutes or seconds in the language's own short units ("1.5 h", "1,5 h", "12 min").
+  const unit = (value: number, u: 'hour' | 'minute' | 'second', digits = 0) =>
+    formatNumber(value, { style: 'unit', unit: u, unitDisplay: 'short', maximumFractionDigits: digits });
+  const time = (s: number) => (s >= 3600 ? unit(s / 3600, 'hour', 1) : s >= 60 ? unit(Math.round(s / 60), 'minute') : unit(Math.round(s), 'second'));
   const items = [
-    { label: 'Visits', value: k.visits.toLocaleString() },
-    { label: 'Clicks', value: k.clicks.toLocaleString(), note: k.clicks ? `${Math.round((k.keyboard / k.clicks) * 100)}% by keyboard` : undefined },
-    { label: 'Reports opened', value: k.opened.toLocaleString() },
-    { label: 'Exports', value: k.exports.toLocaleString() },
-    { label: 'Time in app', value: time(k.pageSeconds), note: k.views ? `${k.views.toLocaleString()} page views` : undefined },
+    { label: t.analytics.visits, value: formatNumber(k.visits) },
+    { label: t.analytics.clicks, value: formatNumber(k.clicks), note: k.clicks ? t.analytics.byKeyboard(k.keyboard / k.clicks) : undefined },
+    { label: t.analytics.reportsOpened, value: formatNumber(k.opened) },
+    { label: t.analytics.exports, value: formatNumber(k.exports) },
+    { label: t.analytics.timeInApp, value: time(k.pageSeconds), note: k.views ? t.analytics.pageViews(k.views) : undefined },
   ];
 
   return (
-    <dl className={styles.kpis} aria-label="Summary for this time window">
+    <dl className={styles.kpis} aria-label={t.analytics.summary}>
       {items.map((i) => (
         <div key={i.label} className={styles.kpi}>
           <dt>{i.label}</dt>

@@ -4,6 +4,7 @@ import { useAutosave } from '../../hooks/useAutosave';
 import { headline } from '../../model';
 import { Icon } from '../Icon';
 import { TagInput } from './TagInput';
+import { useLedgerI18n } from '../../i18n';
 import styles from './AnnotationPanel.module.css';
 
 type TextField = 'rationale' | 'outcomeNotes' | 'comment';
@@ -25,17 +26,10 @@ interface AnnotationPanelProps {
   saving: boolean;
 }
 
-const OUTCOME_LABELS: Record<PromptOutcome, string> = {
-  Unset: 'Not decided yet',
-  Kept: 'Kept: used as is',
-  Changed: 'Changed: used with edits',
-  Rejected: 'Rejected: not used',
-  Mixed: 'Mixed: kept some, rejected some',
-};
-
 export function AnnotationPanel(props: AnnotationPanelProps) {
   const { prompt, position, total, pinned, autoFocusComment, onAutoFocused, onPrev, onNext } = props;
   const { onFollowScroll, onEditingChange, onSave, onSaveTags, saving } = props;
+  const t = useLedgerI18n().t.annotations;
 
   const [draft, setDraft] = useState<Record<TextField, string>>({
     rationale: prompt.rationale ?? '',
@@ -68,20 +62,20 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
     }
   };
 
-  const status = autosave.dirty ? 'Unsaved changes' : saving ? 'Saving…' : 'All changes saved';
+  const status = autosave.dirty ? t.unsaved : saving ? t.saving : t.saved;
 
   return (
-    <aside className={styles.panel} aria-label="Annotations" onFocus={onFocus} onBlur={onBlur}>
+    <aside className={styles.panel} aria-label={t.label} onFocus={onFocus} onBlur={onBlur}>
       <div className={styles.header}>
         <div className={styles.position}>
           <span>
-            Prompt <strong>{position}</strong> of {total}
+            {t.position(<strong>{position}</strong>, total)}
           </span>
           <div className={styles.stepper}>
-            <button type="button" onClick={onPrev} disabled={!onPrev} aria-label="Previous prompt" title="Previous (k)">
+            <button type="button" onClick={onPrev} disabled={!onPrev} aria-label={t.previous} title={t.previousTitle}>
               <Icon name="chevronUp" />
             </button>
-            <button type="button" onClick={onNext} disabled={!onNext} aria-label="Next prompt" title="Next (j)">
+            <button type="button" onClick={onNext} disabled={!onNext} aria-label={t.next} title={t.nextTitle}>
               <Icon name="chevronDown" />
             </button>
           </div>
@@ -90,9 +84,9 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
         {pinned && (
           <div className={styles.pinned}>
             <Icon name="pin" size={13} />
-            <span>Held on this prompt while you edit</span>
+            <span>{t.held}</span>
             <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onFollowScroll}>
-              Follow scroll
+              {t.follow}
             </button>
           </div>
         )}
@@ -104,18 +98,18 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
             checked={prompt.humanReviewed}
             onChange={(v) => onSave(prompt.id, { humanReviewed: v })}
             tone="success"
-            label="Human reviewed"
+            label={t.humanReviewed}
             hint="r"
           />
-          <Toggle checked={prompt.starred} onChange={(v) => onSave(prompt.id, { starred: v })} tone="star" label="Starred" hint="s" />
+          <Toggle checked={prompt.starred} onChange={(v) => onSave(prompt.id, { starred: v })} tone="star" label={t.starred} hint="s" />
           <Toggle
             checked={prompt.includeInLog}
             onChange={(v) => onSave(prompt.id, { includeInLog: v })}
-            label="Include in PROMPT_LOG.md"
+            label={t.includeInLog}
           />
         </div>
 
-        <Field label="Outcome">
+        <Field label={t.outcome}>
           {(id) => (
             <div className={styles.selectWrap} data-outcome={prompt.outcome}>
               <span className={styles.outcomeDot} aria-hidden="true" />
@@ -127,7 +121,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               >
                 {OUTCOMES.map((o) => (
                   <option key={o} value={o}>
-                    {OUTCOME_LABELS[o]}
+                    {t.outcomes[o]}
                   </option>
                 ))}
               </select>
@@ -136,7 +130,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
           )}
         </Field>
 
-        <Field label="Why I sent it">
+        <Field label={t.why}>
           {(id) => (
             <textarea
               id={id}
@@ -144,12 +138,12 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               rows={2}
               value={draft.rationale}
               onChange={(e) => editText('rationale', e.target.value)}
-              placeholder="What were you trying to learn or achieve?"
+              placeholder={t.whyPlaceholder}
             />
           )}
         </Field>
 
-        <Field label="What I kept, changed or rejected">
+        <Field label={t.kept}>
           {(id) => (
             <textarea
               id={id}
@@ -157,16 +151,16 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               rows={2}
               value={draft.outcomeNotes}
               onChange={(e) => editText('outcomeNotes', e.target.value)}
-              placeholder="…and why"
+              placeholder={t.keptPlaceholder}
             />
           )}
         </Field>
 
-        <Field label="Tags">
+        <Field label={t.tags}>
           {(id) => <TagInput id={id} tags={prompt.tags} onChange={(tags) => onSaveTags(prompt.id, tags)} />}
         </Field>
 
-        <Field label="Comments" grow hint="#hashtags become tags">
+        <Field label={t.comments} grow hint={t.commentsHint}>
           {(id) => (
             <textarea
               id={id}
@@ -174,7 +168,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               className={`${styles.textarea} ${styles.comment}`}
               value={draft.comment}
               onChange={(e) => editText('comment', e.target.value)}
-              placeholder="Your notes on this prompt and the reply…"
+              placeholder={t.commentsPlaceholder}
             />
           )}
         </Field>
@@ -186,7 +180,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
           {status}
         </span>
         <span className={styles.shortcuts}>
-          <kbd>Ctrl</kbd>+<kbd>Enter</kbd> reviewed &amp; next
+          <kbd>Ctrl</kbd>+<kbd>Enter</kbd> {t.reviewedNext}
         </span>
       </footer>
     </aside>

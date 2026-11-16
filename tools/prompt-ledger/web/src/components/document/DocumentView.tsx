@@ -1,7 +1,8 @@
 import { memo } from 'react';
 import type { PromptDetail } from '../../api/client';
 import { SECTION_ATTRIBUTE } from '../../hooks/useScrollSpy';
-import { formatDate, formatTime, headline, type SessionGroup } from '../../model';
+import { headline, type SessionGroup } from '../../model';
+import { useLedgerI18n } from '../../i18n';
 import { Icon } from '../Icon';
 import { ResponseBlock } from './ResponseBlock';
 import styles from './DocumentView.module.css';
@@ -14,17 +15,17 @@ interface DocumentViewProps {
 
 /** The whole ledger as one continuous document: sessions are chapters, prompts are sections. */
 export function DocumentView({ groups, selectedId, onSelect }: DocumentViewProps) {
+  const { t, formatDate } = useLedgerI18n();
   let number = 0;
   return (
     <article className={styles.paper}>
       {groups.map((group) => (
         <div key={group.sessionId} className={styles.session}>
           <header className={styles.sessionHeader}>
-            <p className={styles.kicker}>Session · {formatDate(group.startedAt)}</p>
+            <p className={styles.kicker}>{t.document.session(formatDate(group.startedAt))}</p>
             <h1 className={styles.sessionTitle}>{group.title}</h1>
             <p className={styles.sessionMeta}>
-              {group.prompts.length} prompt{group.prompts.length === 1 ? '' : 's'} ·{' '}
-              {group.prompts.filter((p) => p.humanReviewed).length} reviewed
+              {t.document.summary(group.prompts.length, group.prompts.filter((p) => p.humanReviewed).length)}
             </p>
           </header>
 
@@ -54,7 +55,8 @@ interface PromptSectionProps {
 }
 
 const PromptSection = memo(function PromptSection({ prompt, number, selected, onSelect }: PromptSectionProps) {
-  const title = headline(prompt.text) || '(empty prompt)';
+  const { t, formatTime } = useLedgerI18n();
+  const title = headline(prompt.text) || t.document.empty;
   return (
     <section
       {...{ [SECTION_ATTRIBUTE]: prompt.id }}
@@ -66,10 +68,10 @@ const PromptSection = memo(function PromptSection({ prompt, number, selected, on
     >
       <header className={styles.sectionHeader}>
         <p className={styles.eyebrow}>
-          <span className={styles.number}>Prompt {number}</span>
+          <span className={styles.number}>{t.document.prompt(number)}</span>
           <span aria-hidden="true">·</span>
           <time dateTime={prompt.submittedAt}>{formatTime(prompt.submittedAt)}</time>
-          {prompt.starred && <Icon name="star" size={13} filled className={styles.star} aria-label="Starred" />}
+          {prompt.starred && <Icon name="star" size={13} filled className={styles.star} aria-label={t.document.starred} />}
         </p>
         <h2 id={`pl-prompt-${prompt.id}-title`} className={styles.title}>
           <button type="button" className={styles.titleButton} onClick={() => onSelect(prompt.id)}>
@@ -80,20 +82,20 @@ const PromptSection = memo(function PromptSection({ prompt, number, selected, on
           <span className={styles.chip} data-kind={prompt.humanReviewed ? 'reviewed' : 'pending'}>
             {prompt.humanReviewed ? (
               <>
-                <Icon name="check" size={12} strokeWidth={2.6} /> Reviewed
+                <Icon name="check" size={12} strokeWidth={2.6} /> {t.document.reviewed}
               </>
             ) : (
-              'Not reviewed'
+              t.document.notReviewed
             )}
           </span>
           {prompt.outcome !== 'Unset' && (
             <span className={styles.chip} data-kind="outcome" data-outcome={prompt.outcome}>
-              {prompt.outcome}
+              {t.annotations.outcomeChips[prompt.outcome]}
             </span>
           )}
           {!prompt.includeInLog && (
             <span className={styles.chip} data-kind="pending">
-              <Icon name="hidden" size={12} /> Not in log
+              <Icon name="hidden" size={12} /> {t.document.notInLog}
             </span>
           )}
           {prompt.tags.map((tag) => (
@@ -105,19 +107,19 @@ const PromptSection = memo(function PromptSection({ prompt, number, selected, on
       </header>
 
       <div className={styles.prompt}>
-        <p className={styles.blockLabel}>You</p>
+        <p className={styles.blockLabel}>{t.document.you}</p>
         <div className={styles.promptText}>{prompt.text}</div>
       </div>
 
       {prompt.responseText ? (
         <ResponseBlock text={prompt.responseText} model={prompt.model} />
       ) : (
-        <p className={styles.noResponse}>No reply recorded yet. It's added when the turn finishes, or on the next sync.</p>
+        <p className={styles.noResponse}>{t.document.noReply}</p>
       )}
 
       {prompt.comment && (
-        <aside className={styles.note} aria-label="Your comment">
-          <p className={styles.blockLabel}>Note</p>
+        <aside className={styles.note} aria-label={t.document.yourComment}>
+          <p className={styles.blockLabel}>{t.document.note}</p>
           <p className={styles.noteText}>{prompt.comment}</p>
         </aside>
       )}

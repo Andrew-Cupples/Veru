@@ -1,3 +1,4 @@
+import { messages } from '../../i18n/I18nProvider';
 import { FIELD_BY_KEY } from './fields';
 import type { Report } from './model';
 import type { Shaped } from './shape';
@@ -15,22 +16,23 @@ export interface DataTable {
 export function toTable(s: Shaped, report: Report): DataTable {
   const { enc } = report;
   const f = (k: keyof typeof FIELD_BY_KEY) => FIELD_BY_KEY[k].label;
+  const { series, value, measure } = messages().table;
   switch (s.kind) {
     case 'cartesian':
       return {
-        columns: ['Series', f(enc.x), 'Value'],
+        columns: [series, f(enc.x), value],
         rows: s.traces.flatMap((t) => t.x.map((x, i) => [t.name, x, t.y[i] ?? null])),
       };
     case 'ohlc':
       return {
-        columns: [f(enc.x), 'Open', 'High', 'Low', 'Close', 'Volume'],
+        columns: [f(enc.x), f('open'), f('high'), f('low'), f('close'), f('volume')],
         rows: s.x.map((x, i) => [x, s.open[i]!, s.high[i]!, s.low[i]!, s.close[i]!, s.volume[i]!]),
       };
     case 'histogram':
-      return { columns: ['Series', f(enc.x)], rows: s.traces.flatMap((t) => t.values.map((v) => [t.name, v])) };
+      return { columns: [series, f(enc.x)], rows: s.traces.flatMap((t) => t.values.map((v) => [t.name, v])) };
     case 'box':
       return {
-        columns: ['Measure', ...(enc.color ? [f(enc.color)] : []), 'Value'],
+        columns: [measure, ...(enc.color ? [f(enc.color)] : []), value],
         rows: s.traces.flatMap((t) => t.values.map((v, i) => [t.name, ...(t.groups ? [t.groups[i]!] : []), v])),
       };
     case 'grid':
@@ -40,7 +42,7 @@ export function toTable(s: Shaped, report: Report): DataTable {
       };
     case 'points3d':
       return {
-        columns: ['Series', 'Time', f(enc.x), f(enc.y), f(enc.z)],
+        columns: [series, f('time'), f(enc.x), f(enc.y), f(enc.z)],
         rows: s.traces.flatMap((t) =>
           t.z.map((z, i) => [
             t.name,

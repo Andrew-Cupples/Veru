@@ -2,6 +2,8 @@ import type { Theme } from '../../theme/theme';
 import type { ColorScheme } from '../../theme/tokens';
 import { radioGroup } from '../../a11y/radioGroup';
 import { scopeStyle } from './scope';
+import { useT } from '../../i18n/I18nProvider';
+import { themeName, themeTagline } from './themeText';
 import styles from './Personalize.module.css';
 
 interface Props {
@@ -16,14 +18,15 @@ interface Props {
  * A radio group: Tab lands on the active theme, arrow keys switch theme immediately.
  */
 export function ThemeGallery({ themes, activeId, scheme, onPick }: Props) {
+  const t = useT();
   const group = radioGroup(
-    themes.map((t) => t.id),
+    themes.map((th) => th.id),
     activeId,
     onPick,
   );
 
   return (
-    <div className={styles.gallery} role="radiogroup" aria-label="Theme" onKeyDown={group.onKeyDown}>
+    <div className={styles.gallery} role="radiogroup" aria-label={t.personalize.theme} onKeyDown={group.onKeyDown}>
       {themes.map((theme) => {
         const active = theme.id === activeId;
         return (
@@ -31,7 +34,7 @@ export function ThemeGallery({ themes, activeId, scheme, onPick }: Props) {
             key={theme.id}
             type="button"
             className={styles.themeCard}
-            aria-label={theme.name}
+            aria-label={themeName(theme, t)}
             aria-describedby={`theme-${theme.id}-tagline`}
             {...group.radioProps(theme.id)}
           >
@@ -64,15 +67,15 @@ export function ThemeGallery({ themes, activeId, scheme, onPick }: Props) {
             </div>
             <div className={styles.themeMeta}>
               <span className={styles.themeName}>
-                <span aria-hidden="true">{theme.emoji}</span> {theme.name}
+                <span aria-hidden="true">{theme.emoji}</span> {themeName(theme, t)}
                 {active && (
                   <span className={styles.badge} aria-hidden="true">
-                    Active
+                    {t.personalize.active}
                   </span>
                 )}
               </span>
               <span id={`theme-${theme.id}-tagline`} className={styles.themeTagline}>
-                {theme.tagline}
+                {themeTagline(theme, t)}
               </span>
             </div>
           </button>

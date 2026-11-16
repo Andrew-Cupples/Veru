@@ -2,7 +2,8 @@ import { useEffect, useId, useMemo, useState, type KeyboardEvent, type Ref } fro
 import type { SymbolMatch } from '../../api/client';
 import { useSymbolSearch } from '../../api/hooks';
 import { useDebounced } from '../../lib/useDebounced';
-import { buildSuggestions, type Suggestion } from './suggestions';
+import { buildSuggestions } from './suggestions';
+import { useT } from '../../i18n/I18nProvider';
 import styles from './DataQuery.module.css';
 
 interface Props {
@@ -28,7 +29,6 @@ interface Props {
   align?: 'start' | 'end';
 }
 
-const SOURCE_LABEL: Record<Suggestion['source'], string> = { favourite: 'Favourite', recent: 'Recent', search: '' };
 
 /**
  * Symbol input with autocomplete (WAI-ARIA combobox with a listbox popup). Typing shows your matching
@@ -54,6 +54,7 @@ export function SymbolCombobox({
   align = 'start',
 }: Props) {
   const listId = useId();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   // Only search for what the user typed, not for a symbol that was picked or loaded.
@@ -123,10 +124,10 @@ export function SymbolCombobox({
   // What the status line says (and what screen readers hear, politely) about the list.
   let status = '';
   if (shown) {
-    if (search.isError && typed) status = 'Search is unavailable. Press Enter to load what you typed.';
-    else if (typed && value.trim() && (stale || search.isFetching) && !matches.length) status = 'Searching…';
-    else if (!options.length) status = `No matches. Press Enter to try ${value.trim().toUpperCase()}.`;
-    else status = `${options.length} suggestion${options.length === 1 ? '' : 's'}. Arrow keys to choose, Enter to load.`;
+    if (search.isError && typed) status = t.search.unavailable;
+    else if (typed && value.trim() && (stale || search.isFetching) && !matches.length) status = t.search.searching;
+    else if (!options.length) status = t.search.noMatches(value.trim().toUpperCase());
+    else status = t.search.count(options.length);
   }
 
   return (
@@ -162,7 +163,7 @@ export function SymbolCombobox({
       />
       {/* Mouse down on the popup must not blur the input, or the list would close before the click lands. */}
       <div className={styles.comboPopup} data-align={align} hidden={!shown} onMouseDown={(e) => e.preventDefault()}>
-        <ul id={listId} role="listbox" aria-label="Stock suggestions" className={styles.comboList}>
+        <ul id={listId} role="listbox" aria-label={t.search.suggestions} className={styles.comboList}>
           {options.map((o, i) => (
             <li
               key={o.symbol}
@@ -173,11 +174,11 @@ export function SymbolCombobox({
               onMouseMove={() => i !== active && setActive(i)}
               onClick={() => pick(o.symbol)}
             >
-              <span className={styles.comboSymbol}>{o.symbol}</span>
+              <span className={styles.comboSymbol} translate="no">{o.symbol}</span>
               <span className={styles.comboName}>{o.name ?? ''}</span>
               <span className={styles.comboMeta}>
                 {o.source === 'favourite' && <span aria-hidden="true">★ </span>}
-                {SOURCE_LABEL[o.source] || o.meta}
+                {o.source === 'favourite' ? t.search.favourite : o.source === 'recent' ? t.search.recent : o.meta}
               </span>
             </li>
           ))}

@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { track } from '../../analytics/tracker';
 import type { Dataset } from './fields';
-import { CHART_BY_TYPE, blankReport, type Report } from './model';
+import { blankReport, type Report } from './model';
 import { MARKET_KEYS, reportStore, type ReportStoreKeys } from './storage';
 import { TEMPLATES } from './templates';
+import { messages } from '../../i18n/I18nProvider';
+import { en } from '../../i18n/catalogs/en';
 
 export type ReportNotice =
   | { kind: 'forked'; name: string; templateId: string }
@@ -20,7 +22,8 @@ export interface ReportConfig {
 
 export const MARKET_REPORTS: ReportConfig = { dataset: 'market', templates: TEMPLATES, keys: MARKET_KEYS };
 
-const chartLabel = (r: Report) => CHART_BY_TYPE[r.chart].label;
+/** Analytics records chart types by their English name, so usage reads the same in every language. */
+const chartLabel = (r: Report) => en.charts[r.chart].label;
 
 /**
  * The open report and the user's saved ones. User reports save on every change (no Save button);
@@ -103,12 +106,12 @@ export function useReports(config: ReportConfig = MARKET_REPORTS) {
 
   const create = (dims: 2 | 3) => {
     track('report', { target: 'create', detail: `${dims}D` });
-    add(blankReport(dims, dims === 3 ? 'New 3D report' : 'New report', dataset));
+    add(blankReport(dims, dims === 3 ? messages().reports.new3dName : messages().reports.newName, dataset));
   };
 
   const duplicate = () => {
     track('report', { target: 'duplicate', detail: chartLabel(active), subject: active.name });
-    add({ ...active, id: crypto.randomUUID(), name: `${active.name} copy`, template: undefined, updatedAt: Date.now() });
+    add({ ...active, id: crypto.randomUUID(), name: messages().reports.copyName(active.name), template: undefined, updatedAt: Date.now() });
   };
 
   const remove = () => {

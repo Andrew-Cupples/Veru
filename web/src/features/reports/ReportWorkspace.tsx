@@ -17,6 +17,8 @@ import { useThemeColors } from './themeColors';
 import { CompareView, type CompareItem } from './CompareView';
 import { usePins } from './pins';
 import { thumbnailOf, type Thumb } from './thumbGeometry';
+import { formatNumber, messages, useT } from '../../i18n/I18nProvider';
+import { en } from '../../i18n/catalogs/en';
 import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
 
@@ -26,17 +28,20 @@ type Tab = (typeof TABS)[number];
 
 /** One sentence describing the chart, for its accessible name and the status line. */
 export function describe(report: Report, points: number, subject: string): string {
+  const t = messages().describe;
   const def = CHART_BY_TYPE[report.chart];
   const { enc } = report;
   const label = (k: keyof typeof FIELD_BY_KEY) => FIELD_BY_KEY[k].label.toLowerCase();
   let what: string;
-  if (def.slots.series) what = `${enc.series.map((s) => label(s.field)).join(', ') || 'nothing'}${def.slots.x ? ` by ${label(enc.x)}` : ''}`;
-  else if (def.slots.z) what = `${label(enc.z)} over ${label(enc.x)} and ${label(enc.y)}`;
-  else if (report.chart === 'histogram') what = `distribution of ${label(enc.x)}`;
-  else what = `open, high, low, close by ${label(enc.x)}`;
-  const split = enc.color ? `, coloured by ${label(enc.color)}` : '';
-  return `${def.label} chart of ${subject} ${what}${split}. ${points.toLocaleString()} values.`;
+  if (def.slots.series) what = t.series(enc.series.map((s) => label(s.field)), def.slots.x ? label(enc.x) : null);
+  else if (def.slots.z) what = t.surface(label(enc.z), label(enc.x), label(enc.y));
+  else if (report.chart === 'histogram') what = t.distribution(label(enc.x));
+  else what = t.ohlc(label(enc.x));
+  return t.sentence(def.label, subject, what, enc.color ? label(enc.color) : null, points);
 }
+
+/** Analytics records chart types by their English name, so usage reads the same in every language. */
+const trackedChart = (chart: Report['chart']) => en.charts[chart].label;
 
 interface Props {
   reports: ReportsState;
@@ -46,8 +51,8 @@ interface Props {
   hasData: boolean;
   /** Names the data in descriptions and file names: the symbol, or "app usage". */
   subject: string;
-  /** What one row is, for empty states: "bars", "events". */
-  noun: string;
+  /** What one row is, for empty states. */
+  noun: 'bars' | 'events';
   /** Wraps the chart area with the page's loading, error and empty states. */
   gate: (content: () => ReactNode, mode: 'editor' | 'compare') => ReactNode;
   /** The page's polite status line, given what the chart area would say. */
@@ -66,6 +71,7 @@ interface Props {
  * Data / Style inspector, and the compare view. Pages supply the rows and their own FROM / WHERE card.
  */
 export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate, status: statusFor, compare = true, onCompareStocks }: Props) {
+  const t = useT();
   const { active, templates } = reports;
   const comparing = compare && reports.comparing;
   const colors = useThemeColors();
@@ -97,7 +103,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   const { pins, toggle } = usePins(reports.pinsKey);
   const togglePin = (id: string) => {
     const r = reports.mine.find((m) => m.id === id) ?? reports.templateById.get(id);
-    track('report', { target: pins.includes(id) ? 'remove from compare' : 'add to compare', detail: r ? CHART_BY_TYPE[r.chart].label : '', subject: r?.name ?? '' });
+    track('report', { target: pins.includes(id) ? 'remove from compare' : 'add to compare', detail: r ? trackedChart(r.chart) : '', subject: r?.name ?? '' });
     toggle(id);
   };
   const pinned = useMemo(
@@ -119,13 +125,13 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
       pinned.map((r) => {
         const base = { key: r.id, report: r, symbol: null, label: r.name };
         const needs = !!CHART_BY_TYPE[r.chart].slots.series && !r.enc.series.length;
-        if (needs) return { ...base, shaped: null, message: 'Nothing to plot yet. Open it to pick values.' };
+        if (needs) return { ...base, shaped: null, message: t.compare.nothingToPlot };
         const reportRows = rowsFor(r.where);
-        if (!reportRows.length) return { ...base, shaped: null, message: `No ${noun} match this report's conditions.` };
+        if (!reportRows.length) return { ...base, shaped: null, message: t.reports.noRowsForReport(noun) };
         const sh = shape(reportRows, r);
         return { ...base, shaped: sh, label: describe(r, pointCount(sh), subject) };
       }),
-    [pinned, rowsFor, subject, noun],
+    [pinned, rowsFor, subject, noun, t],
   );
 
   useLayoutEffect(() => {
@@ -146,7 +152,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   const description = describe(active, points, subject);
   const fileBase = `${subject}_${active.name}`.replace(/[^\w.-]+/g, '_');
   const needsSeries = !!CHART_BY_TYPE[active.chart].slots.series && !active.enc.series.length;
-  const chartLabel = CHART_BY_TYPE[active.chart].label;
+  const chartLabel = trackedChart(active.chart);
 
   const exportAs = (format: 'PNG' | 'SVG' | 'CSV') => {
     track('export', { target: format, detail: chartLabel, subject: active.name, value: format === 'CSV' ? table.rows.length : null });
@@ -155,7 +161,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   };
 
   const changeChart = (chart: Report['chart']) => {
-    track('report', { target: 'chart type', detail: CHART_BY_TYPE[chart].label, subject: active.name });
+    track('report', { target: 'chart type', detail: trackedChart(chart), subject: active.name });
     reports.update((r) => switchChart(r, chart));
   };
 
@@ -170,10 +176,10 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
   const notice = reports.notice;
   const status =
     notice?.kind === 'forked'
-      ? `Saved your changes as a new report, ${notice.name}, in My reports`
+      ? t.reports.forkedStatus(notice.name)
       : notice?.kind === 'deleted'
-        ? `Deleted ${notice.report.name}`
-        : statusFor(comparing ? `Comparing ${pinned.length} reports` : description);
+        ? t.reports.deletedStatus(notice.report.name)
+        : statusFor(comparing ? t.reports.comparing(pinned.length) : description);
 
   return (
     <>
@@ -199,15 +205,15 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                 <CompareView
                   items={compareItems}
                   colors={colors}
-                  heading={`Comparing ${pinned.length} report${pinned.length === 1 ? '' : 's'}`}
+                  heading={t.reports.comparing(pinned.length)}
                   onOpen={(item) => openReport(item.report.id)}
                   onRemoveReport={togglePin}
                 />
               ) : (
                 <div className={dq.empty}>
-                  Nothing to compare yet. Add reports with the + button in the list.{' '}
+                  {t.reports.nothingToCompare}{' '}
                   <button type="button" className={dq.linkButton} onClick={() => reports.setComparing(false)}>
-                    Back to editor
+                    {t.reports.backToEditor}
                   </button>
                 </div>
               ),
@@ -219,46 +225,46 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
               <div className={styles.toolbar}>
                 <label className={styles.nameField}>
                   <span id="report-name-label" className="sr-only">
-                    Report name
+                    {t.reports.reportName}
                   </span>
                   <input
                     className={styles.nameInput}
                     value={active.name}
                     onChange={(e) => reports.update((r) => ({ ...r, name: e.target.value }))}
-                    onBlur={(e) => !e.target.value.trim() && reports.update((r) => ({ ...r, name: 'Untitled report' }))}
+                    onBlur={(e) => !e.target.value.trim() && reports.update((r) => ({ ...r, name: t.reports.untitled }))}
                     aria-describedby={active.template ? 'template-note' : undefined}
                   />
                 </label>
                 {active.template && (
                   <span id="template-note" className={styles.badge}>
-                    Template · edits save a copy
+                    {t.reports.templateNote}
                   </span>
                 )}
-                <div className={styles.toolbarActions} role="group" aria-label="Report actions">
+                <div className={styles.toolbarActions} role="group" aria-label={t.reports.actions}>
                   {onCompareStocks && (
                     <button type="button" className={dq.linkButton} onClick={() => onCompareStocks(active)}>
-                      Compare stocks
+                      {t.reports.compareStocks}
                     </button>
                   )}
                   <button type="button" className={dq.linkButton} onClick={reports.duplicate}>
-                    Duplicate
+                    {t.common.duplicate}
                   </button>
                   {!active.template && (
                     <button type="button" className={dq.linkButton} onClick={reports.remove}>
-                      Delete
+                      {t.common.delete}
                     </button>
                   )}
                   <span className={styles.toolbarDivider} aria-hidden="true" />
                   <span className={styles.exportLabel} aria-hidden="true">
-                    Export
+                    {t.common.export}
                   </span>
-                  <button type="button" className={dq.linkButton} aria-label="Export image as PNG" disabled={!hasData} onClick={() => exportAs('PNG')}>
+                  <button type="button" className={dq.linkButton} aria-label={t.reports.exportImage('PNG')} disabled={!hasData} onClick={() => exportAs('PNG')}>
                     PNG
                   </button>
-                  <button type="button" className={dq.linkButton} aria-label="Export image as SVG" disabled={!hasData} onClick={() => exportAs('SVG')}>
+                  <button type="button" className={dq.linkButton} aria-label={t.reports.exportImage('SVG')} disabled={!hasData} onClick={() => exportAs('SVG')}>
                     SVG
                   </button>
-                  <button type="button" className={dq.linkButton} aria-label="Export chart data as CSV" disabled={!hasData} onClick={() => exportAs('CSV')}>
+                  <button type="button" className={dq.linkButton} aria-label={t.reports.exportCsv} disabled={!hasData} onClick={() => exportAs('CSV')}>
                     CSV
                   </button>
                 </div>
@@ -268,20 +274,20 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                 <div className={dq.notice} role="note">
                   {notice.kind === 'forked' ? (
                     <>
-                      Your changes were saved as a new report, <strong>{notice.name}</strong>, in My reports. The template is unchanged.
+                      {t.reports.forked(<strong>{notice.name}</strong>)}
                       <button type="button" className={dq.linkButton} onClick={() => openReport(notice.templateId)}>
-                        Back to template
+                        {t.reports.backToTemplate}
                       </button>
                     </>
                   ) : (
                     <>
-                      Deleted <strong>{notice.report.name}</strong>.
+                      {t.reports.deleted(<strong>{notice.report.name}</strong>)}
                       <button type="button" className={dq.linkButton} onClick={reports.undoDelete}>
-                        Undo
+                        {t.reports.undo}
                       </button>
                     </>
                   )}
-                  <button type="button" className={dq.iconButton} aria-label="Dismiss" onClick={reports.dismissNotice}>
+                  <button type="button" className={dq.iconButton} aria-label={t.reports.dismiss} onClick={reports.dismissNotice}>
                     ×
                   </button>
                 </div>
@@ -291,12 +297,12 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                 () => (
                   <>
                     {needsSeries ? (
-                      <div className={dq.empty}>Pick at least one value to plot in the Data panel.</div>
+                      <div className={dq.empty}>{t.reports.pickValue}</div>
                     ) : !rows.length ? (
                       <div className={dq.empty}>
-                        No {noun} match these conditions.{' '}
+                        {t.reports.noRows(noun)}{' '}
                         <button type="button" className={dq.linkButton} onClick={() => reports.update((r) => ({ ...r, where: [] }))}>
-                          Clear conditions
+                          {t.raw.clearConditions}
                         </button>
                       </div>
                     ) : (
@@ -308,10 +314,9 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                     {rows.length > 0 && !needsSeries && (
                       <details className={styles.dataTable}>
                         <summary>
-                          Data table ({table.rows.length.toLocaleString()} rows
-                          {table.rows.length > TABLE_PREVIEW_ROWS && `, first ${TABLE_PREVIEW_ROWS} shown`})
+                          {t.reports.dataTable(table.rows.length, table.rows.length > TABLE_PREVIEW_ROWS ? TABLE_PREVIEW_ROWS : null)}
                         </summary>
-                        <div className={dq.tableWrap} tabIndex={0} role="region" aria-label={`${active.name} data (scrollable)`}>
+                        <div className={dq.tableWrap} tabIndex={0} role="region" aria-label={t.raw.scrollable(t.reports.dataOf(active.name))}>
                           <table className={dq.table}>
                             <caption className="sr-only">{description}</caption>
                             <thead>
@@ -328,7 +333,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                                 <tr key={i}>
                                   {r.map((v, j) => (
                                     <td key={j} className={typeof v === 'number' ? dq.numeric : undefined}>
-                                      {v === null ? '—' : typeof v === 'number' ? v.toLocaleString(undefined, { maximumFractionDigits: 4 }) : v}
+                                      {v === null ? '—' : typeof v === 'number' ? formatNumber(v, { maximumFractionDigits: 4 }) : v}
                                     </td>
                                   ))}
                                 </tr>
@@ -344,21 +349,22 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
               )}
             </section>
 
-            <aside className={styles.inspector} aria-label="Report settings">
-              <div role="tablist" aria-label="Settings" className={styles.tabs} onKeyDown={onTabKey}>
-                {TABS.map((t) => (
+            <aside className={styles.inspector} aria-label={t.reports.settings}>
+              <div role="tablist" aria-label={t.reports.settingsTabs} className={styles.tabs} onKeyDown={onTabKey}>
+                {TABS.map((key) => (
                   <button
-                    key={t}
-                    id={`${tabIds}-${t}-tab`}
+                    key={key}
+                    id={`${tabIds}-${key}-tab`}
                     type="button"
                     role="tab"
-                    aria-selected={tab === t}
-                    aria-controls={`${tabIds}-${t}-panel`}
-                    tabIndex={tab === t ? 0 : -1}
+                    aria-selected={tab === key}
+                    aria-controls={`${tabIds}-${key}-panel`}
+                    tabIndex={tab === key ? 0 : -1}
                     className={styles.tab}
-                    onClick={() => setTab(t)}
+                    data-track={key === 'data' ? 'Data' : 'Style'}
+                    onClick={() => setTab(key)}
                   >
-                    {t === 'data' ? 'Data' : 'Style'}
+                    {key === 'data' ? t.reports.dataTab : t.reports.styleTab}
                   </button>
                 ))}
                 <span

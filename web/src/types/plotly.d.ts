@@ -5,6 +5,8 @@ declare module 'plotly.js-dist-min' {
     react(root: HTMLElement, data: Obj[], layout?: Obj, config?: Obj): Promise<HTMLElement>;
     relayout(root: HTMLElement, update: Obj): Promise<HTMLElement>;
     purge(root: HTMLElement): void;
+    /** Adds a locale module (month and day names, number separators) that `config.locale` can then name. */
+    register(module: Obj): void;
     downloadImage(root: HTMLElement, options: { format: 'png' | 'svg' | 'jpeg'; filename: string; width?: number; height?: number; scale?: number }): Promise<string>;
     Plots: { resize(root: HTMLElement): Promise<void> | void };
     Fx: {
