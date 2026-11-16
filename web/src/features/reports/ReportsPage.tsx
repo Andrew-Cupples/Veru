@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useDocumentTitle } from '../../a11y/useDocumentTitle';
-import { ApiAlert, Clause, ConditionsEditor, GranularityNotice, SeriesGate, SourceFields, loadStatus } from '../data-query/SourceControls';
-import { filterRows, type Condition } from '../data-query/query';
+import { ExpressionEditor } from '../data-query/ExpressionEditor';
+import { ApiAlert, Clause, GranularityNotice, SeriesGate, SourceFields, loadStatus } from '../data-query/SourceControls';
+import { filterRows } from '../data-query/query';
 import { useDataSource } from '../data-query/useDataSource';
 import { toReportRows } from './fields';
 import { ReportWorkspace } from './ReportWorkspace';
@@ -23,7 +24,7 @@ export function ReportsPage() {
   useDocumentTitle(`${active.name}${ds.source.symbol ? ` · ${ds.source.symbol}` : ''} · ${t.nav.reports}`);
 
   // Derived measures are computed after WHERE, so "return" starts at the first bar shown.
-  const rowsFor = useCallback((where: readonly Condition[]) => toReportRows(filterRows(ds.rows, where)), [ds.rows]);
+  const rowsFor = useCallback((where: string) => toReportRows(filterRows(ds.rows, where)), [ds.rows]);
 
   return (
     <div className={styles.page}>
@@ -39,7 +40,7 @@ export function ReportsPage() {
             <SourceFields ds={ds} />
           </Clause>
           <Clause keyword={t.query.where}>
-            <ConditionsEditor where={active.where} onChange={(where) => reports.update((r) => ({ ...r, where }))} />
+            <ExpressionEditor where={active.where} onChange={(where) => reports.update((r) => ({ ...r, where }))} />
           </Clause>
         </form>
       </div>

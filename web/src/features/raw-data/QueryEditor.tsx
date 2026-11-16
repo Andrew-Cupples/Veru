@@ -1,4 +1,5 @@
-import { Clause, ConditionsEditor, MultiSelectChips, SourceFields } from '../data-query/SourceControls';
+import { Clause, MultiSelectChips, SourceFields } from '../data-query/SourceControls';
+import { ExpressionEditor } from '../data-query/ExpressionEditor';
 import { COLUMNS, type ColumnKey, type QuerySpec } from '../data-query/query';
 import type { DataSource } from '../data-query/useDataSource';
 import { useT } from '../../i18n/I18nProvider';
@@ -29,7 +30,7 @@ export function QueryEditor({ ds, spec, onSpecChange }: Props) {
       </Clause>
 
       <Clause keyword={t.query.where}>
-        <ConditionsEditor where={spec.where} onChange={(where) => onSpecChange({ ...spec, where })} />
+        <ExpressionEditor where={spec.where} onChange={(where) => onSpecChange({ ...spec, where })} />
       </Clause>
 
       <Clause keyword={t.query.orderBy}>
@@ -68,23 +69,6 @@ export function QueryEditor({ ds, spec, onSpecChange }: Props) {
             </div>
           )}
         </div>
-      </Clause>
-
-      <Clause keyword={t.query.limit}>
-        <input
-          className={`${styles.input} ${styles.limitInput}`}
-          type="number"
-          min={0}
-          step={1}
-          inputMode="numeric"
-          aria-label={t.raw.rowLimit}
-          placeholder={t.raw.limitAll}
-          value={spec.limit ?? ''}
-          onChange={(e) => {
-            const n = e.target.valueAsNumber;
-            onSpecChange({ ...spec, limit: Number.isFinite(n) && n >= 0 ? Math.floor(n) : null });
-          }}
-        />
       </Clause>
     </form>
   );

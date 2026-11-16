@@ -37,12 +37,12 @@ export function RawDataPage() {
     }));
 
   const downloadCsv = () => {
-    track('export', { target: 'CSV', detail: 'raw data', subject: source.symbol, value: result.rows.length });
-    downloadText(toCsv(result.rows, columns), `${source.symbol}_${source.interval}_${source.range}.csv`, 'text/csv');
+    track('export', { target: 'CSV', detail: 'raw data', subject: source.symbol, value: result.length });
+    downloadText(toCsv(result, columns), `${source.symbol}_${source.interval}_${source.range}.csv`, 'text/csv');
   };
 
   // One polite message for screen readers describing what the page is doing now.
-  const status = loadStatus(ds, t.raw.status(result.rows.length, source.symbol));
+  const status = loadStatus(ds, t.raw.status(result.length, source.symbol));
 
   return (
     <div className={styles.page}>
@@ -68,16 +68,15 @@ export function RawDataPage() {
 
             <div className={styles.resultBar}>
               <span>
-                {t.raw.rows(result.rows.length)}
-                {result.rows.length !== rows.length && t.raw.ofBars(rows.length)}
-                {result.matched !== result.rows.length && t.raw.matchedBeforeLimit(result.matched)}
-                {result.rows.length > MAX_RENDERED_ROWS && t.raw.showingFirst(MAX_RENDERED_ROWS)}
+                {t.raw.rows(result.length)}
+                {result.length !== rows.length && t.raw.ofBars(rows.length)}
+                {result.length > MAX_RENDERED_ROWS && t.raw.showingFirst(MAX_RENDERED_ROWS)}
               </span>
               <button
                 type="button"
                 className={styles.secondaryButton}
                 onClick={downloadCsv}
-                disabled={!result.rows.length || !columns.length}
+                disabled={!result.length || !columns.length}
               >
                 {t.raw.downloadCsv}
               </button>
@@ -94,9 +93,9 @@ export function RawDataPage() {
                   {t.raw.selectAllColumns}
                 </button>
               </div>
-            ) : result.rows.length ? (
+            ) : result.length ? (
               <ResultsTable
-                rows={result.rows}
+                rows={result}
                 columns={columns}
                 orderBy={spec.orderBy}
                 onSort={sortBy}
@@ -105,7 +104,7 @@ export function RawDataPage() {
             ) : (
               <div className={styles.empty}>
                 {t.raw.noMatches}{' '}
-                <button type="button" className={styles.linkButton} onClick={() => setSpec((s) => ({ ...s, where: [] }))}>
+                <button type="button" className={styles.linkButton} onClick={() => setSpec((s) => ({ ...s, where: '' }))}>
                   {t.raw.clearConditions}
                 </button>
               </div>

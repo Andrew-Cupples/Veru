@@ -4,8 +4,9 @@ import { useDocumentTitle } from '../../a11y/useDocumentTitle';
 import { toAnalyticsRows, type AnalyticsRow } from '../../analytics/rows';
 import { clearEvents, getEvents, isPaused, setPaused, subscribe, track } from '../../analytics/tracker';
 import { downloadText } from '../../lib/download';
-import { Clause, ConditionsEditor } from '../data-query/SourceControls';
-import { ANALYTICS_COLUMNS, filterRows, type Condition } from '../data-query/query';
+import { Clause } from '../data-query/SourceControls';
+import { ExpressionEditor } from '../data-query/ExpressionEditor';
+import { ANALYTICS_COLUMNS, filterRows } from '../data-query/query';
 import { Segmented } from '../reports/controls';
 import { ReportWorkspace } from '../reports/ReportWorkspace';
 import { tableToCsv } from '../reports/table';
@@ -97,7 +98,7 @@ export function AnalyticsPage() {
     while (i < events.length && events[i]!.t < since) i++;
     return allRows.slice(i);
   }, [allRows, events, windowId, now]);
-  const rowsFor = useCallback((where: readonly Condition[]) => filterRows(windowRows, where), [windowRows]);
+  const rowsFor = useCallback((where: string) => filterRows(windowRows, where, ANALYTICS_COLUMNS), [windowRows]);
 
   const exportEvents = (format: 'CSV' | 'JSON') => {
     track('export', { target: format, detail: 'events', subject: 'Analytics', value: windowRows.length });
@@ -126,11 +127,11 @@ export function AnalyticsPage() {
             </div>
           </Clause>
           <Clause keyword={t.query.where}>
-            <ConditionsEditor
+            <ExpressionEditor
               where={active.where}
               onChange={(where) => reports.update((r) => ({ ...r, where }))}
               columns={ANALYTICS_COLUMNS}
-              defaultColumn="event"
+              example="event = click AND NOT page = Start"
             />
           </Clause>
         </div>

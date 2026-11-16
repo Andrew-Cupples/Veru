@@ -16,7 +16,7 @@ export const es: Messages = {
   appTitle: (page: string) => (page ? `${page} · Veru` : 'Veru'),
 
   query: {
-    select: 'SELECCIÓN', from: 'DE', where: 'DONDE', orderBy: 'ORDENAR POR', limit: 'LÍMITE',
+    select: 'SELECCIÓN', from: 'DE', where: 'DONDE', orderBy: 'ORDENAR POR',
     asc: 'ASC', desc: 'DESC', ascending: 'Ascendente', descending: 'Descendente',
   },
 
@@ -106,15 +106,27 @@ export const es: Messages = {
     favourite: (symbol: string) => `${symbol} como favorito`,
     addFavourite: (symbol: string) => `Añadir ${symbol} a favoritos`,
     removeFavourite: (symbol: string) => `Quitar ${symbol} de favoritos`,
-    addCondition: 'Añadir condición',
     clearAll: 'Borrar todo',
-    condition: (i: number) => `Condición ${i}`,
-    conditionColumn: (i: number) => `Columna de la condición ${i}`,
-    conditionOperator: (i: number) => `Operador de la condición ${i}`,
-    conditionValue: (i: number) => `Valor de la condición ${i}`,
-    removeCondition: (i: number) => `Quitar la condición ${i}`,
-    choose: 'elegir…',
     needsNumber: (column: string, example: string) => `${column} necesita un número, como ${example}.`,
+    expression: {
+      label: 'Expresión DONDE',
+      datapoints: 'Datos',
+      comparisons: 'Comparaciones',
+      logic: 'Lógica',
+      values: (datapoint: string) => `Valores de ${datapoint}`,
+      insert: (token: string, label: string) => (token === label ? `Insertar ${token}` : `Insertar ${token} (${label})`),
+      showError: 'Mostrar dónde',
+      errors: {
+        unexpected: (token: string) => `«${token}» inesperado.`,
+        expectedOperand: (token: string) => `Falta un dato o valor antes de «${token}».`,
+        expectedOperandAtEnd: 'Falta un dato o valor al final.',
+        expectedOperator: (token: string) => `Falta una comparación (=, >, CONTAINS…) después de «${token}».`,
+        expectedClose: 'A un «(» le falta su «)».',
+        unclosedQuote: 'A unas comillas les falta el cierre.',
+        unknownDatapoint: (token: string) => `«${token}» no es un dato. Elige uno abajo o ponlo entre comillas como texto.`,
+        noDatapoint: 'Cada comparación necesita un dato, como close > 100.',
+      },
+    },
     apiDown: 'No se puede conectar con la API de datos de mercado.',
     apiDownHelp: (api: ReactNode, dev: ReactNode) => (
       <>
@@ -436,8 +448,6 @@ export const es: Messages = {
     columns: 'Columnas',
     orderBy: 'Ordenar por columna',
     direction: 'Dirección',
-    rowLimit: 'Límite de filas',
-    limitAll: 'todas',
     status: (rows: number, symbol: string) => `${n(rows)} ${s(rows, 'fila', 'filas')} de ${symbol}`,
     rows: (count: number) => (
       <>
@@ -445,13 +455,12 @@ export const es: Messages = {
       </>
     ),
     ofBars: (count: number) => ` de ${n(count)} barras`,
-    matchedBeforeLimit: (count: number) => ` · ${n(count)} coincidencias antes de LIMIT`,
     showingFirst: (count: number) => ` · se muestran las primeras ${n(count)}`,
     downloadCsv: 'Descargar CSV',
     noColumns: 'No hay columnas seleccionadas.',
     selectAllColumns: 'Seleccionar todas las columnas',
     noMatches: 'Ninguna barra cumple estas condiciones.',
-    clearConditions: 'Borrar condiciones',
+    clearConditions: 'Borrar filtro',
     caption: (symbol: string, interval: string, range: string) => `Barras de ${interval} de ${symbol} durante ${range}`,
     scrollable: (caption: string) => `${caption} (desplazable)`,
     sortedBy: (column: string, asc: boolean) => `, ordenado por ${column} ${asc ? 'ascendente' : 'descendente'}`,

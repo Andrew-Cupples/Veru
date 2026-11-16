@@ -2,7 +2,6 @@ import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, 
 import { track } from '../../analytics/tracker';
 import { useCalmSwitch, useMotion } from '../../motion/MotionProvider';
 import { downloadText } from '../../lib/download';
-import type { Condition } from '../data-query/query';
 import { DataPanel } from './DataPanel';
 import { FIELD_BY_KEY, type ChartRow } from './fields';
 import { paletteColors } from './figure';
@@ -43,8 +42,8 @@ const trackedChart = (chart: Report['chart']) => en.charts[chart].label;
 
 interface Props {
   reports: ReportsState;
-  /** Chart-ready rows for a report's WHERE conditions. Memoise it: a new function redraws every thumbnail. */
-  rowsFor: (where: readonly Condition[]) => ChartRow[];
+  /** Chart-ready rows for a report's WHERE expression. Memoise it: a new function redraws every thumbnail. */
+  rowsFor: (where: string) => ChartRow[];
   /** Whether there is any data at all (thumbnails and exports wait for it). */
   hasData: boolean;
   /** Names the data in descriptions and file names: the symbol, or "app usage". */
@@ -233,7 +232,7 @@ export function ReportWorkspace({ reports, rowsFor, hasData, subject, noun, gate
                     ) : !rows.length ? (
                       <div className={dq.empty}>
                         {t.reports.noRows(noun)}{' '}
-                        <button type="button" className={dq.linkButton} onClick={() => reports.update((r) => ({ ...r, where: [] }))}>
+                        <button type="button" className={dq.linkButton} onClick={() => reports.update((r) => ({ ...r, where: '' }))}>
                           {t.raw.clearConditions}
                         </button>
                       </div>

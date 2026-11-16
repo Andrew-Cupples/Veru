@@ -1,4 +1,3 @@
-import type { Condition } from '../data-query/query';
 import { messages } from '../../i18n/I18nProvider';
 import { FIELD_BY_KEY, type Dataset, type FieldKey, type FieldKind } from './fields';
 
@@ -114,7 +113,8 @@ export interface Report {
   name: string;
   chart: ChartType;
   enc: Encoding;
-  where: Condition[];
+  /** WHERE as a logical expression over the dataset's datapoints; blank for every row. */
+  where: string;
   style: ReportStyle;
   /** Set on built-in templates; editing one saves a copy to My reports. */
   template?: boolean;
@@ -394,7 +394,7 @@ export function blankReport(dims: 2 | 3, name: string, dataset: Dataset = 'marke
       dataset,
       chart: 'bar',
       enc: { x: 'date', y: 'hour', z: 'count', series: [newSeries('count')], color: null, size: null, aggregate: 'sum' },
-      where: [],
+      where: '',
       style: DEFAULT_STYLE,
       updatedAt: Date.now(),
     };
@@ -405,7 +405,7 @@ export function blankReport(dims: 2 | 3, name: string, dataset: Dataset = 'marke
     name,
     chart: 'line',
     enc: { x: 'time', y: 'close', z: 'volume', series: [newSeries('close')], color: null, size: null, aggregate: 'none' },
-    where: [],
+    where: '',
     style: DEFAULT_STYLE,
     updatedAt: Date.now(),
   };

@@ -2,10 +2,11 @@ import type { MarketSession, PriceBar } from '../../api/client';
 import type { AnalyticsRow } from '../../analytics/rows';
 import { EVENT_KINDS } from '../../analytics/tracker';
 import { messages } from '../../i18n/I18nProvider';
+import { evaluate, expressionSql, parseExpression } from './expression';
 
 /*
- * A small, SQL-shaped query model over raw bars: SELECT columns, WHERE conditions (AND-ed),
- * ORDER BY one column, LIMIT. Pure functions so the UI stays thin and the logic is unit-testable.
+ * A small, SQL-shaped query model over raw bars: SELECT columns, WHERE a logical expression (./expression),
+ * ORDER BY one column. Pure functions so the UI stays thin and the logic is unit-testable.
  */
 
 export interface Row {
@@ -68,19 +69,15 @@ export const ANALYTICS_COLUMNS: readonly ColumnDef<AnalyticsColumnKey>[] = [
   { key: 'seq', get label() { return messages().fields.seq.label; }, kind: 'number', get description() { return messages().columns.seq; } },
 ];
 
-/** Every column a condition may name, for validating and applying conditions on either dataset. */
+/** Every column a WHERE may name, across both datasets. */
 export const CONDITION_COLUMN_BY_KEY = Object.fromEntries(
   [...COLUMNS, ...ANALYTICS_COLUMNS].map((c) => [c.key, c]),
 ) as Record<ConditionColumn, ColumnDef<ConditionColumn>>;
 
+
 export type Operator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains';
 
-export const OPERATORS_BY_KIND: Record<ColumnKind, readonly Operator[]> = {
-  number: ['>', '>=', '<', '<=', '=', '!='],
-  text: ['=', '!=', '>', '>=', '<', '<=', 'contains'],
-  session: ['=', '!='],
-};
-
+/** The old row-per-condition WHERE (AND-ed). Only read back from storage, to migrate into an expression. */
 export interface Condition {
   id: string;
   column: ConditionColumn;
@@ -92,16 +89,15 @@ export type Direction = 'asc' | 'desc';
 
 export interface QuerySpec {
   select: ColumnKey[];
-  where: Condition[];
+  /** A logical expression over the datapoints, e.g. `close > open AND NOT session = post`. Blank means every row. */
+  where: string;
   orderBy: { column: ColumnKey; direction: Direction } | null;
-  limit: number | null;
 }
 
 export const DEFAULT_SPEC: QuerySpec = {
   select: COLUMNS.map((c) => c.key),
-  where: [],
+  where: '',
   orderBy: { column: 'time', direction: 'asc' },
-  limit: null,
 };
 
 export function toRows(bars: readonly PriceBar[]): Row[] {
@@ -120,10 +116,9 @@ export function toRows(bars: readonly PriceBar[]): Row[] {
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
-const OPERATORS = new Set<string>(Object.values(OPERATORS_BY_KIND).flat());
+const OPERATORS = new Set<string>(['=', '!=', '>', '>=', '<', '<=', 'contains']);
 
-/** Validates WHERE conditions read back from storage. */
-export function isConditionList(v: unknown): v is Condition[] {
+function isConditionList(v: unknown): v is Condition[] {
   return (
     Array.isArray(v) &&
     v.every(
@@ -139,37 +134,33 @@ export function isConditionList(v: unknown): v is Condition[] {
   );
 }
 
-/** A condition is applied only when complete and well-formed; half-typed ones are ignored, not errors. */
-export function isActive(condition: Condition): boolean {
-  const value = condition.value.trim();
-  if (!value) return false;
-  return CONDITION_COLUMN_BY_KEY[condition.column].kind !== 'number' || Number.isFinite(Number(value));
+/** Rewrites old AND-ed conditions as the same expression; incomplete ones are dropped, as they were ignored. */
+export function conditionsToExpression(where: readonly Condition[]): string {
+  return where
+    .filter((c) => {
+      const value = c.value.trim();
+      return value && (CONDITION_COLUMN_BY_KEY[c.column].kind !== 'number' || Number.isFinite(Number(value)));
+    })
+    .map((c) => {
+      const value = c.value.trim();
+      const literal = CONDITION_COLUMN_BY_KEY[c.column].kind === 'number' ? value : `'${value.replaceAll("'", "''")}'`;
+      return `${c.column} ${c.operator === 'contains' ? 'CONTAINS' : c.operator} ${literal}`;
+    })
+    .join(' AND ');
 }
 
-function matches(row: object, condition: Condition): boolean {
-  const cell = (row as Record<string, unknown>)[condition.column] as string | number | null | undefined;
-  const raw = condition.value.trim();
-  const kind = CONDITION_COLUMN_BY_KEY[condition.column].kind;
+/** Reads a stored WHERE: an expression, or the old condition list (migrated). Null if neither. */
+export function readWhere(v: unknown): string | null {
+  if (typeof v === 'string') return v;
+  return isConditionList(v) ? conditionsToExpression(v) : null;
+}
 
-  if (condition.operator === 'contains') {
-    return String(cell ?? '').toLowerCase().includes(raw.toLowerCase());
-  }
-
-  const left = kind === 'number' ? (cell as number) : String(cell ?? '');
-  const right = kind === 'number' ? Number(raw) : raw;
-  if (kind !== 'number' && (condition.operator === '=' || condition.operator === '!=')) {
-    const equal = String(left).toLowerCase() === String(right).toLowerCase();
-    return condition.operator === '=' ? equal : !equal;
-  }
-
-  switch (condition.operator) {
-    case '=': return left === right;
-    case '!=': return left !== right;
-    case '>': return left > right;
-    case '>=': return left >= right;
-    case '<': return left < right;
-    case '<=': return left <= right;
-  }
+/** Applies a WHERE expression, keeping row order. Blank or invalid text filters nothing (the editor says why). */
+export function filterRows<T extends object>(rows: readonly T[], where: string, columns: readonly ColumnDef<string>[] = COLUMNS): T[] {
+  const parsed = parseExpression(where, columns);
+  if (!parsed.ok || !parsed.expr) return [...rows];
+  const expr = parsed.expr;
+  return rows.filter((r) => evaluate(expr, r));
 }
 
 function compare(a: Row, b: Row, column: ColumnKey): number {
@@ -181,30 +172,14 @@ function compare(a: Row, b: Row, column: ColumnKey): number {
   return x < y ? -1 : 1;
 }
 
-export interface QueryResult {
-  rows: Row[];
-  /** Rows that passed WHERE, before LIMIT. */
-  matched: number;
-}
-
-/** Applies just the WHERE conditions (AND-ed), keeping row order. Works on any row that extends {@link Row}. */
-export function filterRows<T extends object>(rows: readonly T[], where: readonly Condition[]): T[] {
-  const conditions = where.filter(isActive);
-  return conditions.length ? rows.filter((r) => conditions.every((c) => matches(r, c))) : [...rows];
-}
-
-export function runQuery(rows: readonly Row[], spec: QuerySpec): QueryResult {
-  let result = filterRows(rows, spec.where);
-
+export function runQuery(rows: readonly Row[], spec: QuerySpec): Row[] {
+  const result = filterRows(rows, spec.where);
   if (spec.orderBy) {
     const { column, direction } = spec.orderBy;
     const sign = direction === 'asc' ? 1 : -1;
     result.sort((a, b) => sign * compare(a, b, column));
   }
-
-  const matched = result.length;
-  if (spec.limit !== null && spec.limit >= 0) result = result.slice(0, spec.limit);
-  return { rows: result, matched };
+  return result;
 }
 
 export interface Source {
@@ -219,7 +194,6 @@ export function toSql(source: Source, spec: QuerySpec): string {
   const columns = spec.select.length === COLUMNS.length ? '*' : spec.select.join(', ') || '/* no columns */';
   const lines = [`SELECT ${columns}`, fromSql(source), ...whereSql(spec.where)];
   if (spec.orderBy) lines.push(`ORDER BY ${spec.orderBy.column} ${spec.orderBy.direction.toUpperCase()}`);
-  if (spec.limit !== null) lines.push(`LIMIT ${spec.limit}`);
   return lines.join('\n') + ';';
 }
 
@@ -227,17 +201,10 @@ export function fromSql(source: Source): string {
   return `FROM bars('${source.symbol}', interval => '${source.interval}', range => '${source.range}', extended_hours => ${source.extendedHours})`;
 }
 
-/** WHERE / AND lines for the conditions that apply; empty when none do. */
-export function whereSql(where: readonly Condition[]): string[] {
-  return where.filter(isActive).map((c, i) => {
-    const kind = CONDITION_COLUMN_BY_KEY[c.column].kind;
-    const value = c.value.trim();
-    const literal = kind === 'number' ? value : `'${value.replaceAll("'", "''")}'`;
-    const predicate = c.operator === 'contains'
-      ? `${c.column} ILIKE '%${value.replaceAll("'", "''")}%'`
-      : `${c.column} ${c.operator === '!=' ? '<>' : c.operator} ${literal}`;
-    return `${i === 0 ? 'WHERE' : '  AND'} ${predicate}`;
-  });
+/** The WHERE line for an expression that applies; empty when it is blank or invalid. */
+export function whereSql(where: string, columns: readonly ColumnDef<string>[] = COLUMNS): string[] {
+  const parsed = parseExpression(where, columns);
+  return parsed.ok && parsed.expr ? [`WHERE ${expressionSql(parsed.expr)}`] : [];
 }
 
 export function toCsv(rows: readonly Row[], columns: readonly ColumnKey[]): string {

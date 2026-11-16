@@ -14,7 +14,7 @@ export const en = {
 
   /** The query clause keywords, shown SQL-style, and the sort directions. */
   query: {
-    select: 'SELECT', from: 'FROM', where: 'WHERE', orderBy: 'ORDER BY', limit: 'LIMIT',
+    select: 'SELECT', from: 'FROM', where: 'WHERE', orderBy: 'ORDER BY',
     asc: 'ASC', desc: 'DESC', ascending: 'Ascending', descending: 'Descending',
   },
 
@@ -104,15 +104,27 @@ export const en = {
     favourite: (symbol: string) => `Favourite ${symbol}`,
     addFavourite: (symbol: string) => `Add ${symbol} to favourites`,
     removeFavourite: (symbol: string) => `Remove ${symbol} from favourites`,
-    addCondition: 'Add condition',
     clearAll: 'Clear all',
-    condition: (i: number) => `Condition ${i}`,
-    conditionColumn: (i: number) => `Condition ${i} column`,
-    conditionOperator: (i: number) => `Condition ${i} operator`,
-    conditionValue: (i: number) => `Condition ${i} value`,
-    removeCondition: (i: number) => `Remove condition ${i}`,
-    choose: 'choose…',
     needsNumber: (column: string, example: string) => `${column} needs a number, like ${example}.`,
+    expression: {
+      label: 'WHERE expression',
+      datapoints: 'Datapoints',
+      comparisons: 'Comparisons',
+      logic: 'Logic',
+      values: (datapoint: string) => `${datapoint} values`,
+      insert: (token: string, label: string) => (token === label ? `Insert ${token}` : `Insert ${token} (${label})`),
+      showError: 'Show where',
+      errors: {
+        unexpected: (token: string) => `Unexpected “${token}”.`,
+        expectedOperand: (token: string) => `Expected a datapoint or value before “${token}”.`,
+        expectedOperandAtEnd: 'Expected a datapoint or value at the end.',
+        expectedOperator: (token: string) => `Expected a comparison (=, >, CONTAINS…) after “${token}”.`,
+        expectedClose: 'A “(” is missing its “)”.',
+        unclosedQuote: 'A quote is missing its closing mark.',
+        unknownDatapoint: (token: string) => `“${token}” isn’t a datapoint. Pick one below, or quote it as text.`,
+        noDatapoint: 'Each comparison needs a datapoint, like close > 100.',
+      },
+    },
     apiDown: 'Market data API not reachable.',
     apiDownHelp: (api: ReactNode, dev: ReactNode) => (
       <>
@@ -440,8 +452,6 @@ export const en = {
     columns: 'Columns',
     orderBy: 'Order by column',
     direction: 'Direction',
-    rowLimit: 'Row limit',
-    limitAll: 'all',
     status: (rows: number, symbol: string) => `${n(rows)} ${s(rows, 'row', 'rows')} for ${symbol}`,
     rows: (count: number) => (
       <>
@@ -449,13 +459,12 @@ export const en = {
       </>
     ),
     ofBars: (count: number) => ` of ${n(count)} bars`,
-    matchedBeforeLimit: (count: number) => ` · ${n(count)} matched before LIMIT`,
     showingFirst: (count: number) => ` · showing the first ${n(count)}`,
     downloadCsv: 'Download CSV',
     noColumns: 'No columns selected.',
     selectAllColumns: 'Select all columns',
     noMatches: 'No bars match these conditions.',
-    clearConditions: 'Clear conditions',
+    clearConditions: 'Clear filter',
     caption: (symbol: string, interval: string, range: string) => `${symbol} ${interval} bars over ${range}`,
     scrollable: (caption: string) => `${caption} (scrollable)`,
     sortedBy: (column: string, asc: boolean) => `, sorted by ${column} ${asc ? 'ascending' : 'descending'}`,
