@@ -5,24 +5,16 @@ import type { components } from '../../api/schema';
 import { getPage, track } from '../../analytics/tracker';
 import styles from './Analytics.module.css';
 import dq from '../data-query/DataQuery.module.css';
+import { formatDateTime, messages, useT } from '../../i18n/I18nProvider';
+import type { Messages } from '../../i18n/catalogs';
+import { en } from '../../i18n/catalogs/en';
 
 type SuggestionResponse = components['schemas']['SuggestionResponse'];
 
 /** Same keys the API accepts (SuggestionCatalog on the server). */
-export const FEATURES = [
-  { value: 'raw-data', label: 'Raw data' },
-  { value: 'reports', label: 'Reports' },
-  { value: 'analytics', label: 'Analytics' },
-  { value: 'personalize', label: 'Personalize' },
-  { value: 'prompt-ledger', label: 'Prompt ledger' },
-  { value: 'other', label: 'Other…' },
-] as const;
+export const FEATURES = ['raw-data', 'reports', 'analytics', 'personalize', 'prompt-ledger', 'other'] as const;
 
-export const KINDS = [
-  { value: 'want', label: 'I want…' },
-  { value: 'like', label: 'I like…' },
-  { value: 'problem', label: "Something's wrong" },
-] as const;
+export const KINDS = ['want', 'like', 'problem'] as const;
 
 const MAX_MESSAGE = 2000;
 const LIST_KEY = ['suggestions'] as const;
@@ -30,16 +22,19 @@ const LIST_KEY = ['suggestions'] as const;
 type Field = 'feature' | 'otherFeature' | 'kind' | 'message';
 type Errors = Partial<Record<Field, string>>;
 
-const featureLabel = (s: SuggestionResponse) =>
-  s.feature === 'other' ? (s.otherFeature ?? 'Other') : (FEATURES.find((f) => f.value === s.feature)?.label ?? s.feature);
-const kindLabel = (kind: string) => KINDS.find((k) => k.value === kind)?.label ?? kind;
+type Suggest = Messages['suggest'];
+const known = <K extends string>(list: readonly K[], value: string): value is K => (list as readonly string[]).includes(value);
+const featureLabel = (s: SuggestionResponse, t: Suggest) =>
+  s.feature === 'other' ? (s.otherFeature ?? t.other) : known(FEATURES, s.feature) ? t.features[s.feature] : s.feature;
+const kindLabel = (kind: string, t: Suggest) => (known(KINDS, kind) ? t.kinds[kind] : kind);
 
 function validate(feature: string, other: string, message: string): Errors {
+  const t = messages().suggest;
   const errors: Errors = {};
-  if (!feature) errors.feature = 'Pick the feature this is about.';
-  else if (feature === 'other' && !other.trim()) errors.otherFeature = 'Say which feature this is about.';
-  if (!message.trim()) errors.message = 'Write your suggestion.';
-  else if (message.trim().length > MAX_MESSAGE) errors.message = `Keep it under ${MAX_MESSAGE.toLocaleString()} characters.`;
+  if (!feature) errors.feature = t.pickFeature;
+  else if (feature === 'other' && !other.trim()) errors.otherFeature = t.sayWhich;
+  if (!message.trim()) errors.message = t.writeIt;
+  else if (message.trim().length > MAX_MESSAGE) errors.message = t.tooLong(MAX_MESSAGE);
   return errors;
 }
 
@@ -58,6 +53,7 @@ function serverErrors(error: unknown): Errors | null {
 /** Quick feedback: which feature, what kind, a message. Saved by the API in its database. */
 export function SuggestionBox() {
   const ids = useId();
+  const t = useT();
   const queryClient = useQueryClient();
   const [feature, setFeature] = useState('');
   const [other, setOther] = useState('');
@@ -87,7 +83,7 @@ export function SuggestionBox() {
         }),
       ),
     onSuccess: (saved) => {
-      track('feedback', { target: kind, detail: featureLabel(saved), value: saved.message.length });
+      track('feedback', { target: kind, detail: featureLabel(saved, en.suggest), value: saved.message.length });
       setFeature('');
       setOther('');
       setMessage('');
@@ -135,12 +131,12 @@ export function SuggestionBox() {
   return (
     <section className={`${dq.card} ${styles.suggestions}`} aria-labelledby={`${ids}-title`}>
       <h2 id={`${ids}-title`} className={styles.suggestionsTitle}>
-        Suggestion box
+        {t.suggest.title}
       </h2>
       <form className={styles.suggestionForm} onSubmit={submit} noValidate>
         <div className={styles.suggestionRow}>
           <label className={styles.suggestionField}>
-            <span className={dq.fieldLabel}>Feature</span>
+            <span className={dq.fieldLabel}>{t.suggest.feature}</span>
             <select
               ref={refs.feature}
               className={dq.input}
@@ -153,10 +149,10 @@ export function SuggestionBox() {
               }}
               {...errorProps('feature')}
             >
-              <option value="">Choose…</option>
+              <option value="">{t.suggest.choose}</option>
               {FEATURES.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
+                <option key={f} value={f}>
+                  {t.suggest.features[f]}
                 </option>
               ))}
             </select>
@@ -165,13 +161,13 @@ export function SuggestionBox() {
 
           {feature === 'other' && (
             <label className={styles.suggestionField}>
-              <span className={dq.fieldLabel}>Which feature?</span>
+              <span className={dq.fieldLabel}>{t.suggest.whichFeature}</span>
               <input
                 ref={refs.otherFeature}
                 className={dq.input}
                 value={other}
                 maxLength={80}
-                placeholder="e.g. Price alerts"
+                placeholder={t.suggest.otherPlaceholder}
                 onChange={(e) => {
                   setOther(e.target.value);
                   clearError('otherFeature');
@@ -183,7 +179,7 @@ export function SuggestionBox() {
           )}
 
           <label className={styles.suggestionField}>
-            <span className={dq.fieldLabel}>Type</span>
+            <span className={dq.fieldLabel}>{t.suggest.type}</span>
             <select
               ref={refs.kind}
               className={dq.input}
@@ -195,8 +191,8 @@ export function SuggestionBox() {
               {...errorProps('kind')}
             >
               {KINDS.map((k) => (
-                <option key={k.value} value={k.value}>
-                  {k.label}
+                <option key={k} value={k}>
+                  {t.suggest.kinds[k]}
                 </option>
               ))}
             </select>
@@ -205,14 +201,14 @@ export function SuggestionBox() {
         </div>
 
         <label className={styles.suggestionField}>
-          <span className={dq.fieldLabel}>Suggestion</span>
+          <span className={dq.fieldLabel}>{t.suggest.suggestion}</span>
           <textarea
             ref={refs.message}
             className={`${dq.input} ${styles.suggestionMessage}`}
             value={message}
             rows={3}
             maxLength={MAX_MESSAGE}
-            placeholder="What would make this better?"
+            placeholder={t.suggest.placeholder}
             onChange={(e) => {
               setMessage(e.target.value);
               clearError('message');
@@ -228,28 +224,28 @@ export function SuggestionBox() {
 
         <div className={styles.suggestionActions}>
           <button type="submit" className={dq.runButton} aria-disabled={send.isPending}>
-            {send.isPending ? 'Sending…' : 'Send'}
+            {send.isPending ? t.suggest.sending : t.suggest.send}
           </button>
-          <span className={styles.suggestionHint}>Ctrl+Enter to send</span>
+          <span className={styles.suggestionHint}>{t.suggest.hint}</span>
           <span role="status" className={styles.suggestionStatus}>
-            {sent ? 'Thanks, your suggestion was saved.' : ''}
+            {sent ? t.suggest.thanks : ''}
           </span>
         </div>
         {unexpectedError && (
           <p className={dq.fieldError} role="alert">
-            Couldn't send: {send.error.message}
+            {t.suggest.failed(send.error.message)}
           </p>
         )}
       </form>
 
       {recent.data && recent.data.length > 0 && (
         <details className={styles.recent}>
-          <summary>Recent suggestions ({recent.data.length})</summary>
+          <summary>{t.suggest.recent(recent.data.length)}</summary>
           <ul>
             {recent.data.map((s) => (
               <li key={s.id}>
                 <span className={styles.recentMeta}>
-                  {featureLabel(s)} · {kindLabel(s.kind)} · {new Date(s.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                  {featureLabel(s, t.suggest)} · {kindLabel(s.kind, t.suggest)} · {formatDateTime(s.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}
                 </span>
                 <span>{s.message}</span>
               </li>

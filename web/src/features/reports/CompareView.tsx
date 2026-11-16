@@ -5,6 +5,7 @@ import type { ThemeColors } from './figure';
 import { CHART_BY_TYPE, type Report } from './model';
 import { PlotlyChart } from './PlotlyChart';
 import type { Shaped } from './shape';
+import { useT } from '../../i18n/I18nProvider';
 import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
 
@@ -102,6 +103,7 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const t = useT();
   const linkedCount = [...syncs.values()].filter((s) => s.hoverKey).length;
 
   const chart = (item: CompareItem) =>
@@ -112,7 +114,7 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
     );
 
   const reportMeta = (r: Report) => `${CHART_BY_TYPE[r.chart].label} · ${CHART_BY_TYPE[r.chart].dims}D`;
-  const openLabel = (item: CompareItem) => `Open ${item.report.name}${item.symbol ? ` for ${item.symbol}` : ''} in the editor`;
+  const openLabel = (item: CompareItem) => t.compare.openLabel(item.report.name, item.symbol);
 
   /** A card inside a group: titled by what varies along the row (the stock, or the report). */
   const groupedCard = (item: CompareItem) => {
@@ -124,11 +126,11 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
         <header className={styles.compareSymbolHead}>
           <h4 id={`cmp-${item.key}`} className={groupBy === 'report' ? styles.compareSymbol : styles.compareReportName}>
             <span className="sr-only">{context}, </span>
-            {title}
+            <span translate={groupBy === 'report' ? 'no' : undefined}>{title}</span>
           </h4>
           <span className={styles.libraryMeta}>{meta ?? ''}</span>
           <button type="button" className={`${dq.linkButton} ${styles.compareOpen}`} aria-label={openLabel(item)} onClick={() => onOpen(item)}>
-            Open
+            {t.common.open}
           </button>
         </header>
         {chart(item)}
@@ -142,7 +144,7 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
         <h2 id="compare-heading" ref={headingRef} tabIndex={-1}>
           {heading}
         </h2>
-        {linkedCount > 1 && <p className={styles.compareHint}>Charts along the same axis share a crosshair and zoom together.</p>}
+        {linkedCount > 1 && <p className={styles.compareHint}>{t.compare.linkedHint}</p>}
       </div>
 
       {groupBy === 'none' ? (
@@ -157,9 +159,9 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
                   <span className={styles.libraryMeta}>{reportMeta(item.report)}</span>
                 </div>
                 <button type="button" className={dq.linkButton} onClick={() => onOpen(item)}>
-                  Open
+                  {t.common.open}
                 </button>
-                <button type="button" className={dq.iconButton} aria-label={`Remove ${item.report.name} from comparison`} onClick={() => onRemoveReport(item.report.id)}>
+                <button type="button" className={dq.iconButton} aria-label={t.compare.removeFrom(item.report.name)} onClick={() => onRemoveReport(item.report.id)}>
                   ×
                 </button>
               </header>
@@ -184,7 +186,7 @@ export function CompareView({ items, colors, heading, groupBy = 'none', names = 
                     </h3>
                     {meta && <span className={styles.libraryMeta}>{meta}</span>}
                   </div>
-                  <button type="button" className={dq.iconButton} aria-label={`Remove ${title} from comparison`} onClick={remove}>
+                  <button type="button" className={dq.iconButton} aria-label={t.compare.removeFrom(title)} onClick={remove}>
                     ×
                   </button>
                 </header>

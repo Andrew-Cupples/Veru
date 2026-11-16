@@ -2,6 +2,7 @@ import { useId, type ReactNode } from 'react';
 import { radioGroup } from '../../a11y/radioGroup';
 import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
+import { useT } from '../../i18n/I18nProvider';
 
 /* Small labelled inputs for the report inspector. Every control has a visible label tied to it. */
 
@@ -152,17 +153,18 @@ export function ColorField({
   auto: string;
   onChange: (v: string | null) => void;
 }) {
+  const t = useT();
   return (
     <Field label={label}>
       {(id) => (
         <div className={styles.colorRow}>
           <input id={id} type="color" className={styles.colorInput} value={value ?? auto} onChange={(e) => onChange(e.target.value)} />
           {value ? (
-            <button type="button" className={dq.linkButton} onClick={() => onChange(null)} aria-label={`Reset ${label.toLowerCase()} to automatic`}>
-              auto
+            <button type="button" className={dq.linkButton} onClick={() => onChange(null)} aria-label={t.reports.resetAuto(label.toLowerCase())}>
+              {t.reports.auto}
             </button>
           ) : (
-            <span className={styles.controlHint}>auto</span>
+            <span className={styles.controlHint}>{t.reports.auto}</span>
           )}
         </div>
       )}

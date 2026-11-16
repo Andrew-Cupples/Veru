@@ -1,3 +1,4 @@
+import { messages } from '../../i18n/I18nProvider';
 import { FIELD_BY_KEY, compareValues, type FieldKey } from './fields';
 import { CHART_BY_TYPE, type CameraPreset, type NumberFormat, type PaletteId, type Report } from './model';
 import type { Axis3D, Shaped } from './shape';
@@ -53,15 +54,6 @@ export function toHex(color: string, fallback = '#888888'): string {
   const rgb = parseColor(color);
   return rgb ? `#${rgb.map((n) => Math.round(n).toString(16).padStart(2, '0')).join('')}` : fallback;
 }
-
-export const PALETTE_LABELS: Record<PaletteId, string> = {
-  theme: 'Theme',
-  colorblind: 'Colour-blind safe',
-  vivid: 'Vivid',
-  warm: 'Warm',
-  cool: 'Cool',
-  mono: 'Single hue',
-};
 
 export function paletteColors(id: PaletteId, c: ThemeColors): string[] {
   switch (id) {
@@ -301,7 +293,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         const max = Math.max(1, ...shaped.volume);
         data.push({
           type: 'bar',
-          name: 'Volume',
+          name: FIELD_BY_KEY.volume.label,
           x: shaped.x,
           y: shaped.volume,
           yaxis: 'y2',
@@ -316,7 +308,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         ...xAxisFor(enc.x, shaped.x.map(String)),
         rangeslider: { visible: st.rangeSlider, bgcolor: c.surface, bordercolor: c.rule },
       };
-      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, 'Price')), type: st.yLog ? 'log' : 'linear', ...numberFormat(st.yFormat, 'price') };
+      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, messages().figure.price)), type: st.yLog ? 'log' : 'linear', ...numberFormat(st.yFormat, 'price') };
       break;
     }
 
@@ -332,7 +324,7 @@ export function buildFigure(shaped: Shaped, report: Report, c: ThemeColors): Fig
         }),
       );
       layout.xaxis = { ...axisBase, title: title(axisTitle(st.xTitle, enc.x)), ...numberFormat('auto', FIELD_BY_KEY[enc.x].unit) };
-      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, 'Bars')), type: st.yLog ? 'log' : 'linear' };
+      layout.yaxis = { ...axisBase, title: title(axisTitle(st.yTitle, null, messages().figure.bars)), type: st.yLog ? 'log' : 'linear' };
       layout.barmode = st.barMode;
       layout.bargap = 0.04;
       break;

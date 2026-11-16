@@ -1,3 +1,5 @@
+import { messages } from '../../i18n/I18nProvider';
+import type { Messages } from '../../i18n/catalogs';
 import { DEFAULT_STYLE, newSeries, type Encoding, type Report, type ReportStyle } from './model';
 
 /** Built-in starting points. They work on any symbol; editing one saves a copy to My reports. */
@@ -13,17 +15,20 @@ const enc = (e: Partial<Encoding>): Encoding => ({
   ...e,
 });
 
+/** Name and description come from the active language's catalog, by template id. */
 const template = (
-  id: string,
-  name: string,
-  description: string,
+  id: keyof Messages['templates'],
   chart: Report['chart'],
   encoding: Partial<Encoding>,
   style: Partial<ReportStyle> = {},
 ): Report => ({
   id: `template:${id}`,
-  name,
-  description,
+  get name() {
+    return messages().templates[id].name;
+  },
+  get description() {
+    return messages().templates[id].description;
+  },
   chart,
   enc: enc(encoding),
   where: [],
@@ -33,56 +38,56 @@ const template = (
 });
 
 export const TEMPLATES: readonly Report[] = [
-  template('price-volume', 'Price & volume', 'Close as a line over volume bars on a second axis', 'line', {
+  template('price-volume', 'line', {
     series: [newSeries('close'), { ...newSeries('volume'), mark: 'bar', axis: 'right' }],
-  }, { y2Title: 'Volume', opacity: 0.85 }),
-  template('candles', 'Candlesticks', 'Classic OHLC candles with volume underneath', 'candlestick', { x: 'time' }, {
+  }, { opacity: 0.85 }),
+  template('candles', 'candlestick', { x: 'time' }, {
     volumeOverlay: true,
     hover: 'x',
   }),
-  template('return', 'Cumulative return', 'Percent change since the first bar shown', 'area', {
+  template('return', 'area', {
     series: [newSeries('return')],
   }, { yFormat: 'percent', opacity: 0.35 }),
-  template('intraday-volume', 'Intraday volume profile', 'Average volume at each time of day, by session', 'bar', {
+  template('intraday-volume', 'bar', {
     x: 'clock',
     series: [newSeries('volume')],
     color: 'session',
     aggregate: 'avg',
   }, { barMode: 'stack', yFormat: 'compact' }),
-  template('return-dist', 'Move distribution', 'How often each size of bar move happens', 'histogram', {
+  template('return-dist', 'histogram', {
     x: 'changePct',
     color: 'session',
   }, { barMode: 'overlay', opacity: 0.7, bins: 40 }),
-  template('weekday-range', 'Range by weekday', 'Spread of high minus low for each weekday', 'box', {
+  template('weekday-range', 'box', {
     series: [newSeries('spreadPct')],
     color: 'weekday',
   }, { yFormat: 'percent', legend: 'hidden' }),
-  template('volume-move', 'Volume vs move', 'Do bigger moves come with more volume?', 'scatter', {
+  template('volume-move', 'scatter', {
     x: 'changePct',
     series: [newSeries('volume')],
     color: 'session',
     size: 'spread',
   }, { yFormat: 'compact', opacity: 0.7, hover: 'closest', spikes: false }),
-  template('session-heatmap', 'Session heatmap', 'Average move for each day and time of day', 'heatmap', {
+  template('session-heatmap', 'heatmap', {
     x: 'date',
     y: 'clock',
     z: 'changePct',
     aggregate: 'avg',
   }, { colorscale: 'RdBu', hover: 'closest' }),
-  template('landscape', 'Price landscape', 'Close as a 3D surface over day and time of day', 'surface', {
+  template('landscape', 'surface', {
     x: 'date',
     y: 'clock',
     z: 'close',
     aggregate: 'avg',
   }, { colorscale: 'Viridis', contours: true, height: 560 }),
-  template('trade-cloud', 'Trade cloud', 'Every bar placed by time, price and volume', 'scatter3d', {
+  template('trade-cloud', 'scatter3d', {
     x: 'bar',
     y: 'close',
     z: 'volume',
     color: 'changePct',
     size: null,
   }, { colorscale: 'RdBu', markerSize: 4, height: 560, opacity: 0.8 }),
-  template('price-path', 'Price path', 'Close and volume traced through time in 3D', 'line3d', {
+  template('price-path', 'line3d', {
     x: 'bar',
     y: 'close',
     z: 'volume',

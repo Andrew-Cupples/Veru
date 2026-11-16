@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createLedgerClient } from './api/client';
 import { LedgerApiProvider } from './api/LedgerApiContext';
 import { Workspace } from './components/Workspace';
+import { LedgerI18nProvider } from './i18n';
 import { presetStyle, type ColorScheme, type ThemePreset } from './theme/theme';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/source-serif-4';
@@ -23,6 +24,8 @@ export interface PromptLedgerProps {
   hostControlsScheme?: boolean;
   /** Token overrides applied on top of the color scheme (the hook for future color presets). */
   preset?: ThemePreset;
+  /** Interface language, as a BCP 47 tag ("es", "fr-CA", "pt-BR"). Matched by language; English otherwise. */
+  locale?: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -31,7 +34,7 @@ export interface PromptLedgerProps {
  * The Prompt Ledger, as a self-contained module. It fills its parent's box (give the parent a height),
  * scopes all of its styles under `.pl-root`, and owns no routing, so it can drop into a host app as is.
  */
-export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'system', hostControlsScheme = false, preset, className, style }: PromptLedgerProps) {
+export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'system', hostControlsScheme = false, preset, locale, className, style }: PromptLedgerProps) {
   const client = useMemo(() => createLedgerClient(apiBaseUrl), [apiBaseUrl]);
   const [ownQueryClient] = useState(
     // Three retries with backoff (~7s) covers the API still starting when the UI loads first.
@@ -43,6 +46,7 @@ export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'syst
   return (
     <QueryClientProvider client={queryClient ?? ownQueryClient}>
       <LedgerApiProvider client={client}>
+        <LedgerI18nProvider locale={locale}>
         <div
           className={['pl-root', className].filter(Boolean).join(' ')}
           data-pl-scheme={scheme}
@@ -50,6 +54,7 @@ export function PromptLedger({ apiBaseUrl = '', queryClient, colorScheme = 'syst
         >
           <Workspace scheme={scheme} onSchemeChange={hostControlsScheme ? undefined : setScheme} />
         </div>
+        </LedgerI18nProvider>
       </LedgerApiProvider>
     </QueryClientProvider>
   );

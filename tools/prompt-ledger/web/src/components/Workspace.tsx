@@ -9,6 +9,7 @@ import { DocumentView } from './document/DocumentView';
 import { Outline } from './outline/Outline';
 import { EmptyState, ErrorState, LoadingState } from './StatusStates';
 import { Toolbar } from './Toolbar';
+import { useLedgerI18n } from '../i18n';
 import styles from './Workspace.module.css';
 
 interface WorkspaceProps {
@@ -26,6 +27,7 @@ const isTypingTarget =(el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
 
 export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
+  const { t } = useLedgerI18n();
   const document = useDocument();
   const prompts = useMemo(() => document.data ?? [], [document.data]);
   const groups = useMemo(() => groupBySession(prompts), [prompts]);
@@ -162,7 +164,7 @@ export function Workspace({ scheme, onSchemeChange }: WorkspaceProps) {
         )}
 
         {/* A region, not <main>: the host app already provides the page's main landmark. */}
-        <section ref={scrollRef} className={styles.documentScroll} tabIndex={0} aria-label="Prompt document">
+        <section ref={scrollRef} className={styles.documentScroll} tabIndex={0} aria-label={t.document.region}>
           {body ?? <DocumentView groups={groups} selectedId={currentId} onSelect={(id) => goTo(id)} />}
         </section>
 

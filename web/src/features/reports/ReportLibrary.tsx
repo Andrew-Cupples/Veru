@@ -4,6 +4,7 @@ import { ChartIcon } from './ChartIcon';
 
 import { Thumbnail } from './Thumbnail';
 import type { Thumb } from './thumbGeometry';
+import { useT } from '../../i18n/I18nProvider';
 import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
 
@@ -31,6 +32,7 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
   const pins = compare?.pins ?? [];
   const comparing = compare?.comparing ?? false;
   const canCompare = pins.length >= 2;
+  const t = useT();
   const navRef = useRef<HTMLElement>(null);
   const highlightRef = useRef<HTMLSpanElement>(null);
   // While comparing, no single report is "open", so nothing is marked current.
@@ -90,8 +92,8 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
             type="button"
             className={styles.compareToggle}
             aria-pressed={pinned}
-            aria-label={`Compare ${r.name}`}
-            title={pinned ? 'In comparison: click to remove' : 'Add to comparison'}
+            aria-label={t.reports.compareItem(r.name)}
+            title={pinned ? t.reports.inComparison : t.reports.addToComparison}
             onClick={() => compare.onTogglePin(r.id)}
           >
             {pinned ? <CheckIcon /> : <PlusIcon />}
@@ -102,14 +104,14 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
   };
 
   return (
-    <nav ref={navRef} className={styles.library} aria-label="Reports" data-compare={compare ? '' : undefined}>
+    <nav ref={navRef} className={styles.library} aria-label={t.nav.reports} data-compare={compare ? '' : undefined}>
       <span ref={highlightRef} className={styles.libraryHighlight} aria-hidden="true" hidden />
       <div className={styles.newButtons}>
         <button type="button" className={dq.secondaryButton} onClick={() => onCreate(2)}>
-          <span aria-hidden="true">+ </span>New 2D
+          <span aria-hidden="true">+ </span>{t.reports.new2d}
         </button>
         <button type="button" className={dq.secondaryButton} onClick={() => onCreate(3)}>
-          <span aria-hidden="true">+ </span>New 3D
+          <span aria-hidden="true">+ </span>{t.reports.new3d}
         </button>
       </div>
 
@@ -122,29 +124,29 @@ export function ReportLibrary({ mine, templates, activeId, onOpen, onCreate, thu
             aria-describedby={comparing || canCompare ? 'compare-hint' : undefined}
             onClick={() => compare.onCompare(!comparing)}
           >
-            {comparing ? 'Back to editor' : `Compare (${pins.length})`}
+            {comparing ? t.reports.backToEditor : t.reports.compareCount(pins.length)}
           </button>
           {(comparing || canCompare) && (
             <p id="compare-hint" className={styles.compareHint}>
-              {comparing ? 'Hover one chart to see the same moment on the others. Add more with +.' : `${pins.length} reports ready to compare.`}
+              {comparing ? t.reports.compareHint : t.reports.readyToCompare(pins.length)}
             </p>
           )}
         </div>
       )}
 
       <h2 className={styles.libraryHeading} id="mine-heading">
-        My reports
+        {t.reports.myReports}
       </h2>
       {mine.length ? (
         <ul className={styles.libraryList} aria-labelledby="mine-heading">
           {mine.map((r) => item(r, false))}
         </ul>
       ) : (
-        <p className={styles.libraryEmpty}>None yet. Edit a template or start a new one; changes save automatically.</p>
+        <p className={styles.libraryEmpty}>{t.reports.noneYet}</p>
       )}
 
       <h2 className={styles.libraryHeading} id="templates-heading">
-        Templates
+        {t.reports.templates}
       </h2>
       <ul className={styles.libraryList} aria-labelledby="templates-heading">
         {templates.map((r) => item(r, true))}

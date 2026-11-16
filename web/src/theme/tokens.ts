@@ -1,3 +1,4 @@
+import { messages } from '../i18n/I18nProvider';
 /**
  * The app's color tokens. Every feature stylesheet reads only these CSS variables (`var(--accent)` etc.),
  * so a theme is just a value for each one, per color scheme.
@@ -49,17 +50,17 @@ export type SchemePreference = ColorScheme | 'system';
  * 4.5 for normal text, 3 for large text, icons and hints the UI never relies on.
  */
 export const CONTRAST_PAIRS: readonly { fg: ThemeToken; bg: ThemeToken; min: number; where: string }[] = [
-  { fg: 'ink', bg: 'surface-raised', min: 4.5, where: 'Card text' },
-  { fg: 'ink', bg: 'desk', min: 4.5, where: 'Page headings' },
-  { fg: 'ink-muted', bg: 'surface-raised', min: 4.5, where: 'Labels on cards' },
-  { fg: 'ink-muted', bg: 'surface', min: 4.5, where: 'Nav links, table headers' },
-  { fg: 'ink-faint', bg: 'surface-raised', min: 3, where: 'Hints' },
-  { fg: 'accent-ink', bg: 'accent', min: 4.5, where: 'Primary button label' },
-  { fg: 'accent-ink', bg: 'accent-hover', min: 4.5, where: 'Primary button hover' },
-  { fg: 'accent', bg: 'surface-raised', min: 4.5, where: 'Links, selected chips' },
-  { fg: 'keyword', bg: 'surface-raised', min: 4.5, where: 'SQL keywords' },
-  { fg: 'danger', bg: 'surface-raised', min: 4.5, where: 'Price down, errors' },
-  { fg: 'session-pre', bg: 'surface-raised', min: 4.5, where: 'Pre tag' },
-  { fg: 'session-regular', bg: 'surface-raised', min: 4.5, where: 'Regular tag, price up' },
-  { fg: 'session-post', bg: 'surface-raised', min: 4.5, where: 'Post tag' },
+  { fg: 'ink', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.cardText; } },
+  { fg: 'ink', bg: 'desk', min: 4.5, get where() { return messages().contrastWhere.pageHeadings; } },
+  { fg: 'ink-muted', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.labelsOnCards; } },
+  { fg: 'ink-muted', bg: 'surface', min: 4.5, get where() { return messages().contrastWhere.navLinksTableHeaders; } },
+  { fg: 'ink-faint', bg: 'surface-raised', min: 3, get where() { return messages().contrastWhere.hints; } },
+  { fg: 'accent-ink', bg: 'accent', min: 4.5, get where() { return messages().contrastWhere.primaryButtonLabel; } },
+  { fg: 'accent-ink', bg: 'accent-hover', min: 4.5, get where() { return messages().contrastWhere.primaryButtonHover; } },
+  { fg: 'accent', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.linksSelectedChips; } },
+  { fg: 'keyword', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.sqlKeywords; } },
+  { fg: 'danger', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.priceDownErrors; } },
+  { fg: 'session-pre', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.preTag; } },
+  { fg: 'session-regular', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.regularTagPriceUp; } },
+  { fg: 'session-post', bg: 'surface-raised', min: 4.5, get where() { return messages().contrastWhere.postTag; } },
 ];

@@ -1,3 +1,4 @@
+import { messages } from '../i18n/I18nProvider';
 import createClient from 'openapi-fetch';
 import type { components, paths } from './schema';
 
@@ -46,7 +47,7 @@ function describe(status: number, problem: unknown): string {
     if (p.title) return p.title;
   }
   if (status === 0 || status === 502 || status === 503 || status === 504) {
-    return 'The market data API is unreachable. Is it running? Start everything with `npm run dev`.';
+    return messages().api.unreachable;
   }
-  return `Request failed (${status}).`;
+  return messages().api.failed(status);
 }

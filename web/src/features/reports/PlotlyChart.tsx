@@ -3,6 +3,7 @@ import { buildFigure, type ThemeColors } from './figure';
 import type { Report } from './model';
 import { pointIndexAt, relayoutRange, type ChartSync } from './chartSync';
 import type { Shaped } from './shape';
+import { currentLocale, useI18n } from '../../i18n/I18nProvider';
 import styles from './Reports.module.css';
 
 type PlotlyModule = typeof import('plotly.js-dist-min').default;
@@ -10,6 +11,48 @@ type PlotlyModule = typeof import('plotly.js-dist-min').default;
 // Plotly is large, so it loads on first use of Reports and is shared after that.
 let plotlyPromise: Promise<PlotlyModule> | null = null;
 const loadPlotly = () => (plotlyPromise ??= import('plotly.js-dist-min').then((m) => m.default));
+
+/*
+ * Dates and numbers inside charts in the app's language: month and day names come from the browser's own
+ * Intl data, so no Plotly locale bundles are needed. Registered once per language, on first use.
+ */
+const registered = new Set<string>();
+function plotlyLocale(Plotly: PlotlyModule): string {
+  const locale = currentLocale();
+  if (!registered.has(locale)) {
+    const names = (options: Intl.DateTimeFormatOptions, count: number, at: (i: number) => number) =>
+      Array.from({ length: count }, (_, i) => new Intl.DateTimeFormat(locale, { ...options, timeZone: 'UTC' }).format(at(i)));
+    // 2023-01-01 was a Sunday, which is where Plotly's day lists start.
+    const day = (i: number) => Date.UTC(2023, 0, 1 + i);
+    const month = (i: number) => Date.UTC(2023, i, 1);
+    const parts = new Intl.NumberFormat(locale).formatToParts(12345.6);
+    Plotly.register({
+      moduleType: 'locale',
+      name: locale,
+      dictionary: {},
+      format: {
+        days: names({ weekday: 'long' }, 7, day),
+        shortDays: names({ weekday: 'short' }, 7, day),
+        months: names({ month: 'long' }, 12, month),
+        shortMonths: names({ month: 'short' }, 12, month),
+        // d3's time formatter maps over every list here: a missing one breaks any date axis.
+        periods: [Date.UTC(2023, 0, 1, 9), Date.UTC(2023, 0, 1, 21)].map(
+          (at) =>
+            new Intl.DateTimeFormat(locale, { hour: 'numeric', hour12: true, timeZone: 'UTC' }).formatToParts(at).find((p) => p.type === 'dayPeriod')?.value ?? '',
+        ),
+        dateTime: '%x, %X',
+        date: '%-m/%-d/%Y',
+        time: '%H:%M:%S',
+        grouping: [3],
+        currency: ['$', ''],
+        decimal: parts.find((p) => p.type === 'decimal')?.value ?? '.',
+        thousands: parts.find((p) => p.type === 'group')?.value ?? ',',
+      },
+    });
+    registered.add(locale);
+  }
+  return locale;
+}
 
 export interface ChartHandle {
   download: (format: 'png' | 'svg', filename: string) => void;
@@ -30,6 +73,8 @@ export function PlotlyChart({ shaped, report, colors, label, sync, ref }: Props)
   const host = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // Redraws in the new language's month names and number style.
+  const { locale } = useI18n();
 
   useEffect(() => {
     const gd = host.current as PlotlyElement | null;
@@ -106,6 +151,7 @@ export function PlotlyChart({ shaped, report, colors, label, sync, ref }: Props)
           responsive: true,
           displaylogo: false,
           displayModeBar: 'hover',
+          locale: plotlyLocale(Plotly),
           modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d', 'toImage'],
         }).then(() => {
           if (!cancelled) setLoaded(true);
@@ -118,7 +164,7 @@ export function PlotlyChart({ shaped, report, colors, label, sync, ref }: Props)
     return () => {
       cancelled = true;
     };
-  }, [shaped, report, colors]);
+  }, [shaped, report, colors, locale]);
 
   // Panels opening and closing change the width without a window resize.
   useEffect(() => {

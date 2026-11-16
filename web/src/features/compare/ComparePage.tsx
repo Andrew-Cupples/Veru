@@ -20,9 +20,9 @@ import { useThemeColors } from '../reports/themeColors';
 import { MAX_REPORTS, MAX_STOCKS, useCompareState, type CompareState } from './compareState';
 import styles from './Compare.module.css';
 import dq from '../data-query/DataQuery.module.css';
+import { messages, useT } from '../../i18n/I18nProvider';
 
 const GROUPINGS = ['report', 'stock'] as const;
-const GROUPING_LABEL = { report: 'By report', stock: 'By stock' } as const;
 
 /**
  * Compare: the same reports across several stocks. Its own page, separate from the Reports editor: pick
@@ -31,6 +31,7 @@ const GROUPING_LABEL = { report: 'By report', stock: 'By stock' } as const;
  */
 export function ComparePage() {
   const navigate = useNavigate();
+  const t = useT();
   const { state, set } = useCompareState();
   const { stocks, interval, range, extendedHours, groupBy } = state;
   const options = useQueryOptions();
@@ -72,11 +73,11 @@ export function ComparePage() {
         const base = { key: `${r.id}|${symbol}`, report: r, symbol, label: `${r.name}, ${symbol}` };
         const needs = !!CHART_BY_TYPE[r.chart].slots.series && !r.enc.series.length;
         const rows = rowsByStock[i];
-        if (needs) out.push({ ...base, shaped: null, message: 'Nothing to plot yet. Open it to pick values.' });
-        else if (!rows) out.push({ ...base, shaped: null, message: state?.error ? errorText(symbol, state.error) : `Loading ${symbol}…` });
+        if (needs) out.push({ ...base, shaped: null, message: t.compare.nothingToPlot });
+        else if (!rows) out.push({ ...base, shaped: null, message: state?.error ? errorText(symbol, state.error) : t.source.loadingSymbol(symbol) });
         else {
           const reportRows = toReportRows(filterRows(rows, r.where));
-          if (!reportRows.length) out.push({ ...base, shaped: null, message: "No bars match this report's conditions." });
+          if (!reportRows.length) out.push({ ...base, shaped: null, message: t.compare.noBars });
           else {
             const s = shape(reportRows, r);
             out.push({ ...base, shaped: s, label: describe(r, pointCount(s), symbol) });
@@ -87,10 +88,10 @@ export function ComparePage() {
     // Ordered for the grouping: rows of stocks under each report, or rows of reports under each stock.
     if (groupBy === 'stock') out.sort((a, b) => stocks.indexOf(a.symbol!) - stocks.indexOf(b.symbol!));
     return out;
-  }, [reports, stocks, series, groupBy]);
+  }, [reports, stocks, series, groupBy, t]);
 
-  const heading = `${plural(reports.length, 'report')} across ${plural(stocks.length, 'stock')}`;
-  useDocumentTitle(`Compare${stocks.length ? ` · ${stocks.join(', ')}` : ''}`);
+  const heading = t.compare.heading(reports.length, stocks.length);
+  useDocumentTitle(`${t.nav.compare}${stocks.length ? ` · ${stocks.join(', ')}` : ''}`);
 
   const removeStock = (symbol: string) => {
     track('report', { target: 'compare remove stock', subject: symbol });
@@ -108,36 +109,36 @@ export function ComparePage() {
   };
 
   const status = !stocks.length
-    ? 'Add a stock to compare.'
+    ? t.compare.statusAddStock
     : !reports.length
-      ? 'Add a report to compare.'
+      ? t.compare.statusAddReport
       : loading
-        ? `Loading ${plural(stocks.length, 'stock')}`
-        : `Comparing ${heading}`;
+        ? t.compare.loadingStocks(stocks.length)
+        : heading;
 
   return (
     <div className={dq.page}>
       <div className={dq.heading}>
-        <h1>Compare</h1>
+        <h1>{t.nav.compare}</h1>
       </div>
 
       {options.isError && (
         <div className={dq.alert} role="alert">
           <span>
-            <strong>Market data API not reachable.</strong> Start it with <code>npm run api</code>. This page reconnects automatically.
+            <strong>{t.source.apiDown}</strong> {t.compare.apiDownHelp(<code translate="no">npm run api</code>)}
           </span>
         </div>
       )}
 
       <div className={dq.card}>
-        <div className={dq.editor} role="group" aria-label="Comparison">
-          <Clause keyword="STOCKS">
+        <div className={dq.editor} role="group" aria-label={t.compare.comparison}>
+          <Clause keyword={t.compare.stocksKeyword}>
             <StockPicker stocks={stocks} names={loadedNames} onLearn={learn} set={set} onRemove={removeStock} />
           </Clause>
-          <Clause keyword="REPORTS">
+          <Clause keyword={t.compare.reportsKeyword}>
             <ReportPicker reports={reports} mine={mine} chosen={state.reports} set={set} onRemove={removeReport} />
           </Clause>
-          <Clause keyword="OVER">
+          <Clause keyword={t.compare.overKeyword}>
             <BarsPicker state={state} set={set} options={options.data} />
           </Clause>
         </div>
@@ -148,16 +149,16 @@ export function ComparePage() {
       </p>
 
       {!stocks.length ? (
-        <div className={dq.empty}>Add a stock above to start comparing. Type a ticker or company name.</div>
+        <div className={dq.empty}>{t.compare.emptyStocks}</div>
       ) : !reports.length ? (
-        <div className={dq.empty}>Add a report above. Each one is drawn for every stock.</div>
+        <div className={dq.empty}>{t.compare.emptyReports}</div>
       ) : colors ? (
         <div aria-busy={loading}>
           <CompareView
             autoFocus={false}
             items={items}
             colors={colors}
-            heading={`Comparing ${heading}`}
+            heading={heading}
             groupBy={groupBy}
             names={loadedNames}
             onOpen={open}
@@ -170,10 +171,9 @@ export function ComparePage() {
   );
 }
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
 function errorText(symbol: string, error: Error): string {
-  return error instanceof ApiError && error.status === 404 ? `No data for ${symbol}. Check the ticker.` : `${symbol} failed to load: ${error.message}`;
+  const t = messages();
+  return error instanceof ApiError && error.status === 404 ? t.compare.noData(symbol) : t.compare.failed(symbol, error.message);
 }
 
 type Setter = (change: (s: CompareState) => CompareState) => void;
@@ -192,6 +192,7 @@ function StockPicker({
   set: Setter;
   onRemove: (symbol: string) => void;
 }) {
+  const t = useT();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -202,8 +203,8 @@ function StockPicker({
 
   const add = (symbol: string) => {
     const s = symbol.trim().toUpperCase();
-    if (!s) return setError('Type a ticker or company name, like AAPL.');
-    if (stocks.includes(s)) return setError(`${s} is already in the comparison.`);
+    if (!s) return setError(t.compare.typeTicker);
+    if (stocks.includes(s)) return setError(t.compare.already(s));
     track('report', { target: 'compare add stock', subject: s });
     set((st) => ({ ...st, stocks: [...st.stocks, s] }));
     setText('');
@@ -222,11 +223,11 @@ function StockPicker({
   return (
     <div className={styles.picker}>
       {stocks.length > 0 && (
-        <ul className={styles.tags} aria-label="Stocks in the comparison">
+        <ul className={styles.tags} aria-label={t.compare.stocksIn}>
           {stocks.map((s) => (
             <li key={s} className={styles.tag} title={names[s]}>
-              <span className={styles.tagText}>{s}</span>
-              <button type="button" className={styles.tagRemove} aria-label={`Remove ${s}`} onClick={() => remove(s)}>
+              <span className={styles.tagText} translate="no">{s}</span>
+              <button type="button" className={styles.tagRemove} aria-label={t.compare.remove(s)} onClick={() => remove(s)}>
                 ×
               </button>
             </li>
@@ -234,18 +235,18 @@ function StockPicker({
         </ul>
       )}
       {full ? (
-        <p className={styles.note}>Up to {MAX_STOCKS} stocks at once. Remove one to add another.</p>
+        <p className={styles.note}>{t.compare.maxStocks(MAX_STOCKS)}</p>
       ) : (
-        <form className={styles.addForm} onSubmit={submit} aria-label="Add a stock">
+        <form className={styles.addForm} onSubmit={submit} aria-label={t.compare.addStock}>
           <SymbolCombobox
             id="compare-add-stock"
             inputRef={inputRef}
             className={`${dq.input} ${dq.symbolInput}`}
-            ariaLabel="Add a stock"
-            placeholder="+ Add stock"
+            ariaLabel={t.compare.addStock}
+            placeholder={t.compare.addStockPlaceholder}
             value={text}
-            onChange={(t) => {
-              setText(t);
+            onChange={(value) => {
+              setText(value);
               setError(null);
             }}
             onPick={add}
@@ -281,6 +282,7 @@ function ReportPicker({
   set: Setter;
   onRemove: (id: string) => void;
 }) {
+  const t = useT();
   const selectRef = useRef<HTMLSelectElement>(null);
   const full = chosen.length >= MAX_REPORTS;
   const available = (list: readonly Report[]) => list.filter((r) => !chosen.includes(r.id));
@@ -298,11 +300,11 @@ function ReportPicker({
   return (
     <div className={styles.picker}>
       {reports.length > 0 && (
-        <ul className={styles.tags} aria-label="Reports in the comparison">
+        <ul className={styles.tags} aria-label={t.compare.reportsIn}>
           {reports.map((r) => (
             <li key={r.id} className={`${styles.tag} ${styles.reportTag}`}>
               <span className={styles.tagText}>{r.name}</span>
-              <button type="button" className={styles.tagRemove} aria-label={`Remove ${r.name}`} onClick={() => remove(r.id)}>
+              <button type="button" className={styles.tagRemove} aria-label={t.compare.remove(r.name)} onClick={() => remove(r.id)}>
                 ×
               </button>
             </li>
@@ -310,12 +312,12 @@ function ReportPicker({
         </ul>
       )}
       {full ? (
-        <p className={styles.note}>Up to {MAX_REPORTS} reports at once. Remove one to add another.</p>
+        <p className={styles.note}>{t.compare.maxReports(MAX_REPORTS)}</p>
       ) : (
-        <select ref={selectRef} className={dq.input} aria-label="Add a report" value="" onChange={(e) => add(e.target.value)}>
-          <option value="">+ Add report…</option>
+        <select ref={selectRef} className={dq.input} aria-label={t.compare.addReport} value="" onChange={(e) => add(e.target.value)}>
+          <option value="">{t.compare.addReportOption}</option>
           {available(mine).length > 0 && (
-            <optgroup label="My reports">
+            <optgroup label={t.reports.myReports}>
               {available(mine).map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -323,7 +325,7 @@ function ReportPicker({
               ))}
             </optgroup>
           )}
-          <optgroup label="Templates">
+          <optgroup label={t.reports.templates}>
             {available(TEMPLATES).map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -338,6 +340,7 @@ function ReportPicker({
 
 /** Interval, range and pre/post for every stock, plus how the charts are grouped. Changes apply at once. */
 function BarsPicker({ state, set, options }: { state: CompareState; set: Setter; options: ReturnType<typeof useQueryOptions>['data'] }) {
+  const t = useT();
   const intervals = options?.intervals ?? [];
   const ranges = options?.ranges ?? [];
   const ready = !!options;
@@ -355,23 +358,23 @@ function BarsPicker({ state, set, options }: { state: CompareState; set: Setter;
   return (
     <div className={dq.fromRow}>
       <label className={dq.field}>
-        <span className={dq.fieldLabel}>Interval</span>
+        <span className={dq.fieldLabel}>{t.source.interval}</span>
         <select className={dq.input} value={state.interval} disabled={!ready} onChange={(e) => changeInterval(e.target.value)}>
-          {!ready && <option value={state.interval}>loading…</option>}
+          {!ready && <option value={state.interval}>{t.common.loading}</option>}
           {intervals.map((i) => (
             <option key={i.code} value={i.code}>
-              {i.label}
+              {t.intervals[i.code] ?? i.label}
             </option>
           ))}
         </select>
       </label>
       <label className={dq.field}>
-        <span className={dq.fieldLabel}>Range</span>
+        <span className={dq.fieldLabel}>{t.source.range}</span>
         <select className={dq.input} value={state.range} disabled={!ready} onChange={(e) => set((s) => ({ ...s, range: e.target.value }))}>
-          {!ready && <option value={state.range}>loading…</option>}
+          {!ready && <option value={state.range}>{t.common.loading}</option>}
           {ranges.map((r) => (
             <option key={r.code} value={r.code} disabled={!rangeFits(selected, r)}>
-              {r.label}
+              {t.ranges[r.code] ?? r.label}
             </option>
           ))}
         </select>
@@ -383,16 +386,16 @@ function BarsPicker({ state, set, options }: { state: CompareState; set: Setter;
           disabled={selected ? !selected.intraday : false}
           onChange={(e) => set((s) => ({ ...s, extendedHours: e.target.checked }))}
         />
-        Pre/post market
+        {t.source.prePost}
       </label>
       <div className={dq.field}>
         <span className={dq.fieldLabel} id="compare-group-label">
-          Rows
+          {t.compare.rows}
         </span>
         <div role="radiogroup" aria-labelledby="compare-group-label" className={styles.segmented} onKeyDown={grouping.onKeyDown}>
           {GROUPINGS.map((g) => (
             <button key={g} type="button" {...grouping.radioProps(g)}>
-              {GROUPING_LABEL[g]}
+              {g === 'report' ? t.compare.byReport : t.compare.byStock}
             </button>
           ))}
         </div>

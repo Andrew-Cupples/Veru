@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { formatDate, headline, matchesFilter, parseFilter, type SessionGroup } from '../../model';
+import { useLedgerI18n } from '../../i18n';
+import { headline, matchesFilter, parseFilter, type SessionGroup } from '../../model';
 import { Icon } from '../Icon';
 import styles from './Outline.module.css';
 
@@ -11,6 +12,7 @@ interface OutlineProps {
 }
 
 export function Outline({ groups, activeId, onSelect, filterRef }: OutlineProps) {
+  const { t, formatDate } = useLedgerI18n();
   const [query, setQuery] = useState('');
   const filter = useMemo(() => parseFilter(query), [query]);
   const filtering = filter.words.length > 0 || filter.tags.length > 0;
@@ -36,7 +38,7 @@ export function Outline({ groups, activeId, onSelect, filterRef }: OutlineProps)
   }, [activeId]);
 
   return (
-    <nav className={styles.outline} aria-label="Prompt outline">
+    <nav className={styles.outline} aria-label={t.outline.label}>
       <div className={styles.search}>
         <Icon name="search" size={15} className={styles.searchIcon} />
         <input
@@ -50,15 +52,15 @@ export function Outline({ groups, activeId, onSelect, filterRef }: OutlineProps)
               e.currentTarget.blur();
             }
           }}
-          placeholder="Filter…  #tag  words"
-          aria-label="Filter prompts by text or #tag"
+          placeholder={t.outline.filter}
+          aria-label={t.outline.filterLabel}
           className={styles.searchInput}
         />
         {filtering && <span className={styles.count}>{matchCount}</span>}
       </div>
 
       <div ref={listRef} className={styles.list}>
-        {visible.length === 0 && <p className={styles.none}>No prompts match “{query}”.</p>}
+        {visible.length === 0 && <p className={styles.none}>{t.outline.noMatch(query)}</p>}
         {visible.map((group) => (
           <section key={group.sessionId} className={styles.group}>
             <h3 className={styles.groupTitle} title={group.title}>
@@ -79,20 +81,20 @@ export function Outline({ groups, activeId, onSelect, filterRef }: OutlineProps)
                       className={styles.status}
                       data-reviewed={prompt.humanReviewed || undefined}
                       data-outcome={prompt.outcome}
-                      title={prompt.humanReviewed ? 'Reviewed' : 'Not reviewed'}
+                      title={prompt.humanReviewed ? t.document.reviewed : t.document.notReviewed}
                     >
                       {prompt.humanReviewed && <Icon name="check" size={10} strokeWidth={3} />}
                     </span>
                     <span className={styles.number}>{number}</span>
-                    <span className={styles.label}>{headline(prompt.text, 70) || '(empty prompt)'}</span>
+                    <span className={styles.label}>{headline(prompt.text, 70) || t.document.empty}</span>
                     {prompt.starred && <Icon name="star" size={12} filled className={styles.star} />}
                     {!prompt.includeInLog && <Icon name="hidden" size={12} className={styles.excluded} />}
                     {/* The status dot and icons are visual only; say the same thing to screen readers. */}
                     <span className="pl-sr-only">
                       {[
-                        prompt.humanReviewed ? 'reviewed' : 'not reviewed',
-                        prompt.starred && 'starred',
-                        !prompt.includeInLog && 'excluded from log',
+                        prompt.humanReviewed ? t.outline.reviewed : t.outline.notReviewed,
+                        prompt.starred && t.outline.starred,
+                        !prompt.includeInLog && t.outline.excluded,
                       ]
                         .filter(Boolean)
                         .map((s) => `, ${s}`)

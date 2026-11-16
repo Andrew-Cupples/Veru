@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { currentLocale } from '../i18n/I18nProvider';
 import { pageLabel } from './rows';
 import { beginVisit, getInput, getPage, save, setInput, setPage, track } from './tracker';
 
@@ -73,6 +74,7 @@ function recordEnvironment() {
     ['browser', browserName()],
     ['platform', platformName()],
     ['language', navigator.language],
+    ['app language', currentLocale()],
     ['time zone', Intl.DateTimeFormat().resolvedOptions().timeZone],
     ['screen', `${screen.width}×${screen.height}`],
     ['pixel ratio', String(Math.round(devicePixelRatio * 100) / 100)],

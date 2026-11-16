@@ -11,16 +11,15 @@ import { Preview } from './Preview';
 import { useCopy } from './useCopy';
 import { MotionSettings } from './MotionSettings';
 import { useMotion } from '../../motion/MotionProvider';
+import { useT } from '../../i18n/I18nProvider';
+import { swatchName, themeName } from './themeText';
 import styles from './Personalize.module.css';
 
-const SCHEMES: { value: SchemePreference; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-];
+const SCHEMES: readonly SchemePreference[] = ['system', 'light', 'dark'];
 
 export function PersonalizePage() {
-  useDocumentTitle('Personalize');
+  const t = useT();
+  useDocumentTitle(t.nav.personalize);
   const { themes, theme, scheme, schemePreference, customColors, setTheme, setSchemePreference, setCustomColors } = useTheme();
   const { copied, copy } = useCopy();
   const css = themeToCss(theme);
@@ -36,11 +35,8 @@ export function PersonalizePage() {
     if (value !== schemePreference) fade(() => setSchemePreference(value));
   };
 
-  const schemeGroup = radioGroup(
-    SCHEMES.map((s) => s.value),
-    schemePreference,
-    pickScheme,
-  );
+  const schemeGroup = radioGroup(SCHEMES, schemePreference, pickScheme);
+  const name = themeName(theme, t);
 
   const editCustom = (colors: CustomTheme) => {
     setCustomColors(colors);
@@ -50,18 +46,18 @@ export function PersonalizePage() {
   return (
     <div className={styles.page}>
       <div className={styles.top}>
-        <h1 className={styles.title}>Personalize</h1>
-        <div className={styles.segmented} role="radiogroup" aria-label="Light or dark" onKeyDown={schemeGroup.onKeyDown}>
+        <h1 className={styles.title}>{t.nav.personalize}</h1>
+        <div className={styles.segmented} role="radiogroup" aria-label={t.personalize.lightOrDark} onKeyDown={schemeGroup.onKeyDown}>
           {SCHEMES.map((s) => (
-            <button key={s.value} type="button" {...schemeGroup.radioProps(s.value)}>
-              {s.label}
+            <button key={s} type="button" {...schemeGroup.radioProps(s)}>
+              {t.common[s]}
             </button>
           ))}
         </div>
       </div>
 
       <section className={styles.section} aria-labelledby="themes-heading">
-        <h2 id="themes-heading">Themes</h2>
+        <h2 id="themes-heading">{t.personalize.themes}</h2>
         <ThemeGallery themes={themes} activeId={theme.id} scheme={scheme} onPick={pickTheme} />
       </section>
 
@@ -70,7 +66,7 @@ export function PersonalizePage() {
       {isCustom ? (
         <section className={styles.section} aria-labelledby="custom-heading">
           <h2 id="custom-heading">
-            <span aria-hidden="true">🎨</span> Custom theme
+            <span aria-hidden="true">🎨</span> {t.personalize.customTheme}
           </h2>
           <CustomThemeEditor colors={customColors} scheme={scheme} onChange={editCustom} />
         </section>
@@ -78,13 +74,13 @@ export function PersonalizePage() {
         theme.palette && (
           <section className={styles.section} aria-labelledby="palette-heading">
             <h2 id="palette-heading">
-              <span aria-hidden="true">{theme.emoji}</span> {theme.name} palette
+              <span aria-hidden="true">{theme.emoji}</span> {t.personalize.palette(name)}
             </h2>
             <div className={styles.paletteSchemes}>
               {(['light', 'dark'] as const).map((s) => (
                 <div key={s} className={styles.paletteGroup} role="group" aria-labelledby={`palette-${s}`}>
                   <h3 id={`palette-${s}`}>
-                    {s === 'light' ? 'Light' : 'Dark'} {s === scheme && <span className={styles.badge}>showing</span>}
+                    {t.common[s]} {s === scheme && <span className={styles.badge}>{t.personalize.showing}</span>}
                   </h3>
                   <div className={styles.palette}>
                     {theme.palette![s].map((sw) => (
@@ -94,10 +90,10 @@ export function PersonalizePage() {
                         className={styles.paletteSwatch}
                         style={{ background: sw.value, color: readableInk(sw.value) }}
                         onClick={() => copy(sw.value)}
-                        aria-label={`${sw.name}, ${sw.value}. Copy`}
+                        aria-label={t.personalize.copySwatch(swatchName(sw.slug, sw.name, t), sw.value)}
                       >
-                        <span className={styles.paletteName}>{sw.name}</span>
-                        <code>{copied === sw.value ? 'copied' : sw.value}</code>
+                        <span className={styles.paletteName}>{swatchName(sw.slug, sw.name, t)}</span>
+                        <code translate="no">{copied === sw.value ? t.personalize.copiedLower : sw.value}</code>
                       </button>
                     ))}
                   </div>
@@ -109,10 +105,8 @@ export function PersonalizePage() {
       )}
 
       <section className={styles.section} aria-labelledby="preview-heading">
-        <h2 id="preview-heading">Preview</h2>
-        <p className="sr-only">
-          A visual sample of the {theme.name} theme in light and dark. Its controls are pictures only and can't be used.
-        </p>
+        <h2 id="preview-heading">{t.personalize.preview}</h2>
+        <p className="sr-only">{t.personalize.previewNote(name)}</p>
         {/* inert: the sample controls aren't real, so keep them out of the Tab order and the accessibility tree. */}
         <div className={styles.previews} inert>
           <Preview theme={theme} scheme="light" />
@@ -121,19 +115,19 @@ export function PersonalizePage() {
       </section>
 
       <section className={styles.section} aria-labelledby="export-heading">
-        <h2 id="export-heading">Export</h2>
+        <h2 id="export-heading">{t.common.export}</h2>
         <div className={styles.exportBox}>
           <button type="button" className={styles.copyButton} onClick={() => copy(css)}>
-            {copied === css ? 'Copied' : 'Copy CSS'}
+            {copied === css ? t.common.copied : t.personalize.copyCss}
           </button>
-          <pre tabIndex={0} aria-label={`${theme.name} theme as CSS`}>
+          <pre tabIndex={0} aria-label={t.personalize.cssLabel(name)} translate="no">
             {css}
           </pre>
         </div>
       </section>
 
       <p className="sr-only" role="status">
-        {copied ? (copied === css ? 'Theme CSS copied' : `Copied ${copied}`) : ''}
+        {copied ? (copied === css ? t.personalize.cssCopied : t.personalize.copiedValue(copied)) : ''}
       </p>
     </div>
   );

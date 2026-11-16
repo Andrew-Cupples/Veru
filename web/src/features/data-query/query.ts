@@ -1,6 +1,7 @@
 import type { MarketSession, PriceBar } from '../../api/client';
 import type { AnalyticsRow } from '../../analytics/rows';
 import { EVENT_KINDS } from '../../analytics/tracker';
+import { messages } from '../../i18n/I18nProvider';
 
 /*
  * A small, SQL-shaped query model over raw bars: SELECT columns, WHERE conditions (AND-ed),
@@ -33,15 +34,15 @@ export interface ColumnDef<K extends string = ColumnKey> {
 }
 
 export const COLUMNS: readonly ColumnDef[] = [
-  { key: 'time', label: 'time', kind: 'text', description: 'Bar start (exchange time, ISO 8601)' },
-  { key: 'date', label: 'date', kind: 'text', description: 'Trading day, YYYY-MM-DD' },
-  { key: 'clock', label: 'clock', kind: 'text', description: 'Time of day, HH:MM (exchange time)' },
-  { key: 'session', label: 'session', kind: 'session', description: 'pre, regular or post market' },
-  { key: 'open', label: 'open', kind: 'number', description: 'First trade price in the bar' },
-  { key: 'high', label: 'high', kind: 'number', description: 'Highest price in the bar' },
-  { key: 'low', label: 'low', kind: 'number', description: 'Lowest price in the bar' },
-  { key: 'close', label: 'close', kind: 'number', description: 'Last trade price in the bar' },
-  { key: 'volume', label: 'volume', kind: 'number', description: 'Shares (or units) traded in the bar' },
+  { key: 'time', get label() { return messages().fields.time.label; }, kind: 'text', get description() { return messages().columns.time; } },
+  { key: 'date', get label() { return messages().fields.date.label; }, kind: 'text', get description() { return messages().columns.date; } },
+  { key: 'clock', get label() { return messages().fields.clock.label; }, kind: 'text', get description() { return messages().columns.clock; } },
+  { key: 'session', get label() { return messages().fields.session.label; }, kind: 'session', get description() { return messages().columns.session; } },
+  { key: 'open', get label() { return messages().fields.open.label; }, kind: 'number', get description() { return messages().columns.open; } },
+  { key: 'high', get label() { return messages().fields.high.label; }, kind: 'number', get description() { return messages().columns.high; } },
+  { key: 'low', get label() { return messages().fields.low.label; }, kind: 'number', get description() { return messages().columns.low; } },
+  { key: 'close', get label() { return messages().fields.close.label; }, kind: 'number', get description() { return messages().columns.close; } },
+  { key: 'volume', get label() { return messages().fields.volume.label; }, kind: 'number', get description() { return messages().columns.volume; } },
 ];
 
 export const COLUMN_BY_KEY = Object.fromEntries(COLUMNS.map((c) => [c.key, c])) as Record<ColumnKey, ColumnDef>;
@@ -51,20 +52,20 @@ export type AnalyticsColumnKey = keyof AnalyticsRow;
 export type ConditionColumn = ColumnKey | AnalyticsColumnKey;
 
 export const ANALYTICS_COLUMNS: readonly ColumnDef<AnalyticsColumnKey>[] = [
-  { key: 'event', label: 'event', kind: 'text', description: 'Kind of event', choices: EVENT_KINDS },
-  { key: 'page', label: 'page', kind: 'text', description: 'Page the event happened on', choices: ['Start', 'Reports', 'Raw data', 'Compare', 'Analytics', 'Prompt ledger', 'Personalize'] },
-  { key: 'target', label: 'control', kind: 'text', description: 'The button, control or action used' },
-  { key: 'detail', label: 'detail', kind: 'text', description: 'Chart type, export format, status code...' },
-  { key: 'subject', label: 'subject', kind: 'text', description: 'Report, symbol, theme or state' },
-  { key: 'input', label: 'input', kind: 'text', description: 'mouse, keyboard, touch or pen', choices: ['mouse', 'keyboard', 'touch', 'pen'] },
-  { key: 'visit', label: 'visit', kind: 'text', description: 'Visit number, like #3' },
-  { key: 'date', label: 'date', kind: 'text', description: 'Day, YYYY-MM-DD (local time)' },
-  { key: 'clock', label: 'clock', kind: 'text', description: 'Time of day, HH:MM (local time)' },
-  { key: 'weekday', label: 'weekday', kind: 'text', description: 'Mon to Sun', choices: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-  { key: 'hour', label: 'hour', kind: 'number', description: 'Hour of day, 0 to 23' },
-  { key: 'duration', label: 'duration', kind: 'number', description: 'Seconds: time on page, slow frame' },
-  { key: 'value', label: 'value', kind: 'number', description: 'Scroll depth %, characters copied...' },
-  { key: 'seq', label: 'event #', kind: 'number', description: 'Order the event happened in' },
+  { key: 'event', get label() { return messages().fields.event.label; }, kind: 'text', get description() { return messages().columns.event; }, choices: EVENT_KINDS },
+  { key: 'page', get label() { return messages().fields.page.label; }, kind: 'text', get description() { return messages().columns.page; }, choices: ['Start', 'Reports', 'Raw data', 'Compare', 'Analytics', 'Prompt ledger', 'Personalize'] },
+  { key: 'target', get label() { return messages().fields.target.label; }, kind: 'text', get description() { return messages().columns.target; } },
+  { key: 'detail', get label() { return messages().fields.detail.label; }, kind: 'text', get description() { return messages().columns.detail; } },
+  { key: 'subject', get label() { return messages().fields.subject.label; }, kind: 'text', get description() { return messages().columns.subject; } },
+  { key: 'input', get label() { return messages().fields.input.label; }, kind: 'text', get description() { return messages().columns.input; }, choices: ['mouse', 'keyboard', 'touch', 'pen'] },
+  { key: 'visit', get label() { return messages().fields.visit.label; }, kind: 'text', get description() { return messages().columns.visit; } },
+  { key: 'date', get label() { return messages().fields.date.label; }, kind: 'text', get description() { return messages().columns.localDate; } },
+  { key: 'clock', get label() { return messages().fields.clock.label; }, kind: 'text', get description() { return messages().columns.localClock; } },
+  { key: 'weekday', get label() { return messages().fields.weekday.label; }, kind: 'text', get description() { return messages().columns.weekday; }, choices: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { key: 'hour', get label() { return messages().fields.hour.label; }, kind: 'number', get description() { return messages().columns.hour; } },
+  { key: 'duration', get label() { return messages().fields.duration.label; }, kind: 'number', get description() { return messages().columns.duration; } },
+  { key: 'value', get label() { return messages().fields.value.label; }, kind: 'number', get description() { return messages().columns.value; } },
+  { key: 'seq', get label() { return messages().fields.seq.label; }, kind: 'number', get description() { return messages().columns.seq; } },
 ];
 
 /** Every column a condition may name, for validating and applying conditions on either dataset. */

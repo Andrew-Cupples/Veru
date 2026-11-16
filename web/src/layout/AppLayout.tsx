@@ -2,17 +2,20 @@ import { useEffect, useRef, type MouseEvent } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useMotion } from '../motion/MotionProvider';
 import { usePageTracking } from '../analytics/autoTrack';
+import { pageLabel } from '../analytics/rows';
 import { HeaderSearch } from './HeaderSearch';
+import { LanguagePicker } from './LanguagePicker';
+import { useT } from '../i18n/I18nProvider';
 import styles from './AppLayout.module.css';
 
 const NAV = [
-  { to: '/', label: 'Start', end: true },
-  { to: '/reports', label: 'Reports', end: false },
-  { to: '/raw-data', label: 'Raw data', end: false },
-  { to: '/compare', label: 'Compare', end: false },
-  { to: '/analytics', label: 'Analytics', end: false },
-  { to: '/ledger', label: 'Prompt ledger', end: false },
-  { to: '/personalize', label: 'Personalize', end: false },
+  { to: '/', label: 'start', end: true },
+  { to: '/reports', label: 'reports', end: false },
+  { to: '/raw-data', label: 'rawData', end: false },
+  { to: '/compare', label: 'compare', end: false },
+  { to: '/analytics', label: 'analytics', end: false },
+  { to: '/ledger', label: 'ledger', end: false },
+  { to: '/personalize', label: 'personalize', end: false },
 ] as const;
 
 const navIndex = (pathname: string) =>
@@ -24,6 +27,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { enabled: motion, slide } = useMotion();
   const lastPath = useRef(pathname);
+  const t = useT();
   usePageTracking(pathname);
 
   // On navigation, move focus to the new page so keyboard and screen reader users start at its top
@@ -49,25 +53,27 @@ export function AppLayout() {
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main">
-        Skip to content
+        {t.nav.skip}
       </a>
       <header className={styles.header}>
         <span className={styles.brand}>
           <span className={styles.mark} aria-hidden="true" />
           <span className={styles.brandName}>Veru</span>
         </span>
-        <nav className={styles.nav} aria-label="Main">
+        <nav className={styles.nav} aria-label={t.nav.label}>
           {NAV.map((item, index) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
+              // Analytics keeps the English page name, so usage reads the same whatever the language.
+              data-track={pageLabel(item.to)}
               onClick={(e) => onNavClick(e, index, item.to)}
               className={({ isActive }) => [styles.link, isActive && styles.active].filter(Boolean).join(' ')}
             >
               {({ isActive }) => (
                 <>
-                  {item.label}
+                  {t.nav[item.label]}
                   {isActive && <span className={styles.indicator} aria-hidden="true" />}
                 </>
               )}
@@ -75,6 +81,7 @@ export function AppLayout() {
           ))}
         </nav>
         <HeaderSearch />
+        <LanguagePicker />
       </header>
       <main id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
         <Outlet />

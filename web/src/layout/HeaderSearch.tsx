@@ -4,6 +4,7 @@ import { usePriceSeries } from '../api/hooks';
 import { track } from '../analytics/tracker';
 import { SymbolCombobox } from '../features/data-query/SymbolCombobox';
 import { loadFavourites, loadLastSource, loadRecentSymbols, loadSymbolNames } from '../features/data-query/memory';
+import { formatNumber, useT } from '../i18n/I18nProvider';
 import styles from './AppLayout.module.css';
 
 /** Pages that load a stock from `?symbol=`: a pick here swaps the stock in place, keeping the rest of the view. */
@@ -22,6 +23,7 @@ export function HeaderSearch() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
+  const t = useT();
 
   // Suggestions read the same memory the data pages write; refresh it whenever the page or stock changes.
   const urlSymbol = params.get('symbol') ?? '';
@@ -87,8 +89,8 @@ export function HeaderSearch() {
           favourites={memory.favourites}
           recent={memory.recent}
           names={memory.names}
-          placeholder="Search stocks"
-          ariaLabel="Search stocks"
+          placeholder={t.search.placeholder}
+          ariaLabel={t.search.placeholder}
           keyShortcut="/"
           align="end"
         />
@@ -107,17 +109,17 @@ function readMemory() {
 
 /** The stock in view and how it moved since the previous close. Links to its chart. */
 function PriceChip({ symbol }: { symbol: string }) {
+  const t = useT();
   const daily = usePriceSeries({ symbol, interval: '1d', range: '5d', extendedHours: false });
   const bars = daily.data?.bars ?? [];
   const last = bars.at(-1)?.close;
   const prev = bars.at(-2)?.close;
   const change = last != null && prev ? ((last - prev) / prev) * 100 : null;
   const dir = change == null ? 'flat' : change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
-  const pct = change == null ? '' : `${Math.abs(change).toFixed(1)}%`;
-  const spoken = change == null ? symbol : `${symbol} ${dir === 'flat' ? 'unchanged' : `${dir} ${pct}`} since the last close`;
+  const pct = change == null ? '' : formatNumber(Math.abs(change) / 100, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   return (
-    <Link to={`/reports?symbol=${encodeURIComponent(symbol)}`} className={styles.price} data-dir={dir} aria-label={`${spoken}. Open in Reports.`}>
+    <Link to={`/reports?symbol=${encodeURIComponent(symbol)}`} className={styles.price} data-dir={dir} aria-label={t.search.price(symbol, change == null ? null : dir, pct)} translate="no">
       <span className={styles.priceSymbol}>{symbol}</span>
       {change != null && (
         <span className={styles.priceChange} aria-hidden="true">

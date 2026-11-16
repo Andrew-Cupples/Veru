@@ -2,6 +2,7 @@ import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { useTags } from '../../api/hooks';
 import { normalizeTag } from '../../model';
 import { Icon } from '../Icon';
+import { useLedgerI18n } from '../../i18n';
 import styles from './TagInput.module.css';
 
 interface TagInputProps {
@@ -12,6 +13,7 @@ interface TagInputProps {
 
 /** Chips plus an autocompleting input. Enter, comma or space adds a tag; Backspace on an empty input removes the last. */
 export function TagInput({ id, tags, onChange }: TagInputProps) {
+  const l = useLedgerI18n().t.tags;
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -71,7 +73,7 @@ export function TagInput({ id, tags, onChange }: TagInputProps) {
       {tags.map((tag) => (
         <span key={tag} className={styles.chip}>
           #{tag}
-          <button type="button" onClick={() => remove(tag)} aria-label={`Remove tag ${tag}`}>
+          <button type="button" onClick={() => remove(tag)} aria-label={l.remove(tag)}>
             <Icon name="x" size={11} strokeWidth={2.4} />
           </button>
         </span>
@@ -81,7 +83,7 @@ export function TagInput({ id, tags, onChange }: TagInputProps) {
           id={id}
           className={styles.input}
           value={text}
-          placeholder={tags.length === 0 ? 'Add tags…' : ''}
+          placeholder={tags.length === 0 ? l.add : ''}
           onChange={(e) => {
             setText(e.target.value);
             setOpen(true);

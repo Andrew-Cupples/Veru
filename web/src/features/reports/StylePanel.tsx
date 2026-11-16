@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { FIELD_BY_KEY } from './fields';
-import { PALETTE_LABELS, paletteColors, type ThemeColors } from './figure';
+import { paletteColors, type ThemeColors } from './figure';
 import {
   CHART_BY_TYPE,
   COLORSCALES,
@@ -15,6 +15,7 @@ import {
 } from './model';
 import { ColorField, RangeField, Segmented, SelectField, TextField, Toggle } from './controls';
 import { radioGroup } from '../../a11y/radioGroup';
+import { formatNumber, useT } from '../../i18n/I18nProvider';
 import styles from './Reports.module.css';
 import dq from '../data-query/DataQuery.module.css';
 
@@ -64,9 +65,10 @@ function Section({ title, children, open = false }: { title: string; children: R
   );
 }
 
-const percent = (v: number) => `${Math.round(v * 100)}%`;
+const percent = (v: number) => formatNumber(v, { style: 'percent' });
 
 export function StylePanel({ report, onChange, colors }: Props) {
+  const t = useT();
   const st = report.style;
   const rel = relevance(report);
   const set = <K extends keyof ReportStyle>(key: K, value: ReportStyle[K]) =>
@@ -74,208 +76,208 @@ export function StylePanel({ report, onChange, colors }: Props) {
 
   return (
     <div className={styles.panelBody}>
-      <Section title="Titles" open>
-        <Toggle label="Show title" checked={st.showTitle} onChange={(v) => set('showTitle', v)} />
+      <Section title={t.style.titles} open>
+        <Toggle label={t.style.showTitle} checked={st.showTitle} onChange={(v) => set('showTitle', v)} />
         {st.showTitle && (
           <>
-            <TextField label="Title" value={st.title} placeholder={report.name} onChange={(v) => set('title', v)} />
-            <TextField label="Subtitle" value={st.subtitle} placeholder="Optional" onChange={(v) => set('subtitle', v)} />
+            <TextField label={t.style.title} value={st.title} placeholder={report.name} onChange={(v) => set('title', v)} />
+            <TextField label={t.style.subtitle} value={st.subtitle} placeholder={t.style.optional} onChange={(v) => set('subtitle', v)} />
           </>
         )}
       </Section>
 
-      <Section title="Colours" open>
+      <Section title={t.style.colours} open>
         {rel.palette && colors && <PalettePicker value={st.palette} colors={colors} onChange={(v) => set('palette', v)} />}
         {rel.scale && (
           <>
             <SelectField<Colorscale>
-              label="Colour scale"
+              label={t.style.colourScale}
               value={st.colorscale}
               options={COLORSCALES.map((c) => ({ value: c, label: c }))}
               onChange={(v) => set('colorscale', v)}
             />
-            <Toggle label="Reverse scale" checked={st.reverseScale} onChange={(v) => set('reverseScale', v)} />
-            <Toggle label="Show colour key" checked={st.showScale} onChange={(v) => set('showScale', v)} />
+            <Toggle label={t.style.reverseScale} checked={st.reverseScale} onChange={(v) => set('reverseScale', v)} />
+            <Toggle label={t.style.showColourKey} checked={st.showScale} onChange={(v) => set('showScale', v)} />
           </>
         )}
         {rel.candles && colors && (
           <>
-            <ColorField label="Up colour" value={st.upColor} auto={colors.up} onChange={(v) => set('upColor', v)} />
-            <ColorField label="Down colour" value={st.downColor} auto={colors.down} onChange={(v) => set('downColor', v)} />
+            <ColorField label={t.style.upColour} value={st.upColor} auto={colors.up} onChange={(v) => set('upColor', v)} />
+            <ColorField label={t.style.downColour} value={st.downColor} auto={colors.down} onChange={(v) => set('downColor', v)} />
           </>
         )}
         <Segmented
-          label="Background"
+          label={t.style.background}
           value={st.background}
           options={[
-            { value: 'card', label: 'Card' },
-            { value: 'transparent', label: 'None' },
-            { value: 'custom', label: 'Custom' },
+            { value: 'card', label: t.style.card },
+            { value: 'transparent', label: t.style.none },
+            { value: 'custom', label: t.style.custom },
           ]}
           onChange={(v) => set('background', v)}
         />
         {st.background === 'custom' && (
-          <ColorField label="Background colour" value={st.backgroundColor} auto="#ffffff" onChange={(v) => set('backgroundColor', v ?? '#ffffff')} />
+          <ColorField label={t.style.backgroundColour} value={st.backgroundColor} auto="#ffffff" onChange={(v) => set('backgroundColor', v ?? '#ffffff')} />
         )}
       </Section>
 
-      <Section title="Marks">
-        {rel.lines && <RangeField label="Line width" value={st.lineWidth} min={0.5} max={8} step={0.5} onChange={(v) => set('lineWidth', v)} format={(v) => `${v}px`} />}
+      <Section title={t.style.marks}>
+        {rel.lines && <RangeField label={t.style.lineWidth} value={st.lineWidth} min={0.5} max={8} step={0.5} onChange={(v) => set('lineWidth', v)} format={(v) => `${v}px`} />}
         {rel.lines && !rel.is3d && !rel.candles && (
           <Segmented
-            label="Line shape"
+            label={t.style.lineShape}
             value={st.lineShape}
             options={[
-              { value: 'linear', label: 'Straight' },
-              { value: 'spline', label: 'Smooth' },
-              { value: 'hv', label: 'Step' },
+              { value: 'linear', label: t.style.straight },
+              { value: 'spline', label: t.style.smooth },
+              { value: 'hv', label: t.style.step },
             ]}
             onChange={(v) => set('lineShape', v)}
           />
         )}
-        {rel.markers && <Toggle label="Show points on lines" checked={st.markers} onChange={(v) => set('markers', v)} />}
-        {rel.markerSize && <RangeField label="Point size" value={st.markerSize} min={2} max={20} onChange={(v) => set('markerSize', v)} format={(v) => `${v}px`} />}
+        {rel.markers && <Toggle label={t.style.showPointsOnLines} checked={st.markers} onChange={(v) => set('markers', v)} />}
+        {rel.markerSize && <RangeField label={t.style.pointSize} value={st.markerSize} min={2} max={20} onChange={(v) => set('markerSize', v)} format={(v) => `${v}px`} />}
         {rel.symbol && (
           <SelectField
-            label="Point shape"
+            label={t.style.pointShape}
             value={st.markerSymbol}
             options={[
-              { value: 'circle', label: 'Circle' },
-              { value: 'square', label: 'Square' },
-              { value: 'diamond', label: 'Diamond' },
-              { value: 'triangle-up', label: 'Triangle' },
-              { value: 'cross', label: 'Cross' },
+              { value: 'circle', label: t.style.circle },
+              { value: 'square', label: t.style.square },
+              { value: 'diamond', label: t.style.diamond },
+              { value: 'triangle-up', label: t.style.triangle },
+              { value: 'cross', label: t.style.cross },
             ]}
             onChange={(v) => set('markerSymbol', v)}
           />
         )}
-        <RangeField label="Opacity" value={st.opacity} min={0.1} max={1} step={0.05} onChange={(v) => set('opacity', v)} format={percent} />
+        <RangeField label={t.style.opacity} value={st.opacity} min={0.1} max={1} step={0.05} onChange={(v) => set('opacity', v)} format={percent} />
         {rel.barMode && (
           <Segmented
-            label="Several series"
+            label={t.style.severalSeries}
             value={st.barMode}
             options={[
-              { value: 'group', label: 'Side by side' },
-              { value: 'stack', label: 'Stacked' },
-              { value: 'overlay', label: 'Overlaid' },
+              { value: 'group', label: t.style.sideBySide },
+              { value: 'stack', label: t.style.stacked },
+              { value: 'overlay', label: t.style.overlaid },
             ]}
             onChange={(v) => set('barMode', v)}
           />
         )}
         {rel.bins && (
-          <RangeField label="Bins" value={st.bins} min={0} max={120} step={5} onChange={(v) => set('bins', v)} format={(v) => (v === 0 ? 'auto' : String(v))} />
+          <RangeField label={t.style.bins} value={st.bins} min={0} max={120} step={5} onChange={(v) => set('bins', v)} format={(v) => (v === 0 ? t.reports.auto : formatNumber(v))} />
         )}
-        {rel.candles && <Toggle label="Volume underneath" checked={st.volumeOverlay} onChange={(v) => set('volumeOverlay', v)} />}
+        {rel.candles && <Toggle label={t.style.volumeUnderneath} checked={st.volumeOverlay} onChange={(v) => set('volumeOverlay', v)} />}
       </Section>
 
-      <Section title="Axes">
-        <TextField label={rel.is3d ? 'X axis title' : 'X axis title'} value={st.xTitle} placeholder="Field name" onChange={(v) => set('xTitle', v)} />
-        {rel.yAxis && <TextField label="Y axis title" value={st.yTitle} placeholder="Field name" onChange={(v) => set('yTitle', v)} />}
-        {rel.y2 && <TextField label="Right axis title" value={st.y2Title} placeholder="Field name" onChange={(v) => set('y2Title', v)} />}
-        {rel.zTitle && <TextField label={rel.is3d ? 'Z axis title' : 'Colour key title'} value={st.zTitle} placeholder="Field name" onChange={(v) => set('zTitle', v)} />}
+      <Section title={t.style.axes}>
+        <TextField label={rel.is3d ? t.style.xAxisTitle : t.style.xAxisTitle} value={st.xTitle} placeholder={t.style.fieldName} onChange={(v) => set('xTitle', v)} />
+        {rel.yAxis && <TextField label={t.style.yAxisTitle} value={st.yTitle} placeholder={t.style.fieldName} onChange={(v) => set('yTitle', v)} />}
+        {rel.y2 && <TextField label={t.style.rightAxisTitle} value={st.y2Title} placeholder={t.style.fieldName} onChange={(v) => set('y2Title', v)} />}
+        {rel.zTitle && <TextField label={rel.is3d ? t.style.zAxisTitle : t.style.colourKeyTitle} value={st.zTitle} placeholder={t.style.fieldName} onChange={(v) => set('zTitle', v)} />}
         {!rel.is3d && rel.yAxis && (
           <SelectField<NumberFormat>
-            label="Y number format"
+            label={t.style.yNumberFormat}
             value={st.yFormat}
             options={[
-              { value: 'auto', label: 'Automatic' },
-              { value: 'price', label: '1,234.56' },
-              { value: 'compact', label: '1.23M' },
-              { value: 'integer', label: '1,234' },
-              { value: 'percent', label: '12.3%' },
+              { value: 'auto', label: t.style.automatic },
+              { value: 'price', label: formatNumber(1234.56, { minimumFractionDigits: 2 }) },
+              { value: 'compact', label: formatNumber(1230000, { notation: 'compact', maximumFractionDigits: 2 }) },
+              { value: 'integer', label: formatNumber(1234) },
+              { value: 'percent', label: formatNumber(0.123, { style: 'percent', maximumFractionDigits: 1 }) },
             ]}
             onChange={(v) => set('yFormat', v)}
           />
         )}
-        <Toggle label="Gridlines" checked={st.showGrid} onChange={(v) => set('showGrid', v)} />
-        {!rel.is3d && rel.yAxis && <Toggle label="Log scale (Y)" checked={st.yLog} onChange={(v) => set('yLog', v)} />}
+        <Toggle label={t.style.gridlines} checked={st.showGrid} onChange={(v) => set('showGrid', v)} />
+        {!rel.is3d && rel.yAxis && <Toggle label={t.style.logScaleY} checked={st.yLog} onChange={(v) => set('yLog', v)} />}
         {rel.categoryX && (
           <Segmented
-            label="Order X by"
+            label={t.style.orderXBy}
             value={st.xOrder}
             options={[
-              { value: 'natural', label: 'Name' },
-              { value: 'value', label: 'Largest first' },
+              { value: 'natural', label: t.style.name },
+              { value: 'value', label: t.style.largestFirst },
             ]}
             onChange={(v) => set('xOrder', v)}
           />
         )}
         {rel.timeX && (
           <Toggle
-            label={report.dataset === 'analytics' ? 'Skip quiet stretches' : 'Skip nights and weekends'}
+            label={report.dataset === 'analytics' ? t.style.skipQuietStretches : t.style.skipNightsAndWeekends}
             checked={st.skipGaps}
             onChange={(v) => set('skipGaps', v)}
           />
         )}
-        {rel.timeX && <Toggle label="Range slider" checked={st.rangeSlider} onChange={(v) => set('rangeSlider', v)} />}
+        {rel.timeX && <Toggle label={t.style.rangeSlider} checked={st.rangeSlider} onChange={(v) => set('rangeSlider', v)} />}
       </Section>
 
-      <Section title="Legend & hover">
+      <Section title={t.style.legendHover}>
         {rel.legend && (
           <SelectField<LegendPosition>
-            label="Legend"
+            label={t.style.legend}
             value={st.legend}
             options={[
-              { value: 'auto', label: 'Automatic' },
-              { value: 'top', label: 'Top' },
-              { value: 'bottom', label: 'Bottom' },
-              { value: 'right', label: 'Right' },
-              { value: 'hidden', label: 'Hidden' },
+              { value: 'auto', label: t.style.automatic },
+              { value: 'top', label: t.style.top },
+              { value: 'bottom', label: t.style.bottom },
+              { value: 'right', label: t.style.right },
+              { value: 'hidden', label: t.style.hidden },
             ]}
             onChange={(v) => set('legend', v)}
           />
         )}
         <Segmented
-          label="Hover shows"
+          label={t.style.hoverShows}
           value={st.hover}
           options={[
-            { value: 'x', label: rel.is3d ? 'Point' : 'All at X' },
-            { value: 'closest', label: 'Nearest' },
-            { value: 'none', label: 'Nothing' },
+            { value: 'x', label: rel.is3d ? t.style.point : t.style.allAtX },
+            { value: 'closest', label: t.style.nearest },
+            { value: 'none', label: t.style.nothing },
           ]}
           onChange={(v) => set('hover', v)}
         />
-        <Toggle label="Crosshair lines" checked={st.spikes} onChange={(v) => set('spikes', v)} />
+        <Toggle label={t.style.crosshairLines} checked={st.spikes} onChange={(v) => set('spikes', v)} />
       </Section>
 
       {rel.is3d && (
-        <Section title="3D view" open>
+        <Section title={t.style.n3dView} open>
           <Segmented
-            label="Camera"
+            label={t.style.camera}
             value={st.camera}
             options={[
-              { value: 'iso', label: 'Angled' },
-              { value: 'front', label: 'Front' },
-              { value: 'side', label: 'Side' },
-              { value: 'top', label: 'Top' },
+              { value: 'iso', label: t.style.angled },
+              { value: 'front', label: t.style.front },
+              { value: 'side', label: t.style.side },
+              { value: 'top', label: t.style.top },
             ]}
             onChange={(v) => set('camera', v)}
           />
           <Segmented
-            label="Proportions"
+            label={t.style.proportions}
             value={st.aspect}
             options={[
-              { value: 'cube', label: 'Cube' },
-              { value: 'data', label: 'True to data' },
+              { value: 'cube', label: t.style.cube },
+              { value: 'data', label: t.style.trueToData },
             ]}
             onChange={(v) => set('aspect', v)}
           />
           <Segmented
-            label="Projection"
+            label={t.style.projection}
             value={st.projection}
             options={[
-              { value: 'perspective', label: 'Perspective' },
-              { value: 'orthographic', label: 'Flat' },
+              { value: 'perspective', label: t.style.perspective },
+              { value: 'orthographic', label: t.style.flat },
             ]}
             onChange={(v) => set('projection', v)}
           />
-          {rel.contours && <Toggle label="Contour lines" checked={st.contours} onChange={(v) => set('contours', v)} />}
+          {rel.contours && <Toggle label={t.style.contourLines} checked={st.contours} onChange={(v) => set('contours', v)} />}
         </Section>
       )}
 
-      <Section title="Size & text">
-        <RangeField label="Height" value={st.height} min={280} max={900} step={20} onChange={(v) => set('height', v)} format={(v) => `${v}px`} />
-        <RangeField label="Text size" value={st.fontSize} min={10} max={18} onChange={(v) => set('fontSize', v)} format={(v) => `${v}px`} />
+      <Section title={t.style.sizeText}>
+        <RangeField label={t.style.height} value={st.height} min={280} max={900} step={20} onChange={(v) => set('height', v)} format={(v) => `${v}px`} />
+        <RangeField label={t.style.textSize} value={st.fontSize} min={10} max={18} onChange={(v) => set('fontSize', v)} format={(v) => `${v}px`} />
       </Section>
 
       <button
@@ -283,7 +285,7 @@ export function StylePanel({ report, onChange, colors }: Props) {
         className={dq.secondaryButton}
         onClick={() => onChange((r) => ({ ...r, style: { ...DEFAULT_STYLE } }))}
       >
-        Reset all styling
+        {t.style.resetAll}
       </button>
     </div>
   );
@@ -291,11 +293,12 @@ export function StylePanel({ report, onChange, colors }: Props) {
 
 /** Palettes as swatch rows: what you see is what the series get. */
 function PalettePicker({ value, colors, onChange }: { value: PaletteId; colors: ThemeColors; onChange: (v: PaletteId) => void }) {
+  const t = useT();
   const { onKeyDown, radioProps } = radioGroup(PALETTES, value, onChange);
   return (
     <div className={styles.control}>
       <span id="palette-label" className={dq.fieldLabel}>
-        Palette
+        {t.style.palette}
       </span>
       <div role="radiogroup" aria-labelledby="palette-label" className={styles.paletteList} onKeyDown={onKeyDown}>
         {PALETTES.map((p) => (
@@ -305,7 +308,7 @@ function PalettePicker({ value, colors, onChange }: { value: PaletteId; colors: 
                 <span key={i} style={{ background: c }} />
               ))}
             </span>
-            {PALETTE_LABELS[p]}
+            {t.style.palettes[p]}
           </button>
         ))}
       </div>
