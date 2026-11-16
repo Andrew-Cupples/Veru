@@ -68,7 +68,7 @@ export function pageLabel(pathname: string): string {
   const first = pathname.split('/')[1] ?? '';
   const known: Record<string, string> = {
     reports: 'Reports',
-    'raw-data': 'Raw data',
+    'raw-data': 'Export',
     compare: 'Compare',
     analytics: 'Analytics',
     ledger: 'Prompt ledger',

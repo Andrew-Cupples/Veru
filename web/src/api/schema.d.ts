@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/market/{symbol}/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Intraday bars grouped by day: average low, average high (4 decimal places) and total volume per day (defaults: 15-minute bars over the last month) */
+        get: operations["GetDailySummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/suggestions": {
         parameters: {
             query?: never;
@@ -77,6 +94,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DailySummaryDto: {
+            day: string;
+            /** Format: double */
+            lowAverage: number;
+            /** Format: double */
+            highAverage: number;
+            /** Format: int64 */
+            volume: number;
+        };
         HttpValidationProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -273,6 +299,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PriceSeriesResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDailySummary: {
+        parameters: {
+            query?: {
+                interval?: string;
+                range?: string;
+                extendedHours?: boolean;
+            };
+            header?: never;
+            path: {
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailySummaryDto"][];
                 };
             };
             /** @description Bad Request */

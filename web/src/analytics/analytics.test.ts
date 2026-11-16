@@ -18,7 +18,7 @@ const event = (n: number, patch: Partial<AnalyticsEvent> = {}): AnalyticsEvent =
   n,
   t: new Date(2026, 10, 13, 9 + (n % 3), n % 60, 5).getTime(),
   kind: 'click',
-  page: n % 2 ? 'Reports' : 'Raw data',
+  page: n % 2 ? 'Reports' : 'Export',
   target: n % 3 ? 'PNG' : 'Run',
   detail: 'button',
   subject: '',
@@ -107,7 +107,7 @@ describe('rows', () => {
 
   it('labels pages by their nav name', () => {
     expect(pageLabel('/')).toBe('Start');
-    expect(pageLabel('/raw-data')).toBe('Raw data');
+    expect(pageLabel('/raw-data')).toBe('Export');
     expect(pageLabel('/reports')).toBe('Reports');
     expect(pageLabel('/analytics')).toBe('Analytics');
   });

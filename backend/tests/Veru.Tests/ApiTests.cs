@@ -35,6 +35,38 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task Daily_returns_the_assessment_format_with_four_decimal_places()
+    {
+        var at = (int hour) => new DateTimeOffset(2026, 11, 13, hour, 0, 0, TimeSpan.FromHours(-5));
+        var provider = new FakeProvider(_ => new PriceSeries(Instrument("TSLA"), "15m",
+        [
+            new PriceBar(at(9), MarketSession.Regular, 41m, 50m, 40m, 41m, 49_000_000),
+            new PriceBar(at(10), MarketSession.Regular, 41m, 49.5068m, 40.5916m, 41m, 73_348),
+        ]));
+
+        var body = await ClientWith(provider).GetStringAsync("/api/market/tsla/daily");
+
+        Assert.Equal("""[{"day":"2026-11-13","lowAverage":40.2958,"highAverage":49.7534,"volume":49073348}]""", body);
+    }
+
+    [Fact]
+    public async Task Daily_keeps_four_decimal_places_on_round_numbers()
+    {
+        var bar = new PriceBar(new DateTimeOffset(2026, 11, 13, 9, 30, 0, TimeSpan.FromHours(-5)), MarketSession.Regular, 1m, 2m, 1m, 1m, 1);
+        var body = await ClientWith(new FakeProvider(_ => new PriceSeries(Instrument("TSLA"), "15m", [bar]))).GetStringAsync("/api/market/tsla/daily");
+
+        Assert.Contains("\"lowAverage\":1.0000,\"highAverage\":2.0000", body);
+    }
+
+    [Fact]
+    public async Task Daily_unknown_symbol_is_not_found()
+    {
+        var response = await ClientWith(new FakeProvider(_ => throw new SymbolNotFoundException("NOPE"))).GetAsync("/api/market/NOPE/daily");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Passes_validated_parameters_to_the_provider()
     {
         ChartQuery? seen = null;

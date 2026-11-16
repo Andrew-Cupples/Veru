@@ -61,8 +61,19 @@ public sealed record IntervalOptionDto(string Code, string Label, bool Intraday,
 
 public sealed record RangeOptionDto(string Code, string Label, int? Days);
 
+/// <summary>One day of intraday bars: averages to 4 decimal places, volume summed.</summary>
+public sealed record DailySummaryDto(
+    /// <summary>yyyy-MM-dd in the exchange's local time.</summary>
+    string Day,
+    decimal LowAverage,
+    decimal HighAverage,
+    long Volume);
+
 internal static class ContractMapping
 {
+    public static DailySummaryDto ToDto(this DailySummary d) =>
+        new(d.Day.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), d.LowAverage, d.HighAverage, d.Volume);
+
     public static PriceSeriesResponse ToResponse(this PriceSeries series, ChartQuery query)
     {
         var i = series.Instrument;

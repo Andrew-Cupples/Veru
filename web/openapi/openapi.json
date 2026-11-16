@@ -136,6 +136,71 @@
         }
       }
     },
+    "/api/market/{symbol}/daily": {
+      "get": {
+        "tags": [
+          "Market data"
+        ],
+        "summary": "Intraday bars grouped by day: average low, average high (4 decimal places) and total volume per day (defaults: 15-minute bars over the last month)",
+        "operationId": "GetDailySummary",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "extendedHours",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailySummaryDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/suggestions": {
       "post": {
         "tags": [
@@ -212,6 +277,32 @@
   },
   "components": {
     "schemas": {
+      "DailySummaryDto": {
+        "required": [
+          "day",
+          "lowAverage",
+          "highAverage",
+          "volume"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string"
+          },
+          "lowAverage": {
+            "type": "number",
+            "format": "double"
+          },
+          "highAverage": {
+            "type": "number",
+            "format": "double"
+          },
+          "volume": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
