@@ -8,7 +8,7 @@ import { useDocumentTitle } from '../../a11y/useDocumentTitle';
 import { ThemeGallery } from './ThemeGallery';
 import { CustomThemeEditor } from './CustomThemeEditor';
 import { Preview } from './Preview';
-import { useCopy } from './useCopy';
+import { useCopy } from '../../lib/useCopy';
 import { MotionSettings } from './MotionSettings';
 import { useMotion } from '../../motion/MotionProvider';
 import { useT } from '../../i18n/I18nProvider';

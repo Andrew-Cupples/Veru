@@ -54,7 +54,7 @@ export type ConditionColumn = ColumnKey | AnalyticsColumnKey;
 
 export const ANALYTICS_COLUMNS: readonly ColumnDef<AnalyticsColumnKey>[] = [
   { key: 'event', get label() { return messages().fields.event.label; }, kind: 'text', get description() { return messages().columns.event; }, choices: EVENT_KINDS },
-  { key: 'page', get label() { return messages().fields.page.label; }, kind: 'text', get description() { return messages().columns.page; }, choices: ['Start', 'Reports', 'Raw data', 'Compare', 'Analytics', 'Prompt ledger', 'Personalize'] },
+  { key: 'page', get label() { return messages().fields.page.label; }, kind: 'text', get description() { return messages().columns.page; }, choices: ['Start', 'Reports', 'Export', 'Compare', 'Analytics', 'Prompt ledger', 'Personalize'] },
   { key: 'target', get label() { return messages().fields.target.label; }, kind: 'text', get description() { return messages().columns.target; } },
   { key: 'detail', get label() { return messages().fields.detail.label; }, kind: 'text', get description() { return messages().columns.detail; } },
   { key: 'subject', get label() { return messages().fields.subject.label; }, kind: 'text', get description() { return messages().columns.subject; } },
@@ -205,6 +205,11 @@ export function fromSql(source: Source): string {
 export function whereSql(where: string, columns: readonly ColumnDef<string>[] = COLUMNS): string[] {
   const parsed = parseExpression(where, columns);
   return parsed.ok && parsed.expr ? [`WHERE ${expressionSql(parsed.expr)}`] : [];
+}
+
+/** The selected columns of each row as a JSON array of objects, numbers kept as numbers. */
+export function toJson(rows: readonly Row[], columns: readonly ColumnKey[]): string {
+  return JSON.stringify(rows.map((r) => Object.fromEntries(columns.map((c) => [c, r[c] ?? null]))), null, 2);
 }
 
 export function toCsv(rows: readonly Row[], columns: readonly ColumnKey[]): string {

@@ -57,6 +57,21 @@ export function usePriceSeries(request: SeriesRequest | null) {
   });
 }
 
+/** Bars grouped by day (average low/high to 4 decimal places, total volume). Disabled until a symbol is chosen. */
+export function useDailySummary(request: SeriesRequest | null) {
+  const { symbol, interval, range, extendedHours } = request ?? NO_REQUEST;
+  return useQuery({
+    queryKey: ['market', 'daily', { symbol, interval, range, extendedHours }],
+    queryFn: async ({ signal }) =>
+      unwrap(await marketApi.GET('/api/market/{symbol}/daily', { params: { path: { symbol }, query: { interval, range, extendedHours } }, signal })),
+    enabled: request !== null,
+    staleTime: SERIES_STALE,
+    gcTime: SERIES_KEEP,
+    placeholderData: keepPreviousData,
+    retry: (count: number, error: Error) => !(error instanceof ApiError && error.status >= 400 && error.status < 500) && count < 1,
+  });
+}
+
 /** Bars for several symbols at once (multi-symbol compare). Results are in the same order as the requests. */
 export function usePriceSeriesMany(requests: readonly SeriesRequest[]) {
   return useQueries({ queries: requests.map((r) => seriesQuery(r)), combine: combineSeries });

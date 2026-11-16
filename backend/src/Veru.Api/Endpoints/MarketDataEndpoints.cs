@@ -21,6 +21,10 @@ public static class MarketDataEndpoints
             .WithName("GetPriceBars")
             .WithSummary("Raw OHLCV bars for a symbol (defaults: 15-minute bars over the last month)");
 
+        market.MapGet("/{symbol}/daily", GetDaily)
+            .WithName("GetDailySummary")
+            .WithSummary("Intraday bars grouped by day: average low, average high (4 decimal places) and total volume per day (defaults: 15-minute bars over the last month)");
+
         return api;
     }
 
@@ -83,10 +87,37 @@ public static class MarketDataEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
+        return await Fetch(provider, query, series => series.ToResponse(query), cancellationToken);
+    }
+
+    private static async Task<Results<Ok<List<DailySummaryDto>>, ValidationProblem, ProblemHttpResult>> GetDaily(
+        string symbol,
+        string? interval,
+        string? range,
+        bool? extendedHours,
+        IMarketDataProvider provider,
+        CancellationToken cancellationToken)
+    {
+        var query = ChartQuery.TryCreate(symbol, interval, range, extendedHours ?? false, out var errors);
+        if (query is null)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        return await Fetch(provider, query, series => DailySummaries.ByDay(series.Bars).Select(d => d.ToDto()).ToList(), cancellationToken);
+    }
+
+    /// <summary>Fetches the series and shapes it, turning provider failures into problem details.</summary>
+    private static async Task<Results<Ok<T>, ValidationProblem, ProblemHttpResult>> Fetch<T>(
+        IMarketDataProvider provider,
+        ChartQuery query,
+        Func<PriceSeries, T> shape,
+        CancellationToken cancellationToken)
+    {
         try
         {
             var series = await provider.GetPriceSeriesAsync(query, cancellationToken);
-            return TypedResults.Ok(series.ToResponse(query));
+            return TypedResults.Ok(shape(series));
         }
         catch (SymbolNotFoundException ex)
         {

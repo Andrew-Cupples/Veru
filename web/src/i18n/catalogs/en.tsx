@@ -55,7 +55,7 @@ export const en = {
     skip: 'Skip to content',
     start: 'Start',
     reports: 'Reports',
-    rawData: 'Raw data',
+    rawData: 'Export',
     compare: 'Compare',
     analytics: 'Analytics',
     ledger: 'Prompt ledger',
@@ -85,7 +85,7 @@ export const en = {
     desc: {
       reports: 'Chart any stock from templates or your own reports, in 2D or 3D.',
       compare: 'Line up stocks and reports side by side, with linked charts.',
-      rawData: 'Filter and sort the raw price bars, then download them as CSV.',
+      rawData: 'Filter and sort the raw price bars, then download them as CSV or JSON.',
       analytics: 'See how the app is used, charted from this browser only.',
       personalize: 'Pick or build a theme, and set motion to suit you.',
       ledger: 'Browse the prompts this app was built from.',
@@ -284,7 +284,7 @@ export const en = {
     feature: 'Feature',
     choose: 'Choose…',
     features: {
-      'raw-data': 'Raw data',
+      'raw-data': 'Export',
       reports: 'Reports',
       analytics: 'Analytics',
       personalize: 'Personalize',
@@ -446,7 +446,7 @@ export const en = {
   },
 
   raw: {
-    title: 'Raw data',
+    title: 'Export',
     query: 'Query',
     columns: 'Columns',
     orderBy: 'Order by column',
@@ -460,6 +460,7 @@ export const en = {
     ofBars: (count: number) => ` of ${n(count)} bars`,
     showingFirst: (count: number) => ` · showing the first ${n(count)}`,
     downloadCsv: 'Download CSV',
+    downloadJson: 'Download JSON',
     noColumns: 'No columns selected.',
     selectAllColumns: 'Select all columns',
     noMatches: 'No bars match these conditions.',
@@ -467,6 +468,21 @@ export const en = {
     caption: (symbol: string, interval: string, range: string) => `${symbol} ${interval} bars over ${range}`,
     scrollable: (caption: string) => `${caption} (scrollable)`,
     sortedBy: (column: string, asc: boolean) => `, sorted by ${column} ${asc ? 'ascending' : 'descending'}`,
+    daily: {
+      title: 'Daily summary',
+      intro: 'The bars grouped by day: average low and high to 4 decimal places, and total volume. The JSON is exactly what the API returns.',
+      day: 'Day',
+      lowAverage: 'Low average',
+      highAverage: 'High average',
+      volume: 'Volume',
+      copy: 'Copy daily JSON',
+      copied: 'Copied',
+      download: 'Download daily JSON',
+      loading: 'Loading the daily summary…',
+      empty: 'No bars to summarise.',
+      caption: (symbol: string, days: number) => `${symbol} daily summary, ${n(days)} ${s(days, 'day', 'days')}`,
+      jsonLabel: (file: string) => `JSON for ${file} (scrollable)`,
+    },
   },
 
   reports: {
