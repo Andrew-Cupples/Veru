@@ -1,5 +1,5 @@
 import type { PromptDetail } from '../api/client';
-import { useSync } from '../api/hooks';
+import { useExport, useSync } from '../api/hooks';
 import type { ColorScheme } from '../theme/theme';
 import { Icon, type IconName } from './Icon';
 import { useLedgerI18n } from '../i18n';
@@ -27,6 +27,7 @@ export function Toolbar(props: ToolbarProps) {
   const { t: all } = useLedgerI18n();
   const t = all.toolbar;
   const sync = useSync();
+  const exporter = useExport();
   const reviewed = prompts.filter((p) => p.humanReviewed).length;
   const percent = prompts.length === 0 ? 0 : Math.round((reviewed / prompts.length) * 100);
   const schemeInfo = schemeCycle[scheme];
@@ -77,6 +78,21 @@ export function Toolbar(props: ToolbarProps) {
         </button>
         <span className="pl-sr-only" role="status">
           {sync.isPending ? t.syncingStatus : sync.isError ? t.syncFailedStatus(sync.error.message) : sync.isSuccess ? syncLabel : ''}
+        </span>
+        <button
+          type="button"
+          className={styles.textButton}
+          onClick={() => {
+            if (!exporter.isPending) exporter.mutate();
+          }}
+          aria-disabled={exporter.isPending}
+          title={exporter.isError ? exporter.error.message : t.exportTitle}
+        >
+          <Icon name={exporter.isSuccess ? 'check' : 'export'} size={15} />
+          {exporter.isPending ? t.exporting : exporter.isError ? t.exportFailed : exporter.isSuccess ? t.exported : t.export}
+        </button>
+        <span className="pl-sr-only" role="status">
+          {exporter.isPending ? t.exportingStatus : exporter.isError ? `${t.exportFailed}: ${exporter.error.message}` : exporter.isSuccess ? t.exportedStatus : ''}
         </span>
         {onSchemeChange && (
           <IconButton

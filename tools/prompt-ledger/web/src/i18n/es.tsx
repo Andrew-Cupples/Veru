@@ -26,6 +26,13 @@ export const es: LedgerMessages = {
     synced: (added: number, updated: number) => `Sincronizado: ${n(added)} ${s(added, 'nuevo', 'nuevos')}, ${n(updated)} ${s(updated, 'actualizado', 'actualizados')}`,
     scheme: { system: 'Tema del sistema', light: 'Tema claro', dark: 'Tema oscuro' },
     schemeChange: (label: string) => `${label} (clic para cambiar)`,
+    export: 'Exportar',
+    exporting: 'Exportando…',
+    exported: 'Exportado',
+    exportFailed: 'Error al exportar',
+    exportTitle: 'Escribe PROMPT_LOG.md y la instantánea versionada a partir del registro. Solo lectura: tus anotaciones no cambian.',
+    exportingStatus: 'Exportando PROMPT_LOG.md y la instantánea',
+    exportedStatus: 'PROMPT_LOG.md y la instantánea están al día',
   },
 
   status: {
@@ -50,8 +57,6 @@ export const es: LedgerMessages = {
     notInLog: 'Fuera del registro',
     you: 'Tú',
     noReply: 'Aún no hay respuesta registrada. Se añade cuando termina el turno o en la próxima sincronización.',
-    yourComment: 'Tu comentario',
-    note: 'Nota',
     collapse: 'Contraer respuesta',
     expand: (words: number) => `Ver la respuesta completa · ${n(words)} ${s(words, 'palabra', 'palabras')}`,
   },

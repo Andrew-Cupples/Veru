@@ -98,11 +98,6 @@ const PromptSection = memo(function PromptSection({ prompt, number, selected, on
               <Icon name="hidden" size={12} /> {t.document.notInLog}
             </span>
           )}
-          {prompt.tags.map((tag) => (
-            <span key={tag} className={styles.tag}>
-              #{tag}
-            </span>
-          ))}
         </div>
       </header>
 
@@ -117,12 +112,50 @@ const PromptSection = memo(function PromptSection({ prompt, number, selected, on
         <p className={styles.noResponse}>{t.document.noReply}</p>
       )}
 
-      {prompt.comment && (
-        <aside className={styles.note} aria-label={t.document.yourComment}>
-          <p className={styles.blockLabel}>{t.document.note}</p>
-          <p className={styles.noteText}>{prompt.comment}</p>
-        </aside>
-      )}
+      <Annotations prompt={prompt} />
     </section>
   );
 });
+
+/** Everything typed in the annotation panel, shown in the document under the reply. Empty fields are left out. */
+function Annotations({ prompt }: { prompt: PromptDetail }) {
+  const { t } = useLedgerI18n();
+  const outcome = prompt.outcome !== 'Unset' ? t.annotations.outcomeChips[prompt.outcome] : null;
+  const fields = [
+    { key: 'why', label: t.annotations.why, text: prompt.rationale },
+    { key: 'kept', label: t.annotations.kept, text: prompt.outcomeNotes, badge: outcome },
+    { key: 'comments', label: t.annotations.comments, text: prompt.comment },
+  ].filter((f) => f.text?.trim());
+
+  if (fields.length === 0 && prompt.tags.length === 0) return null;
+
+  return (
+    <aside className={styles.note} aria-label={t.annotations.label}>
+      {fields.map((f) => (
+        <div key={f.key} className={styles.noteField}>
+          <p className={styles.blockLabel}>
+            {f.label}
+            {f.badge && (
+              <span className={styles.chip} data-kind="outcome" data-outcome={prompt.outcome}>
+                {f.badge}
+              </span>
+            )}
+          </p>
+          <p className={styles.noteText}>{f.text}</p>
+        </div>
+      ))}
+      {prompt.tags.length > 0 && (
+        <div className={styles.noteField}>
+          <p className={styles.blockLabel}>{t.annotations.tags}</p>
+          <ul className={styles.noteTags}>
+            {prompt.tags.map((tag) => (
+              <li key={tag} className={styles.tag}>
+                #{tag}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </aside>
+  );
+}

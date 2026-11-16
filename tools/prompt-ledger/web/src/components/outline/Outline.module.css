@@ -56,7 +56,9 @@
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 8px 24px;
+  /* No top padding: a sticky session title pins to the padding edge, so any padding leaves a strip above it
+     that the prompts scroll through. */
+  padding: 0 8px 24px;
   scrollbar-width: thin;
 }
 
@@ -77,8 +79,9 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  margin: 0;
-  padding: 10px 8px 6px;
+  /* Spans the list's side padding too, so nothing shows beside it (the current-item bar sits in that padding). */
+  margin: 0 -8px;
+  padding: 10px 16px 6px;
   background: var(--pl-surface);
   font-size: var(--pl-text-xs);
   font-weight: 650;

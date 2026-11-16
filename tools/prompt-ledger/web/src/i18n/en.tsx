@@ -30,6 +30,13 @@ export const en = {
     synced: (added: number, updated: number) => `Synced: ${n(added)} new, ${n(updated)} updated`,
     scheme: { system: 'System theme', light: 'Light theme', dark: 'Dark theme' },
     schemeChange: (label: string) => `${label} (click to change)`,
+    export: 'Export',
+    exporting: 'Exporting…',
+    exported: 'Exported',
+    exportFailed: 'Export failed',
+    exportTitle: 'Write PROMPT_LOG.md and the committed snapshot from the ledger. Read-only: your annotations are not changed.',
+    exportingStatus: 'Exporting PROMPT_LOG.md and the snapshot',
+    exportedStatus: 'PROMPT_LOG.md and the snapshot are up to date',
   },
 
   status: {
@@ -54,8 +61,6 @@ export const en = {
     notInLog: 'Not in log',
     you: 'You',
     noReply: "No reply recorded yet. It's added when the turn finishes, or on the next sync.",
-    yourComment: 'Your comment',
-    note: 'Note',
     collapse: 'Collapse reply',
     expand: (words: number) => `Show full reply · ${n(words)} ${s(words, 'word', 'words')}`,
   },

@@ -93,6 +93,14 @@ export function useSync() {
   });
 }
 
+/** Writes PROMPT_LOG.md and the committed snapshot. Reads the ledger only, so nothing to refetch. */
+export function useExport() {
+  const client = useLedgerClient();
+  return useMutation({
+    mutationFn: async () => unwrap(await client.POST('/api/export')),
+  });
+}
+
 export function applyPatch(p: PromptDetail, patch: UpdatePromptRequest): PromptDetail {
   const text = (v: string | null | undefined, current: string | null) =>
     v == null ? current : v.trim() === '' ? null : v;
